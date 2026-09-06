@@ -14,7 +14,17 @@ Direction: procedural walls from a plan JSON, CC0 low-poly furniture, Sowel pale
 
 ## Status
 
-Prototype only. See the [project map](https://github.com/mchacher/sowel-showroom/blob/main/docs/project-map.md) for the phases.
+Scaffold: Vite + React + Tailwind + Three.js, the plan types and their validation, CI. The scene arrives with phase 3 of the [project map](https://github.com/mchacher/sowel-showroom/blob/main/docs/project-map.md).
+
+## Development
+
+```bash
+npm install
+npm run dev             # proxies /api to a Sowel instance on localhost:3000
+npm run validate        # lint, typecheck, format, tests, build — what CI runs
+```
+
+Releases: tag `vX.Y.Z` on main; the workflow publishes `sowel-house-3d-X.Y.Z.tar.gz`, the static build the showroom serves.
 
 ## License
 

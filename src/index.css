@@ -1,0 +1,15 @@
+@import "tailwindcss";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/jetbrains-mono/400.css";
+
+@theme {
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --color-primary: #1a4f6e;
+  --color-primary-hover: #144159;
+  --color-primary-light: #eef5f8;
+  --color-accent: #f2c035;
+  --color-accent-hover: #d4a41c;
+}

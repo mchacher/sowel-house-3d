@@ -1,0 +1,45 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: npm ci
+
+      - name: Tag matches package version
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          P=$(node -p "require('./package.json').version")
+          if [ "$P" != "$VERSION" ]; then
+            echo "Tag v$VERSION but package.json=$P" >&2
+            exit 1
+          fi
+
+      - run: npm run build
+
+      # The showroom's compose fetches this static build and serves it behind
+      # its proxy; nothing else is needed at runtime.
+      - name: Package the static build
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          tar czf sowel-house-3d-${VERSION}.tar.gz -C dist .
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          gh release create ${{ github.ref_name }} \
+            sowel-house-3d-${VERSION}.tar.gz \
+            --title "${{ github.ref_name }}" \
+            --generate-notes
