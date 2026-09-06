@@ -16,6 +16,7 @@ It is generic. The public showroom is one deployment; a user's own home is anoth
 | The look to reproduce                      | `prototype/maison-temoin.html` — throwaway, self-contained, **do not grow it**                                 |
 | Sowel's REST API and WebSocket events      | `mchacher/sowel`: `docs/technical/api-reference.md`                                                            |
 | The plan format                            | `src/plan/types.ts`, `src/plan/validate.ts`                                                                    |
+| Every feature specified here               | [docs/specs-index.md](docs/specs-index.md) — one row per spec, CI-gated                                        |
 | Feature history in this repo               | `specs/NNN-name/{spec,architecture,plan}.md`                                                                   |
 
 ## Non-negotiable rules
@@ -43,7 +44,7 @@ npm run validate        # lint, typecheck, format:check, test, build — exactly
 - Feature branches: `feat/`, `fix/`, `refactor/`, `docs/`. Main is protected (PR required, linear history, CI green).
 - Conventional commits. Scopes: `plan`, `scene`, `client`, `hud`, `ui`, `ci`.
 - **Never merge a PR without explicit user approval** ("oui", "merge", "go").
-- Every new `specs/NNN-name/` folder needs `spec.md`, `architecture.md`, `plan.md` (CI gate).
+- Every new `specs/NNN-name/` folder needs `spec.md`, `architecture.md`, `plan.md` **and a row in `docs/specs-index.md`** (two CI gates). A spec that starts a phase also flips that phase's status in the showroom's project map.
 - A release is a PR (version bump, changelog) then a tag on main; the workflow publishes the static build the showroom deploys. See the `house3d-release` skill.
 
 ## Skills
