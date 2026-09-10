@@ -16,6 +16,38 @@ Direction: procedural walls from a plan JSON, CC0 low-poly furniture, Sowel pale
 
 Scaffold: Vite + React + Tailwind + Three.js, the plan types and their validation, CI. The scene arrives with phase 3 of the [project map](https://github.com/mchacher/sowel-showroom/blob/main/docs/project-map.md).
 
+## Looking at it
+
+The app reads its session from `localStorage` on its **own origin** — the showroom's
+landing page puts one there, and in production the proxy serves this app beside Sowel
+so they share it. In development the origins differ, so a dev server needs one
+handed to it:
+
+```bash
+# The showroom stack from sowel-showroom, already reset and running.
+SOWEL_TARGET=http://localhost:8080 npm run dev
+```
+
+Then, once, in the browser console on the dev origin:
+
+```js
+const { username, password } = await (
+  await fetch("http://localhost:8080/showroom/config.json")
+).json();
+const r = await fetch("/api/v1/auth/login", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ username, password }),
+}).then((r) => r.json());
+localStorage.setItem("sowel.accessToken", r.accessToken);
+localStorage.setItem("sowel.refreshToken", r.refreshToken);
+location.reload();
+```
+
+There is deliberately no login form and no token-in-the-URL shortcut: this app is a
+view onto a Sowel somebody else authenticated, and the one place a visitor types a
+password should stay the one place.
+
 ## Development
 
 ```bash
