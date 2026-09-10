@@ -11,8 +11,9 @@ here says which phase it serves.
 
 Status: 📝 Draft · 🚧 In progress · ✅ Shipped
 
-| #   | Title | Status | Summary |
-| --- | ----- | ------ | ------- |
+| #   | Title                | Status | Summary                                                                                                                             |
+| --- | -------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| 001 | The house, read-only | 📝     | Phase 3. The plan as data, the Sowel mapping derived rather than listed, REST + WebSocket, and the scene ported from the prototype. |
 
 _No spec yet. The scene is phase 3 of the project map, the interactions phase 4;
 write them with the `house3d-feature` skill, which creates the folder and the

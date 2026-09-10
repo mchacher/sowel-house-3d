@@ -1,0 +1,1018 @@
+{
+  "height": 2.6,
+  "thickness": 0.14,
+  "levels": [
+    {
+      "level": -1,
+      "name": "Sous-sol",
+      "x": 0.0,
+      "z": 1.2,
+      "w": 9.6,
+      "d": 8.4
+    },
+    {
+      "level": 0,
+      "name": "RDC",
+      "x": 0.0,
+      "z": 1.2,
+      "w": 9.6,
+      "d": 8.4
+    },
+    {
+      "level": 1,
+      "name": "Étage 1",
+      "x": 0.0,
+      "z": 1.2,
+      "w": 9.6,
+      "d": 8.4
+    },
+    {
+      "level": 2,
+      "name": "Étage 2",
+      "x": 0.0,
+      "z": 1.2,
+      "w": 9.6,
+      "d": 8.4
+    }
+  ],
+  "rooms": [
+    {
+      "id": "atelier",
+      "name": "Atelier",
+      "level": -1,
+      "x": 0.0,
+      "z": 1.2,
+      "w": 4.5,
+      "d": 4.0,
+      "spot": [2.25, 3.2]
+    },
+    {
+      "id": "cave",
+      "name": "Cave",
+      "level": -1,
+      "x": 0.0,
+      "z": 5.6,
+      "w": 3.5,
+      "d": 4.0,
+      "spot": [1.75, 7.6]
+    },
+    {
+      "id": "garage",
+      "name": "Garage",
+      "level": -1,
+      "x": 5.0,
+      "z": 5.0,
+      "w": 4.6,
+      "d": 4.6,
+      "spot": [7.3, 7.3]
+    },
+    {
+      "id": "bureau",
+      "name": "Bureau",
+      "level": 0,
+      "x": 0.0,
+      "z": 1.2,
+      "w": 3.2,
+      "d": 3.8,
+      "spot": [1.6, 3.1]
+    },
+    {
+      "id": "entree",
+      "name": "Entrée",
+      "level": 0,
+      "x": 3.2,
+      "z": 1.2,
+      "w": 3.2,
+      "d": 2.5,
+      "spot": [4.8, 2.45]
+    },
+    {
+      "id": "cuisine",
+      "name": "Cuisine",
+      "level": 0,
+      "x": 6.4,
+      "z": 1.2,
+      "w": 3.2,
+      "d": 4.4,
+      "spot": [8.0, 3.4]
+    },
+    {
+      "id": "sejour",
+      "name": "Séjour",
+      "level": 0,
+      "x": 0.0,
+      "z": 5.6,
+      "w": 9.6,
+      "d": 4.0,
+      "spot": [4.8, 7.6]
+    },
+    {
+      "id": "salle-de-bain",
+      "name": "Salle de Bain",
+      "level": 1,
+      "x": 0.0,
+      "z": 1.2,
+      "w": 2.0,
+      "d": 3.5,
+      "spot": [1.0, 2.95]
+    },
+    {
+      "id": "chambre-parents",
+      "name": "Chambre Parents",
+      "level": 1,
+      "x": 0.0,
+      "z": 5.6,
+      "w": 4.0,
+      "d": 4.0,
+      "spot": [2.0, 7.6]
+    },
+    {
+      "id": "chambre-enfant-1",
+      "name": "Chambre Enfant 1",
+      "level": 1,
+      "x": 6.6,
+      "z": 5.6,
+      "w": 3.0,
+      "d": 4.0,
+      "spot": [8.1, 7.6]
+    },
+    {
+      "id": "escalier",
+      "name": "Escalier",
+      "level": 2,
+      "x": 3.6,
+      "z": 3.2,
+      "w": 2.4,
+      "d": 3.8,
+      "spot": [4.8, 5.1]
+    },
+    {
+      "id": "chambre-enfant-2",
+      "name": "Chambre Enfant 2",
+      "level": 2,
+      "x": 0.0,
+      "z": 5.9,
+      "w": 3.0,
+      "d": 3.7,
+      "spot": [1.5, 7.75]
+    },
+    {
+      "id": "chambre-enfant-3",
+      "name": "Chambre Enfant 3",
+      "level": 2,
+      "x": 6.6,
+      "z": 5.9,
+      "w": 3.0,
+      "d": 3.7,
+      "spot": [8.1, 7.75]
+    },
+    {
+      "id": "terrasse",
+      "name": "Terrasse",
+      "level": null,
+      "x": 0.0,
+      "z": 9.6,
+      "w": 9.6,
+      "d": 2.6,
+      "spot": [4.8, 10.9]
+    },
+    {
+      "id": "piscine",
+      "name": "Piscine",
+      "level": null,
+      "x": 1.0,
+      "z": 13.0,
+      "w": 8.0,
+      "d": 4.0,
+      "spot": [5.0, 15.0]
+    },
+    {
+      "id": "jardin",
+      "name": "Jardin",
+      "level": null,
+      "x": -4.0,
+      "z": -2.0,
+      "w": 17.6,
+      "d": 22.7,
+      "spot": [4.8, 9.35],
+      "ground": true
+    }
+  ],
+  "walls": [
+    {
+      "level": -1,
+      "axis": "x",
+      "at": 1.2,
+      "from": 0.0,
+      "to": 9.6,
+      "outside": true,
+      "openings": []
+    },
+    {
+      "level": -1,
+      "axis": "x",
+      "at": 9.6,
+      "from": 0.0,
+      "to": 9.6,
+      "outside": true,
+      "openings": [
+        {
+          "kind": "door",
+          "at": 7.3,
+          "w": 2.4,
+          "sill": 0.0,
+          "head": 2.1
+        }
+      ]
+    },
+    {
+      "level": -1,
+      "axis": "z",
+      "at": 0.0,
+      "from": 1.2,
+      "to": 9.6,
+      "outside": true,
+      "openings": []
+    },
+    {
+      "level": -1,
+      "axis": "z",
+      "at": 9.6,
+      "from": 1.2,
+      "to": 9.6,
+      "outside": true,
+      "openings": []
+    },
+    {
+      "level": 0,
+      "axis": "x",
+      "at": 1.2,
+      "from": 0.0,
+      "to": 9.6,
+      "outside": true,
+      "openings": [
+        {
+          "kind": "window",
+          "at": 1.6,
+          "w": 1.2,
+          "sill": 0.9,
+          "head": 2.1,
+          "id": "window:bureau-1"
+        },
+        {
+          "kind": "door",
+          "at": 4.8,
+          "w": 0.9,
+          "sill": 0.0,
+          "head": 2.1
+        }
+      ]
+    },
+    {
+      "level": 0,
+      "axis": "x",
+      "at": 9.6,
+      "from": 0.0,
+      "to": 9.6,
+      "outside": true,
+      "openings": [
+        {
+          "kind": "window",
+          "at": 2.6,
+          "w": 2.6,
+          "sill": 0.4,
+          "head": 2.3,
+          "id": "window:sejour-1"
+        },
+        {
+          "kind": "window",
+          "at": 6.0,
+          "w": 2.0,
+          "sill": 0.4,
+          "head": 2.3,
+          "id": "window:sejour-2"
+        }
+      ]
+    },
+    {
+      "level": 0,
+      "axis": "z",
+      "at": 0.0,
+      "from": 1.2,
+      "to": 9.6,
+      "outside": true,
+      "openings": [
+        {
+          "kind": "window",
+          "at": 7.6,
+          "w": 1.8,
+          "sill": 0.9,
+          "head": 2.3,
+          "id": "window:sejour-3"
+        }
+      ]
+    },
+    {
+      "level": 0,
+      "axis": "z",
+      "at": 9.6,
+      "from": 1.2,
+      "to": 9.6,
+      "outside": true,
+      "openings": [
+        {
+          "kind": "window",
+          "at": 2.4,
+          "w": 1.2,
+          "sill": 0.9,
+          "head": 2.1,
+          "id": "window:cuisine-1"
+        },
+        {
+          "kind": "window",
+          "at": 4.6,
+          "w": 1.8,
+          "sill": 0.4,
+          "head": 2.3,
+          "id": "window:cuisine-2"
+        }
+      ]
+    },
+    {
+      "level": 1,
+      "axis": "x",
+      "at": 1.2,
+      "from": 0.0,
+      "to": 9.6,
+      "outside": true,
+      "openings": [
+        {
+          "kind": "window",
+          "at": 1.0,
+          "w": 0.8,
+          "sill": 1.4,
+          "head": 2.1,
+          "id": "window:salle-de-bain-1"
+        }
+      ]
+    },
+    {
+      "level": 1,
+      "axis": "x",
+      "at": 9.6,
+      "from": 0.0,
+      "to": 9.6,
+      "outside": true,
+      "openings": [
+        {
+          "kind": "window",
+          "at": 2.0,
+          "w": 1.6,
+          "sill": 0.9,
+          "head": 2.2,
+          "id": "window:chambre-parents-1"
+        }
+      ]
+    },
+    {
+      "level": 1,
+      "axis": "z",
+      "at": 0.0,
+      "from": 1.2,
+      "to": 9.6,
+      "outside": true,
+      "openings": []
+    },
+    {
+      "level": 1,
+      "axis": "z",
+      "at": 9.6,
+      "from": 1.2,
+      "to": 9.6,
+      "outside": true,
+      "openings": [
+        {
+          "kind": "window",
+          "at": 7.6,
+          "w": 1.4,
+          "sill": 0.9,
+          "head": 2.2,
+          "id": "window:chambre-enfant-1-1"
+        }
+      ]
+    },
+    {
+      "level": 2,
+      "axis": "x",
+      "at": 1.2,
+      "from": 0.0,
+      "to": 9.6,
+      "outside": true,
+      "openings": []
+    },
+    {
+      "level": 2,
+      "axis": "x",
+      "at": 9.6,
+      "from": 0.0,
+      "to": 9.6,
+      "outside": true,
+      "openings": []
+    },
+    {
+      "level": 2,
+      "axis": "z",
+      "at": 0.0,
+      "from": 1.2,
+      "to": 9.6,
+      "outside": true,
+      "openings": [
+        {
+          "kind": "window",
+          "at": 7.8,
+          "w": 1.2,
+          "sill": 0.9,
+          "head": 2.1,
+          "id": "window:chambre-enfant-2-1"
+        }
+      ]
+    },
+    {
+      "level": 2,
+      "axis": "z",
+      "at": 9.6,
+      "from": 1.2,
+      "to": 9.6,
+      "outside": true,
+      "openings": [
+        {
+          "kind": "window",
+          "at": 7.8,
+          "w": 1.2,
+          "sill": 0.9,
+          "head": 2.1,
+          "id": "window:chambre-enfant-3-1"
+        }
+      ]
+    },
+    {
+      "level": -1,
+      "axis": "x",
+      "at": 5.2,
+      "from": 0.0,
+      "to": 4.5,
+      "openings": [
+        {
+          "kind": "door",
+          "at": 2.25,
+          "w": 0.9,
+          "sill": 0.0,
+          "head": 2.1
+        }
+      ]
+    },
+    {
+      "level": -1,
+      "axis": "z",
+      "at": 4.5,
+      "from": 1.2,
+      "to": 5.2,
+      "openings": [
+        {
+          "kind": "door",
+          "at": 3.2,
+          "w": 0.9,
+          "sill": 0.0,
+          "head": 2.1
+        }
+      ]
+    },
+    {
+      "level": -1,
+      "axis": "x",
+      "at": 5.6,
+      "from": 0.0,
+      "to": 3.5,
+      "openings": [
+        {
+          "kind": "door",
+          "at": 1.75,
+          "w": 0.9,
+          "sill": 0.0,
+          "head": 2.1
+        }
+      ]
+    },
+    {
+      "level": -1,
+      "axis": "z",
+      "at": 3.5,
+      "from": 5.6,
+      "to": 9.6,
+      "openings": [
+        {
+          "kind": "door",
+          "at": 7.6,
+          "w": 0.9,
+          "sill": 0.0,
+          "head": 2.1
+        }
+      ]
+    },
+    {
+      "level": -1,
+      "axis": "x",
+      "at": 5.0,
+      "from": 5.0,
+      "to": 9.6,
+      "openings": [
+        {
+          "kind": "door",
+          "at": 7.3,
+          "w": 0.9,
+          "sill": 0.0,
+          "head": 2.1
+        }
+      ]
+    },
+    {
+      "level": -1,
+      "axis": "z",
+      "at": 5.0,
+      "from": 5.0,
+      "to": 9.6,
+      "openings": [
+        {
+          "kind": "door",
+          "at": 7.3,
+          "w": 0.9,
+          "sill": 0.0,
+          "head": 2.1
+        }
+      ]
+    },
+    {
+      "level": 0,
+      "axis": "x",
+      "at": 5.0,
+      "from": 0.0,
+      "to": 3.2,
+      "openings": [
+        {
+          "kind": "door",
+          "at": 1.6,
+          "w": 0.9,
+          "sill": 0.0,
+          "head": 2.1
+        }
+      ]
+    },
+    {
+      "level": 0,
+      "axis": "z",
+      "at": 3.2,
+      "from": 1.2,
+      "to": 5.0,
+      "openings": [
+        {
+          "kind": "door",
+          "at": 3.1,
+          "w": 0.9,
+          "sill": 0.0,
+          "head": 2.1
+        }
+      ]
+    },
+    {
+      "level": 0,
+      "axis": "x",
+      "at": 3.7,
+      "from": 3.2,
+      "to": 6.4,
+      "openings": [
+        {
+          "kind": "door",
+          "at": 4.8,
+          "w": 0.9,
+          "sill": 0.0,
+          "head": 2.1
+        }
+      ]
+    },
+    {
+      "level": 0,
+      "axis": "z",
+      "at": 3.2,
+      "from": 1.2,
+      "to": 3.7,
+      "openings": [
+        {
+          "kind": "door",
+          "at": 2.45,
+          "w": 0.9,
+          "sill": 0.0,
+          "head": 2.1
+        }
+      ]
+    },
+    {
+      "level": 0,
+      "axis": "z",
+      "at": 6.4,
+      "from": 1.2,
+      "to": 3.7,
+      "openings": [
+        {
+          "kind": "door",
+          "at": 2.45,
+          "w": 0.9,
+          "sill": 0.0,
+          "head": 2.1
+        }
+      ]
+    },
+    {
+      "level": 0,
+      "axis": "x",
+      "at": 5.6000000000000005,
+      "from": 6.4,
+      "to": 9.600000000000001,
+      "openings": [
+        {
+          "kind": "door",
+          "at": 8.0,
+          "w": 0.9,
+          "sill": 0.0,
+          "head": 2.1
+        }
+      ]
+    },
+    {
+      "level": 0,
+      "axis": "z",
+      "at": 6.4,
+      "from": 1.2,
+      "to": 5.6000000000000005,
+      "openings": [
+        {
+          "kind": "door",
+          "at": 3.4,
+          "w": 0.9,
+          "sill": 0.0,
+          "head": 2.1
+        }
+      ]
+    },
+    {
+      "level": 0,
+      "axis": "x",
+      "at": 5.6,
+      "from": 0.0,
+      "to": 9.6,
+      "openings": [
+        {
+          "kind": "door",
+          "at": 4.8,
+          "w": 0.9,
+          "sill": 0.0,
+          "head": 2.1
+        }
+      ]
+    },
+    {
+      "level": 1,
+      "axis": "x",
+      "at": 4.7,
+      "from": 0.0,
+      "to": 2.0,
+      "openings": [
+        {
+          "kind": "door",
+          "at": 1.0,
+          "w": 0.9,
+          "sill": 0.0,
+          "head": 2.1
+        }
+      ]
+    },
+    {
+      "level": 1,
+      "axis": "z",
+      "at": 2.0,
+      "from": 1.2,
+      "to": 4.7,
+      "openings": [
+        {
+          "kind": "door",
+          "at": 2.95,
+          "w": 0.9,
+          "sill": 0.0,
+          "head": 2.1
+        }
+      ]
+    },
+    {
+      "level": 1,
+      "axis": "x",
+      "at": 5.6,
+      "from": 0.0,
+      "to": 4.0,
+      "openings": [
+        {
+          "kind": "door",
+          "at": 2.0,
+          "w": 0.9,
+          "sill": 0.0,
+          "head": 2.1
+        }
+      ]
+    },
+    {
+      "level": 1,
+      "axis": "z",
+      "at": 4.0,
+      "from": 5.6,
+      "to": 9.6,
+      "openings": [
+        {
+          "kind": "door",
+          "at": 7.6,
+          "w": 0.9,
+          "sill": 0.0,
+          "head": 2.1
+        }
+      ]
+    },
+    {
+      "level": 1,
+      "axis": "x",
+      "at": 5.6,
+      "from": 6.6,
+      "to": 9.6,
+      "openings": [
+        {
+          "kind": "door",
+          "at": 8.1,
+          "w": 0.9,
+          "sill": 0.0,
+          "head": 2.1
+        }
+      ]
+    },
+    {
+      "level": 1,
+      "axis": "z",
+      "at": 6.6,
+      "from": 5.6,
+      "to": 9.6,
+      "openings": [
+        {
+          "kind": "door",
+          "at": 7.6,
+          "w": 0.9,
+          "sill": 0.0,
+          "head": 2.1
+        }
+      ]
+    },
+    {
+      "level": 2,
+      "axis": "x",
+      "at": 3.2,
+      "from": 3.6,
+      "to": 6.0,
+      "openings": [
+        {
+          "kind": "door",
+          "at": 4.8,
+          "w": 0.9,
+          "sill": 0.0,
+          "head": 2.1
+        }
+      ]
+    },
+    {
+      "level": 2,
+      "axis": "x",
+      "at": 7.0,
+      "from": 3.6,
+      "to": 6.0,
+      "openings": [
+        {
+          "kind": "door",
+          "at": 4.8,
+          "w": 0.9,
+          "sill": 0.0,
+          "head": 2.1
+        }
+      ]
+    },
+    {
+      "level": 2,
+      "axis": "z",
+      "at": 3.6,
+      "from": 3.2,
+      "to": 7.0,
+      "openings": [
+        {
+          "kind": "door",
+          "at": 5.1,
+          "w": 0.9,
+          "sill": 0.0,
+          "head": 2.1
+        }
+      ]
+    },
+    {
+      "level": 2,
+      "axis": "z",
+      "at": 6.0,
+      "from": 3.2,
+      "to": 7.0,
+      "openings": [
+        {
+          "kind": "door",
+          "at": 5.1,
+          "w": 0.9,
+          "sill": 0.0,
+          "head": 2.1
+        }
+      ]
+    },
+    {
+      "level": 2,
+      "axis": "x",
+      "at": 5.9,
+      "from": 0.0,
+      "to": 3.0,
+      "openings": [
+        {
+          "kind": "door",
+          "at": 1.5,
+          "w": 0.9,
+          "sill": 0.0,
+          "head": 2.1
+        }
+      ]
+    },
+    {
+      "level": 2,
+      "axis": "z",
+      "at": 3.0,
+      "from": 5.9,
+      "to": 9.600000000000001,
+      "openings": [
+        {
+          "kind": "door",
+          "at": 7.75,
+          "w": 0.9,
+          "sill": 0.0,
+          "head": 2.1
+        }
+      ]
+    },
+    {
+      "level": 2,
+      "axis": "x",
+      "at": 5.9,
+      "from": 6.6,
+      "to": 9.6,
+      "openings": [
+        {
+          "kind": "door",
+          "at": 8.1,
+          "w": 0.9,
+          "sill": 0.0,
+          "head": 2.1
+        }
+      ]
+    },
+    {
+      "level": 2,
+      "axis": "z",
+      "at": 6.6,
+      "from": 5.9,
+      "to": 9.600000000000001,
+      "openings": [
+        {
+          "kind": "door",
+          "at": 7.75,
+          "w": 0.9,
+          "sill": 0.0,
+          "head": 2.1
+        }
+      ]
+    }
+  ],
+  "doors": [
+    {
+      "a": "away",
+      "b": "jardin",
+      "x": -4.0,
+      "z": 10.0
+    },
+    {
+      "a": "jardin",
+      "b": "terrasse",
+      "x": 4.8,
+      "z": 9.6
+    },
+    {
+      "a": "terrasse",
+      "b": "sejour",
+      "x": 4.8,
+      "z": 9.6
+    },
+    {
+      "a": "jardin",
+      "b": "entree",
+      "x": 4.8,
+      "z": 1.2
+    },
+    {
+      "a": "jardin",
+      "b": "piscine",
+      "x": 5.0,
+      "z": 13.0
+    },
+    {
+      "a": "entree",
+      "b": "bureau",
+      "x": 3.2,
+      "z": 2.4
+    },
+    {
+      "a": "entree",
+      "b": "sejour",
+      "x": 4.8,
+      "z": 5.6
+    },
+    {
+      "a": "sejour",
+      "b": "cuisine",
+      "x": 8.0,
+      "z": 5.6
+    },
+    {
+      "a": "entree",
+      "b": "escalier",
+      "x": 4.8,
+      "z": 3.7
+    },
+    {
+      "a": "escalier",
+      "b": "salle-de-bain",
+      "x": 3.6,
+      "z": 4.0
+    },
+    {
+      "a": "escalier",
+      "b": "chambre-parents",
+      "x": 3.6,
+      "z": 6.0
+    },
+    {
+      "a": "escalier",
+      "b": "chambre-enfant-1",
+      "x": 6.0,
+      "z": 6.0
+    },
+    {
+      "a": "escalier",
+      "b": "chambre-enfant-2",
+      "x": 3.6,
+      "z": 6.6
+    },
+    {
+      "a": "escalier",
+      "b": "chambre-enfant-3",
+      "x": 6.0,
+      "z": 6.6
+    },
+    {
+      "a": "entree",
+      "b": "garage",
+      "x": 6.4,
+      "z": 2.4
+    },
+    {
+      "a": "garage",
+      "b": "cave",
+      "x": 5.0,
+      "z": 7.0
+    },
+    {
+      "a": "garage",
+      "b": "atelier",
+      "x": 4.5,
+      "z": 5.0
+    },
+    {
+      "a": "garage",
+      "b": "jardin",
+      "x": 9.6,
+      "z": 7.3
+    }
+  ],
+  "awaySpot": [-2.0, 12.0]
+}

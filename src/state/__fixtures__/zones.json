@@ -1,0 +1,207 @@
+[
+  {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "name": "Maison",
+    "parentId": null,
+    "icon": "home",
+    "displayOrder": 0,
+    "createdAt": "2026-02-22 13:17:20Z",
+    "updatedAt": "2026-02-22 13:17:20Z",
+    "children": [
+      {
+        "id": "f629de19-d521-406d-98a0-c63605725845",
+        "name": "Extérieur",
+        "parentId": "00000000-0000-0000-0000-000000000001",
+        "displayOrder": 0,
+        "createdAt": "2026-02-23 15:47:48Z",
+        "updatedAt": "2026-02-23 15:48:40Z",
+        "children": [
+          {
+            "id": "68876659-cbd8-40d9-ab04-058161d2817c",
+            "name": "Jardin",
+            "parentId": "f629de19-d521-406d-98a0-c63605725845",
+            "displayOrder": 0,
+            "createdAt": "2026-02-23 15:48:53Z",
+            "updatedAt": "2026-02-23 15:48:53Z",
+            "children": []
+          },
+          {
+            "id": "521098a6-44b0-4b08-ac7c-547144d87293",
+            "name": "Piscine",
+            "parentId": "f629de19-d521-406d-98a0-c63605725845",
+            "displayOrder": 0,
+            "createdAt": "2026-02-23 15:48:59Z",
+            "updatedAt": "2026-02-23 15:48:59Z",
+            "children": []
+          },
+          {
+            "id": "14ec5c8b-a011-4ec7-ba16-250f8fed3c19",
+            "name": "Terrasse",
+            "parentId": "f629de19-d521-406d-98a0-c63605725845",
+            "displayOrder": 0,
+            "createdAt": "2026-02-23 15:49:07Z",
+            "updatedAt": "2026-02-23 15:49:07Z",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "61a85d08-2e36-47c5-a731-0bff2aa607f5",
+        "name": "Sous-sol",
+        "parentId": "00000000-0000-0000-0000-000000000001",
+        "displayOrder": 0,
+        "createdAt": "2026-02-20 10:34:16Z",
+        "updatedAt": "2026-02-20 10:43:06Z",
+        "children": [
+          {
+            "id": "354b860d-3357-4da1-a564-380a508fdb6a",
+            "name": "Atelier",
+            "parentId": "61a85d08-2e36-47c5-a731-0bff2aa607f5",
+            "displayOrder": 0,
+            "createdAt": "2026-03-07 10:25:32Z",
+            "updatedAt": "2026-03-07 10:25:32Z",
+            "children": []
+          },
+          {
+            "id": "f18fbd4e-4faf-4e0b-a735-e8aa5b12a11b",
+            "name": "Cave",
+            "parentId": "61a85d08-2e36-47c5-a731-0bff2aa607f5",
+            "displayOrder": 0,
+            "createdAt": "2026-02-20 17:19:20Z",
+            "updatedAt": "2026-02-20 17:19:20Z",
+            "children": []
+          },
+          {
+            "id": "b7c07316-fee0-4f65-9105-352c6106beae",
+            "name": "Garage",
+            "parentId": "61a85d08-2e36-47c5-a731-0bff2aa607f5",
+            "displayOrder": 0,
+            "createdAt": "2026-02-20 17:19:10Z",
+            "updatedAt": "2026-02-23 15:48:02Z",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "4d2250c4-fd75-4f21-9630-76e3b9099a5d",
+        "name": "RDC",
+        "parentId": "00000000-0000-0000-0000-000000000001",
+        "displayOrder": 1,
+        "createdAt": "2026-02-20 10:33:53Z",
+        "updatedAt": "2026-02-20 10:43:06Z",
+        "children": [
+          {
+            "id": "2086c612-c80e-4ccc-9562-a7ea1f9bb788",
+            "name": "Entrée",
+            "parentId": "4d2250c4-fd75-4f21-9630-76e3b9099a5d",
+            "displayOrder": 0,
+            "createdAt": "2026-02-20 11:02:38Z",
+            "updatedAt": "2026-02-20 13:13:12Z",
+            "children": []
+          },
+          {
+            "id": "9a675e19-aa39-4e37-8e99-b53d283f2286",
+            "name": "Bureau",
+            "parentId": "4d2250c4-fd75-4f21-9630-76e3b9099a5d",
+            "displayOrder": 1,
+            "createdAt": "2026-02-20 13:12:59Z",
+            "updatedAt": "2026-02-20 13:13:12Z",
+            "children": []
+          },
+          {
+            "id": "b502efa3-7d14-43b1-8f2d-75bbb03ece43",
+            "name": "Cuisine",
+            "parentId": "4d2250c4-fd75-4f21-9630-76e3b9099a5d",
+            "displayOrder": 2,
+            "createdAt": "2026-02-20 10:43:31Z",
+            "updatedAt": "2026-02-20 13:13:12Z",
+            "children": []
+          },
+          {
+            "id": "62a4a297-4364-4f74-a36c-cd53b912068a",
+            "name": "Séjour",
+            "parentId": "4d2250c4-fd75-4f21-9630-76e3b9099a5d",
+            "displayOrder": 3,
+            "createdAt": "2026-02-20 11:00:16Z",
+            "updatedAt": "2026-02-20 13:13:12Z",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "7d85f5e7-1fdf-432a-a89d-b63c21a71940",
+        "name": "Etage 1",
+        "parentId": "00000000-0000-0000-0000-000000000001",
+        "displayOrder": 2,
+        "createdAt": "2026-02-20 10:33:59Z",
+        "updatedAt": "2026-02-20 10:43:06Z",
+        "children": [
+          {
+            "id": "62463033-1a48-47d8-922b-fd432acc96d9",
+            "name": "Chambre Enfant 1",
+            "parentId": "7d85f5e7-1fdf-432a-a89d-b63c21a71940",
+            "displayOrder": 0,
+            "createdAt": "2026-03-07 10:25:48Z",
+            "updatedAt": "2026-03-07 10:25:48Z",
+            "children": []
+          },
+          {
+            "id": "a9d77839-82d2-4d94-ab27-dd03a3226f13",
+            "name": "Chambre Parents",
+            "parentId": "7d85f5e7-1fdf-432a-a89d-b63c21a71940",
+            "displayOrder": 0,
+            "createdAt": "2026-03-07 10:25:44Z",
+            "updatedAt": "2026-03-07 10:25:44Z",
+            "children": []
+          },
+          {
+            "id": "2e6b9198-dfd7-4a62-b98f-df107807aa12",
+            "name": "Salle de Bain",
+            "parentId": "7d85f5e7-1fdf-432a-a89d-b63c21a71940",
+            "displayOrder": 0,
+            "createdAt": "2026-03-07 10:26:20Z",
+            "updatedAt": "2026-03-07 10:26:20Z",
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "bdf3db3e-bef7-4fa0-98cf-de55542fd01f",
+        "name": "Etage 2",
+        "parentId": "00000000-0000-0000-0000-000000000001",
+        "displayOrder": 3,
+        "createdAt": "2026-02-20 10:34:03Z",
+        "updatedAt": "2026-02-20 10:43:06Z",
+        "children": [
+          {
+            "id": "e372e099-9dec-422e-84eb-9c00c55b4f65",
+            "name": "Escalier",
+            "parentId": "bdf3db3e-bef7-4fa0-98cf-de55542fd01f",
+            "displayOrder": 0,
+            "createdAt": "2026-03-07 10:57:55Z",
+            "updatedAt": "2026-03-07 11:11:45Z",
+            "children": []
+          },
+          {
+            "id": "bf1560a9-b680-4dad-8eb8-e0711c22005b",
+            "name": "Chambre Enfant 3",
+            "parentId": "bdf3db3e-bef7-4fa0-98cf-de55542fd01f",
+            "displayOrder": 1,
+            "createdAt": "2026-03-07 10:26:04Z",
+            "updatedAt": "2026-03-07 11:11:45Z",
+            "children": []
+          },
+          {
+            "id": "07c224e2-7836-4248-929c-440c1890fbdb",
+            "name": "Chambre Enfant 2",
+            "parentId": "bdf3db3e-bef7-4fa0-98cf-de55542fd01f",
+            "displayOrder": 2,
+            "createdAt": "2026-03-07 10:25:56Z",
+            "updatedAt": "2026-03-07 11:11:45Z",
+            "children": []
+          }
+        ]
+      }
+    ]
+  }
+]
