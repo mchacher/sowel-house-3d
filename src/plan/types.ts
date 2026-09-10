@@ -11,12 +11,36 @@
 export interface Room {
   id: string;
   name: string;
+  /**
+   * −1 basement, 0 ground, 1 and 2 upstairs, `null` outdoors.
+   *
+   * The house has four levels, and stacking them all at once would hide every
+   * interior behind the floor above. So the scene shows **one level at a time**,
+   * with the outdoor rooms always present because they surround the house rather
+   * than sit on a storey. Rooms on different levels may therefore share the same
+   * x/z footprint — which is exactly what a house is — and the overlap check is
+   * per level.
+   *
+   * An exploded stack, all four levels floated apart, would show the whole house
+   * at a glance and is the better answer eventually. It is also the harder one to
+   * get right, and it belongs in phase 6 with the rest of the polish.
+   */
+  level: number | null;
   x: number;
   z: number;
   w: number;
   d: number;
   /** Where an occupant stands when "in" the room. */
   spot: [number, number];
+  /**
+   * The ground everything outdoors sits on.
+   *
+   * Outdoors is not a floor plan: a garden *contains* a terrace and a pool rather
+   * than sitting beside them, so the overlap check — which exists to catch two
+   * rooms given the same corner on a storey — would flag the correct arrangement.
+   * Exactly one room should carry this, and nothing else overlaps it by right.
+   */
+  ground?: true;
 }
 
 export type OpeningKind = "door" | "window";
@@ -33,6 +57,8 @@ export interface Opening {
 }
 
 export interface Wall {
+  /** The level this wall belongs to, matching `Room.level`. */
+  level: number | null;
   axis: "x" | "z";
   /** The constant coordinate (z for an x-axis wall, x for a z-axis wall). */
   at: number;
@@ -49,10 +75,28 @@ export interface Door {
   z: number;
 }
 
+/**
+ * A level's floor slab.
+ *
+ * The rooms of a level do not tile it: what is left between them is circulation —
+ * a landing, a hall, the foot of the stairs. Declaring the slab once and letting
+ * rooms sit inside it means those gaps are floor rather than holes, and it keeps
+ * the plan from inventing a "hallway" room that Sowel has no zone for.
+ */
+export interface Level {
+  level: number;
+  name: string;
+  x: number;
+  z: number;
+  w: number;
+  d: number;
+}
+
 export interface Plan {
   /** Wall height and thickness, metres. */
   height: number;
   thickness: number;
+  levels: Level[];
   rooms: Room[];
   walls: Wall[];
   /** Pathing graph. `away` is the outside node. */
