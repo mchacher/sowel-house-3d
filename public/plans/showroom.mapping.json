@@ -1,0 +1,21 @@
+{
+  "zones": {
+    "entree": "Entrée",
+    "sejour": "Séjour",
+    "cuisine": "Cuisine",
+    "bureau": "Bureau",
+    "chambre-parents": "Chambre Parents",
+    "chambre-enfant-1": "Chambre Enfant 1",
+    "salle-de-bain": "Salle de Bain",
+    "chambre-enfant-2": "Chambre Enfant 2",
+    "chambre-enfant-3": "Chambre Enfant 3",
+    "escalier": "Escalier",
+    "garage": "Garage",
+    "cave": "Cave",
+    "atelier": "Atelier",
+    "jardin": "Jardin",
+    "piscine": "Piscine",
+    "terrasse": "Terrasse"
+  },
+  "weatherEquipment": "Station Météo"
+}
