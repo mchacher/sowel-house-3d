@@ -25,6 +25,16 @@ export interface RoomBindings {
   roomId: string;
   zoneId: string;
   zoneName: string;
+  /**
+   * The zone and its ancestors, nearest first.
+   *
+   * Most rooms in a real house have no thermometer: in the showroom only three
+   * zones out of twenty-two report a temperature, because the house measures the
+   * study, the ground floor and itself and nothing else. Walking up the tree lets
+   * the scene show the nearest figure Sowel actually computed, and say where it
+   * came from, instead of either inventing one or showing a blank.
+   */
+  zoneChain: { id: string; name: string }[];
   lamps: Equipment[];
   /** One per window of the room, in plan order. `null` where the zone has none. */
   shutters: (Equipment | null)[];
@@ -134,7 +144,21 @@ export function derive(
       );
     }
 
-    rooms[room.id] = { roomId: room.id, zoneId: zone.id, zoneName, lamps, shutters, sensors };
+    const chain: { id: string; name: string }[] = [];
+    for (let z: Zone | undefined = zone; z; z = zones.find((c) => c.id === z?.parentId)) {
+      chain.push({ id: z.id, name: z.name });
+      if (chain.length > 12) break; // a cycle in the tree is not worth hanging over
+    }
+
+    rooms[room.id] = {
+      roomId: room.id,
+      zoneId: zone.id,
+      zoneName,
+      zoneChain: chain,
+      lamps,
+      shutters,
+      sensors,
+    };
   }
 
   const roomIds = new Set(plan.rooms.map((r) => r.id));
