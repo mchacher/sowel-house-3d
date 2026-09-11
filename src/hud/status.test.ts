@@ -103,3 +103,18 @@ describe("the one line a visitor reads", () => {
     }
   });
 });
+
+describe("a browser that will not draw", () => {
+  // The failure this covers was a blank white page: WebGL threw inside an effect,
+  // React unmounted the tree, and nothing at all was left to read. The data was
+  // arriving the whole time.
+  it("says so, and says the house is still there", () => {
+    const line = statusLine({ kind: "no-webgl" }, "open", state());
+    expect(line).toContain("WebGL");
+    expect(line).toContain("la maison est là");
+  });
+
+  it("reads as trouble even when everything else is healthy", () => {
+    expect(isTrouble({ kind: "no-webgl" }, "open", state())).toBe(true);
+  });
+});

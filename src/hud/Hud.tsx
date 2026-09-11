@@ -91,32 +91,37 @@ export function Hud(props: Props): React.ReactElement {
           </ul>
         )}
 
-        <div className="pointer-events-auto flex gap-1 rounded-lg bg-white/80 p-1 shadow-sm backdrop-blur dark:bg-slate-900/80">
-          <button
-            type="button"
-            onClick={onRecentre}
-            title="Recadrer la vue"
-            className="rounded px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-200/70 dark:text-slate-300 dark:hover:bg-slate-700/70"
-          >
-            Recadrer
-          </button>
-          <span aria-hidden className="my-1 w-px bg-slate-300 dark:bg-slate-700" />
-          {levels.map((entry) => (
+        {/* Camera controls with no camera behind them are a promise the page cannot
+            keep — worse than their absence, because pressing one teaches the visitor
+            that the page is broken rather than limited. */}
+        {levels.length > 0 && (
+          <div className="pointer-events-auto flex gap-1 rounded-lg bg-white/80 p-1 shadow-sm backdrop-blur dark:bg-slate-900/80">
             <button
-              key={entry.level}
               type="button"
-              onClick={() => onLevel(entry.level)}
-              aria-pressed={entry.level === level}
-              className={`rounded px-2.5 py-1.5 text-xs font-semibold transition-colors ${
-                entry.level === level
-                  ? "bg-[#1A4F6E] text-white"
-                  : "text-slate-600 hover:bg-slate-200/70 dark:text-slate-300 dark:hover:bg-slate-700/70"
-              }`}
+              onClick={onRecentre}
+              title="Recadrer la vue"
+              className="rounded px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-200/70 dark:text-slate-300 dark:hover:bg-slate-700/70"
             >
-              {entry.name}
+              Recadrer
             </button>
-          ))}
-        </div>
+            <span aria-hidden className="my-1 w-px bg-slate-300 dark:bg-slate-700" />
+            {levels.map((entry) => (
+              <button
+                key={entry.level}
+                type="button"
+                onClick={() => onLevel(entry.level)}
+                aria-pressed={entry.level === level}
+                className={`rounded px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+                  entry.level === level
+                    ? "bg-[#1A4F6E] text-white"
+                    : "text-slate-600 hover:bg-slate-200/70 dark:text-slate-300 dark:hover:bg-slate-700/70"
+                }`}
+              >
+                {entry.name}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

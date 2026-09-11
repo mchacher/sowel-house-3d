@@ -9,13 +9,22 @@ import type { SceneState } from "../state/scene-state.ts";
 import type { SocketStatus } from "../client/socket.ts";
 
 export type AppPhase =
-  { kind: "loading" } | { kind: "no-session" } | { kind: "unreachable" } | { kind: "live" };
+  | { kind: "loading" }
+  | { kind: "no-session" }
+  | { kind: "unreachable" }
+  | { kind: "no-webgl" }
+  | { kind: "live" };
 
 export function statusLine(
   phase: AppPhase,
   socket: SocketStatus,
   state: SceneState | null,
 ): string {
+  // Worth saying before anything else: the data may be arriving perfectly and the
+  // visitor still sees nothing, which is the one failure that reads as "the site is
+  // broken" rather than as "something is wrong".
+  if (phase.kind === "no-webgl")
+    return "Votre navigateur n'affiche pas la 3D (WebGL indisponible) — la maison est là, sous les chiffres.";
   if (phase.kind === "no-session") return "Pas de session — revenez par la page d'accueil.";
   if (phase.kind === "unreachable") return "Sowel ne répond pas.";
   if (phase.kind === "loading") return "Chargement de la maison…";
