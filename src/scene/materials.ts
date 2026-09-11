@@ -20,6 +20,11 @@ export const PALETTE = {
   shutter: 0x9fb2bd,
   person: 0x1a4f6e,
   glass: 0xbfd8e6,
+  roof: 0x4f6675,
+  door: 0x7f95a3,
+  step: 0xd3dde3,
+  drive: 0xb9bfc4,
+  path: 0xd6dbde,
 } as const;
 
 export interface Materials {
@@ -29,11 +34,18 @@ export interface Materials {
   water: Material;
   shutter: Material;
   glass: Material;
+  roof: Material;
+  door: Material;
+  step: Material;
+  drive: Material;
+  path: Material;
   person: Material;
   shadeOff: Material;
   shadeOn: Material;
   sensorOff: Material;
   sensorOn: Material;
+  /** A pane with a lit room behind it: what a house looks like from outside at night. */
+  glassLit: Material;
 }
 
 export function makeMaterials(): Materials {
@@ -53,6 +65,11 @@ export function makeMaterials(): Materials {
       opacity: 0.3,
       roughness: 0.1,
     }),
+    roof: standard(PALETTE.roof, { roughness: 0.85 }),
+    door: standard(PALETTE.door, { roughness: 0.7 }),
+    step: standard(PALETTE.step, { roughness: 0.9 }),
+    drive: standard(PALETTE.drive, { roughness: 1 }),
+    path: standard(PALETTE.path, { roughness: 1 }),
     person: standard(PALETTE.person, { roughness: 0.6 }),
     shadeOff: standard(PALETTE.light, { roughness: 0.8 }),
     // A lit shade is emissive rather than brighter: the light in the room comes from
@@ -63,6 +80,14 @@ export function makeMaterials(): Materials {
     }),
     sensorOff: new MeshBasicMaterial({ color: new Color(PALETTE.shutter) }),
     sensorOn: new MeshBasicMaterial({ color: new Color(PALETTE.amber) }),
+    // Shared and never ghosted, like the shades: a lit window is a signal.
+    glassLit: Object.assign(new MeshStandardMaterial({ color: new Color(0xffe2a8) }), {
+      emissive: new Color(0xffc75a),
+      emissiveIntensity: 0.9,
+      transparent: true,
+      opacity: 0.75,
+      roughness: 0.2,
+    }),
   };
 }
 
@@ -77,7 +102,19 @@ export function makeMaterials(): Materials {
  * light is on upstairs is most of the reason for showing upstairs at all, and a
  * ghosted amber dot is no longer a signal.
  */
-const GHOSTABLE = ["wall", "floor", "ground", "water", "shutter", "glass"] as const;
+const GHOSTABLE = [
+  "wall",
+  "floor",
+  "ground",
+  "water",
+  "shutter",
+  "glass",
+  "roof",
+  "door",
+  "step",
+  "drive",
+  "path",
+] as const;
 
 type Ghostable = (typeof GHOSTABLE)[number];
 
@@ -89,6 +126,11 @@ const SOLID_OPACITY: Record<Ghostable, number> = {
   water: 1,
   shutter: 1,
   glass: 0.3,
+  roof: 1,
+  door: 1,
+  step: 1,
+  drive: 1,
+  path: 1,
 };
 
 /** Faint enough to see through four of them stacked, present enough to read as a wall. */
@@ -102,6 +144,11 @@ const GHOST_OPACITY: Record<Ghostable, number> = {
   water: 0.14,
   shutter: 0.08,
   glass: 0.04,
+  roof: 0.07,
+  door: 0.09,
+  step: 0.09,
+  drive: 0.1,
+  path: 0.1,
 };
 
 /** A set sharing the signals and owning its own structure. One per storey. */

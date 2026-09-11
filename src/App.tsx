@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Hud } from "./hud/Hud.tsx";
 import { HouseRenderer } from "./scene/renderer.ts";
+import type { Focus } from "./scene/house.ts";
 import { selectableLevels } from "./scene/geometry.ts";
 import { useHouse } from "./useHouse.ts";
 
@@ -31,7 +32,7 @@ function drawsWebGL(): boolean {
 export function App() {
   const canvas = useRef<HTMLCanvasElement>(null);
   const renderer = useRef<HouseRenderer | null>(null);
-  const [level, setLevel] = useState(0);
+  const [level, setLevel] = useState<Focus>(0);
   // Computed once, in the initialiser: nothing here re-probes, and nothing sets it
   // from inside an effect.
   const [webgl] = useState(drawsWebGL);

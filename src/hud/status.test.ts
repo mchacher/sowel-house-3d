@@ -11,6 +11,7 @@ function state(overrides: Partial<SceneState> = {}): SceneState {
         id: "sejour",
         name: "Séjour",
         shutters: [],
+        doors: [],
         lamps: [
           { on: true, brightness: 1 },
           { on: false, brightness: 0 },

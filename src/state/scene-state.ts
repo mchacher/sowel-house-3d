@@ -27,6 +27,8 @@ export interface RoomState {
   /** 0 closed … 100 open, one per window the plan declares. Null: no shutter. */
   shutters: (number | null)[];
   lamps: LampState[];
+  /** True open, one per reporting door the plan declares. Null: no contact bound. */
+  doors: (boolean | null)[];
   /** What a sensor in the room reports, or false when it has none. */
   motion: boolean;
   temperatureC: number | null;
@@ -150,6 +152,12 @@ function assemble(input: BuildInput, derived: Derived): SceneState {
           : (numberOf(shutter.dataBindings.find((b) => b.alias === "position")?.value) ?? 100),
       ),
       lamps: bindings.lamps.map(lampState),
+      // Zigbee's `contact` is true when the door is **shut**, so open is its complement.
+      doors: bindings.doors.map((contact) =>
+        contact === null
+          ? null
+          : !booleanOf(contact.dataBindings.find((b) => b.category === "contact_door")?.value),
+      ),
       // The zone's own aggregation is the better answer where it exists: it folds
       // every sensor in the room, including ones the derivation did not pick.
       motion: zone?.motion ?? sensorMotion,

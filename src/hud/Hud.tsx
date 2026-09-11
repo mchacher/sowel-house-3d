@@ -9,6 +9,7 @@
 import type { SceneState } from "../state/scene-state.ts";
 import type { SocketStatus } from "../client/socket.ts";
 import type { Level } from "../plan/types.ts";
+import type { Focus } from "../scene/house.ts";
 import { isTrouble, statusLine, type AppPhase } from "./status.ts";
 
 export type { AppPhase };
@@ -18,8 +19,8 @@ interface Props {
   socket: SocketStatus;
   state: SceneState | null;
   levels: Level[];
-  level: number;
-  onLevel: (level: number) => void;
+  level: Focus;
+  onLevel: (level: Focus) => void;
   onRecentre: () => void;
 }
 
@@ -105,6 +106,19 @@ export function Hud(props: Props): React.ReactElement {
               Recadrer
             </button>
             <span aria-hidden className="my-1 w-px bg-slate-300 dark:bg-slate-700" />
+            {/* From outside: every storey solid and the roof on. The postcard. */}
+            <button
+              type="button"
+              onClick={() => onLevel("outside")}
+              aria-pressed={level === "outside"}
+              className={`rounded px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+                level === "outside"
+                  ? "bg-[#1A4F6E] text-white"
+                  : "text-slate-600 hover:bg-slate-200/70 dark:text-slate-300 dark:hover:bg-slate-700/70"
+              }`}
+            >
+              Extérieur
+            </button>
             {levels.map((entry) => (
               <button
                 key={entry.level}

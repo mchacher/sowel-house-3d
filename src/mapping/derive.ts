@@ -40,6 +40,12 @@ export interface RoomBindings {
   shutters: (Equipment | null)[];
   /** Equipments carrying a motion binding. A room may have several. */
   sensors: Equipment[];
+  /**
+   * One per door of the room the plan gave an id — the front door, the terrace
+   * door, the garage — paired in plan order with the zone's contact sensors.
+   * `null` where the room has none.
+   */
+  doors: (Equipment | null)[];
 }
 
 export interface Person {
@@ -66,6 +72,20 @@ export function windowsOfRoom(plan: Plan, roomId: string): string[] {
     for (const opening of wall.openings) {
       if (opening.kind !== "window" || !opening.id) continue;
       if (opening.id.replace(/^window:/, "").replace(/-\d+$/, "") === roomId) ids.push(opening.id);
+    }
+  }
+  return ids;
+}
+
+/** Ids of a room's reporting doors — `door:` and `gate:` openings — in plan order. */
+export function doorsOfRoom(plan: Plan, roomId: string): string[] {
+  const ids: string[] = [];
+  for (const wall of plan.walls) {
+    for (const opening of wall.openings) {
+      if ((opening.kind !== "door" && opening.kind !== "gate") || !opening.id) continue;
+      if (opening.id.replace(/^(door|gate):/, "").replace(/-\d+$/, "") === roomId) {
+        ids.push(opening.id);
+      }
     }
   }
   return ids;
@@ -144,6 +164,12 @@ export function derive(
       );
     }
 
+    // Doors pair with contact sensors the way shutters pair with windows: in
+    // order, and by nothing else. A contact on a window would take a door's place,
+    // and the plan has no way to tell them apart; the showroom has none.
+    const contacts = inZone.filter((e) => hasCategory(e, "contact_door"));
+    const doors = doorsOfRoom(plan, room.id).map((_, i) => contacts[i] ?? null);
+
     const chain: { id: string; name: string }[] = [];
     for (let z: Zone | undefined = zone; z; z = zones.find((c) => c.id === z?.parentId)) {
       chain.push({ id: z.id, name: z.name });
@@ -158,6 +184,7 @@ export function derive(
       lamps,
       shutters,
       sensors,
+      doors,
     };
   }
 

@@ -23,8 +23,15 @@ import {
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { Plan } from "../plan/types.ts";
 import type { SceneState } from "../state/scene-state.ts";
-import { cameraFor, levelElevation, stackHeight, sunDirection } from "./geometry.ts";
-import { applyState, buildHouse, focusLevel, syncPeople, type HouseHandles } from "./house.ts";
+import { cameraFor, levelElevation, roofRise, stackHeight, sunDirection } from "./geometry.ts";
+import {
+  applyState,
+  buildHouse,
+  focusLevel,
+  syncPeople,
+  type Focus,
+  type HouseHandles,
+} from "./house.ts";
 import { makeMaterials, PALETTE, type Materials } from "./materials.ts";
 
 /** How fast a shutter and a figure catch up with what Sowel said, per second. */
@@ -41,13 +48,13 @@ export class HouseRenderer {
   private readonly controls: OrbitControls;
   private readonly target = new Vector3();
   private handles: HouseHandles | null = null;
-  private level: number;
+  private level: Focus;
   private lampCounts: Record<string, number> = {};
   private state: SceneState | null = null;
   private frame = 0;
   private last = 0;
 
-  constructor(canvas: HTMLCanvasElement, plan: Plan, level = 0) {
+  constructor(canvas: HTMLCanvasElement, plan: Plan, level: Focus = 0) {
     this.canvas = canvas;
     this.plan = plan;
     this.level = level;
@@ -113,7 +120,7 @@ export class HouseRenderer {
     this.rebuild();
   }
 
-  setLevel(level: number): void {
+  setLevel(level: Focus): void {
     if (level === this.level) return;
     this.level = level;
     // Every storey is already built and standing. Switching floors is a change of
@@ -122,7 +129,7 @@ export class HouseRenderer {
     this.frameLevel();
   }
 
-  get currentLevel(): number {
+  get currentLevel(): Focus {
     return this.level;
   }
 
@@ -159,14 +166,27 @@ export class HouseRenderer {
 
   /** Put the camera back where a level is framed. Also what the HUD's reset calls. */
   frameLevel(): void {
-    const slab = this.plan.levels.find((l) => l.level === this.level) ?? this.plan.levels[0];
     const lowest = Math.min(...this.plan.levels.map((l) => l.level));
+    // From outside the house is framed as a whole, roof included, read from its
+    // ground floor; a storey is framed at its own height.
+    const slab =
+      this.level === "outside"
+        ? (this.plan.levels.find((l) => l.level === lowest) ?? this.plan.levels[0])
+        : (this.plan.levels.find((l) => l.level === this.level) ?? this.plan.levels[0]);
+    // The footprint framed is the storey's body and its wings together: framing the
+    // body alone left the garage half off the right of the screen.
+    const rects = [slab, ...(slab.parts ?? [])];
+    const x0 = Math.min(...rects.map((r) => r.x));
+    const z0 = Math.min(...rects.map((r) => r.z));
+    const x1 = Math.max(...rects.map((r) => r.x + r.w));
+    const z1 = Math.max(...rects.map((r) => r.z + r.d));
+    const footprint = { ...slab, x: x0, z: z0, w: x1 - x0, d: z1 - z0 };
     const view = cameraFor({
-      level: slab,
+      level: footprint,
       height: this.plan.height,
       aspect: this.aspect(),
       elevation: levelElevation(this.plan, slab.level),
-      stack: stackHeight(this.plan),
+      stack: stackHeight(this.plan) + roofRise(this.plan),
       lowest: levelElevation(this.plan, lowest),
     });
     this.camera.position.set(...view.position);
@@ -257,6 +277,15 @@ export class HouseRenderer {
     for (const shutters of this.handles.shutters.values()) {
       for (const shutter of shutters) {
         shutter.panel.scale.y += (shutter.target - shutter.panel.scale.y) * k;
+      }
+    }
+    for (const doors of this.handles.doors.values()) {
+      for (const door of doors) {
+        if (door.kind === "swing") {
+          door.object.rotation.y += (door.target - door.object.rotation.y) * k;
+        } else {
+          door.object.scale.y += (door.target - door.object.scale.y) * k;
+        }
       }
     }
     for (const entry of this.state?.people ?? []) {

@@ -12,7 +12,7 @@
  * is in this file.
  */
 
-import type { Level, Plan, Room, Wall } from "../plan/types.ts";
+import type { Level, Plan, Rect, Roof, Room, StairRun, Wall } from "../plan/types.ts";
 
 /** A solid rectangle of wall: along the wall from `from` to `to`, from `y0` to `y1`. */
 export interface WallPiece {
@@ -228,4 +228,137 @@ export function outdoorRooms(plan: Plan): Room[] {
 /** The levels a viewer can switch between, lowest first. Outdoors is not one. */
 export function selectableLevels(plan: Plan): Level[] {
   return [...plan.levels].sort((a, b) => a.level - b.level);
+}
+
+/**
+ * The rectangles a storey's slab is made of: its body and its wings, the body cut
+ * around the stairwell. Four strips around a hole rather than a slab with a hole in
+ * it, because a box with a hole is not a box.
+ */
+export function slabPieces(level: Level): Rect[] {
+  const body: Rect = { x: level.x, z: level.z, w: level.w, d: level.d };
+  const parts = level.parts ?? [];
+  const hole = level.hole;
+  if (!hole) return [body, ...parts];
+  const pieces: Rect[] = [];
+  const push = (x: number, z: number, w: number, d: number): void => {
+    if (w > 1e-9 && d > 1e-9) pieces.push({ x, z, w, d });
+  };
+  // North and south strips run the full width; east and west fill beside the hole.
+  push(body.x, body.z, body.w, hole.z - body.z);
+  push(body.x, hole.z + hole.d, body.w, body.z + body.d - (hole.z + hole.d));
+  push(body.x, hole.z, hole.x - body.x, hole.d);
+  push(hole.x + hole.w, hole.z, body.x + body.w - (hole.x + hole.w), hole.d);
+  return [...pieces, ...parts];
+}
+
+/** One step: a solid block from the run's floor up to its tread. */
+export interface Step extends Rect {
+  y0: number;
+  y1: number;
+}
+
+/**
+ * A run of stairs as blocks. Solid from the floor, not floating treads: it reads
+ * as a staircase from every angle and it is the cheapest thing that does.
+ *
+ * `riser` is what a riser should be; the count is rounded so the rise divides
+ * evenly, which is what a builder does too.
+ */
+export function stairSteps(run: StairRun, riser = 0.19): Step[] {
+  const rise = run.y1 - run.y0;
+  const count = Math.max(1, Math.round(rise / riser));
+  const length = run.axis === "x" ? run.w : run.d;
+  const tread = length / count;
+  const steps: Step[] = [];
+  for (let i = 0; i < count; i++) {
+    // Climbing towards +axis the first step is at the start; towards −axis it is
+    // at the far end, so the run is walked from its low end either way.
+    const along = run.direction === 1 ? i * tread : length - (i + 1) * tread;
+    const y1 = run.y0 + ((i + 1) * rise) / count;
+    steps.push(
+      run.axis === "x"
+        ? { x: run.x + along, z: run.z, w: tread, d: run.d, y0: run.y0, y1 }
+        : { x: run.x, z: run.z + along, w: run.w, d: tread, y0: run.y0, y1 },
+    );
+  }
+  return steps;
+}
+
+/** A slope of a gable roof: a slab to place and tilt. Position is the slab's centre. */
+export interface RoofSlope {
+  position: [number, number, number];
+  /** Rotation about the ridge axis, radians. */
+  tilt: number;
+  /** Extent along the ridge, and down the slope. */
+  along: number;
+  down: number;
+}
+
+/** A gable end: a triangle standing on the wall line, with its points as [across, y]. */
+export interface GableEnd {
+  /** The constant coordinate of the wall it stands on. */
+  at: number;
+  points: [number, number][];
+}
+
+/**
+ * The geometry of a gable roof, relative to the storey it sits on.
+ *
+ * Two slopes meeting at a ridge, overhanging the walls by `overhang`, and two
+ * gable triangles closing the ends on the wall line. `y` is measured from the
+ * storey's floor; the caller adds the storey's elevation by placing it in the
+ * storey's group.
+ */
+export function gableRoof(
+  roof: Roof,
+  wallHeight: number,
+): { eavesY: number; ridgeY: number; slopes: RoofSlope[]; gables: GableEnd[] } {
+  const o = roof.overhang;
+  const eavesY = wallHeight + 0.05;
+  const ridgeY = eavesY + roof.rise;
+  const ridgeX = roof.ridge !== "z";
+  // Half the span across the ridge, and the slope's length down it.
+  const half = (ridgeX ? roof.d : roof.w) / 2 + o;
+  const down = Math.hypot(half, roof.rise);
+  const tilt = Math.atan2(roof.rise, half);
+  const along = (ridgeX ? roof.w : roof.d) + 2 * o;
+  const cx = roof.x + roof.w / 2;
+  const cz = roof.z + roof.d / 2;
+  const my = eavesY + roof.rise / 2;
+
+  const slopes: RoofSlope[] = ridgeX
+    ? [
+        { position: [cx, my, cz - half / 2], tilt: -tilt, along, down },
+        { position: [cx, my, cz + half / 2], tilt: tilt, along, down },
+      ]
+    : [
+        { position: [cx - half / 2, my, cz], tilt: tilt, along, down },
+        { position: [cx + half / 2, my, cz], tilt: -tilt, along, down },
+      ];
+
+  const lo = ridgeX ? roof.z : roof.x;
+  const hi = ridgeX ? roof.z + roof.d : roof.x + roof.w;
+  const mid = (lo + hi) / 2;
+  const triangle: [number, number][] = [
+    [lo, eavesY],
+    [hi, eavesY],
+    [mid, ridgeY],
+  ];
+  const gables: GableEnd[] = ridgeX
+    ? [
+        { at: roof.x, points: triangle },
+        { at: roof.x + roof.w, points: triangle },
+      ]
+    : [
+        { at: roof.z, points: triangle },
+        { at: roof.z + roof.d, points: triangle },
+      ];
+
+  return { eavesY, ridgeY, slopes, gables };
+}
+
+/** The tallest thing on the house above its top storey's walls, for framing. */
+export function roofRise(plan: Plan): number {
+  return Math.max(0, ...(plan.roofs ?? []).map((r) => r.rise + 0.05));
 }

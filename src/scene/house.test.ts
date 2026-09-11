@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { Mesh, PointLight, type Material } from "three";
-import { applyState, buildHouse, focusLevel, syncPeople } from "./house.ts";
+import {
+  applyState,
+  buildHouse,
+  focusLevel,
+  LIFT_OPEN_SCALE,
+  SWING_OPEN_RAD,
+  syncPeople,
+  type Focus,
+} from "./house.ts";
 import { makeMaterials } from "./materials.ts";
 import { levelElevation, wallPieces } from "./geometry.ts";
 import type { Plan } from "../plan/types.ts";
@@ -13,7 +21,7 @@ const materials = makeMaterials();
 /** The lamp counts the showroom actually has, per derived bindings. */
 const LAMP_COUNTS: Record<string, number> = { sejour: 3, cuisine: 1, entree: 1, bureau: 1 };
 
-function build(level = 0) {
+function build(level: Focus = 0) {
   return buildHouse({ plan, materials, level, lampCounts: LAMP_COUNTS });
 }
 
@@ -24,6 +32,7 @@ function state(overrides: Partial<SceneState> = {}): SceneState {
       id: room.id,
       name: room.name,
       shutters: [],
+      doors: [],
       lamps: [],
       motion: false,
       temperatureC: null,
@@ -43,9 +52,9 @@ function state(overrides: Partial<SceneState> = {}): SceneState {
 describe("building the house", () => {
   it("builds without a renderer, which is why any of this is testable", () => {
     const handles = build();
-    // A group per storey, plus the outdoors.
+    // A group per storey, plus the outdoors, plus the roof.
     expect(handles.levels.size).toBe(plan.levels.length);
-    expect(handles.root.children).toHaveLength(plan.levels.length + 1);
+    expect(handles.root.children).toHaveLength(plan.levels.length + 2);
   });
 
   it("builds every storey at once, each at its own height", () => {
@@ -59,7 +68,7 @@ describe("building the house", () => {
     // Every room of the house is in the graph, whichever storey is in focus.
     expect(handles.rooms.has("sejour")).toBe(true);
     expect(handles.rooms.has("chambre-parents")).toBe(true);
-    expect(handles.rooms.has("cave")).toBe(true);
+    expect(handles.rooms.has("garage")).toBe(true);
   });
 
   it("raises one mesh per solid wall piece of every level", () => {
@@ -195,6 +204,115 @@ describe("choosing a storey", () => {
 function handles0() {
   return build(0);
 }
+
+describe("the doors the house reports on", () => {
+  it("hangs a leaf per reporting door: two that swing, one that lifts", () => {
+    const handles = build(0);
+    expect(handles.doors.get("entree")?.map((d) => d.kind)).toEqual(["swing"]);
+    expect(handles.doors.get("sejour")?.map((d) => d.kind)).toEqual(["swing"]);
+    expect(handles.doors.get("garage")?.map((d) => d.kind)).toEqual(["lift"]);
+    // A plain doorway gets nothing to move.
+    expect(handles.doors.get("cuisine")).toBeUndefined();
+  });
+
+  it("starts every door shut", () => {
+    const handles = build(0);
+    for (const doors of handles.doors.values()) {
+      for (const door of doors) {
+        if (door.kind === "swing") expect(door.object.rotation.y).toBe(0);
+        else expect(door.object.scale.y).toBe(1);
+      }
+    }
+  });
+
+  it("swings the front door and rolls the garage up when Sowel says open", () => {
+    const handles = build(0);
+    const s = state();
+    s.rooms.entree.doors = [true];
+    s.rooms.garage.doors = [true];
+    applyState(handles, s, materials, true);
+    expect(handles.doors.get("entree")![0].object.rotation.y).toBeCloseTo(SWING_OPEN_RAD);
+    expect(handles.doors.get("garage")![0].object.scale.y).toBeCloseTo(LIFT_OPEN_SCALE);
+    // A door with no contact bound stays shut rather than guessing.
+    s.rooms.sejour.doors = [null];
+    applyState(handles, s, materials, true);
+    expect(handles.doors.get("sejour")![0].object.rotation.y).toBe(0);
+  });
+});
+
+describe("windows at night", () => {
+  it("lights a room's panes when one of its lamps is on, and only then", () => {
+    const handles = build(0);
+    const s = state();
+    s.rooms.sejour.lamps = [{ on: true, brightness: 1 }];
+    applyState(handles, s, materials, true);
+    const sejour = handles.panes.get("sejour") ?? [];
+    expect(sejour.length).toBe(3);
+    expect(sejour.every((p) => p.material === materials.glassLit)).toBe(true);
+    // The kitchen is dark, and its panes are the storey's own glass.
+    const cuisine = handles.panes.get("cuisine") ?? [];
+    expect(cuisine.every((p) => p.material === handles.levels.get(0)!.materials.glass)).toBe(true);
+
+    s.rooms.sejour.lamps = [{ on: false, brightness: 0 }];
+    applyState(handles, s, materials, true);
+    expect(sejour.every((p) => p.material === materials.glassLit)).toBe(false);
+  });
+});
+
+describe("the roof and the stairs", () => {
+  it("builds a roof in a group of its own", () => {
+    const handles = build(0);
+    expect(handles.roof).not.toBeNull();
+    // Two slopes, two gables, and the garage's flat slab.
+    expect(handles.roof!.group.children.length).toBe(5);
+  });
+
+  it("puts the stairs on the storey they start from, climbing to the next", () => {
+    const handles = build(0);
+    const ground = handles.levels.get(0)!.group;
+    const steps = ground.children.filter(
+      (c) => c instanceof Mesh && c.material === handles.levels.get(0)!.materials.step,
+    ) as Mesh[];
+    expect(steps.length).toBeGreaterThan(10);
+    // Blocks are centred: the top one's centre is half its height under the arrival.
+    const top = Math.max(...steps.map((m) => m.position.y));
+    expect(top).toBeGreaterThan(plan.height * 0.7);
+  });
+
+  it("cuts the upper slab around the stairwell", () => {
+    const handles = build(0);
+    const upstairs = handles.levels.get(1)!;
+    const slabs = upstairs.group.children.filter(
+      (c) => c instanceof Mesh && c.material === upstairs.materials.floor,
+    );
+    expect(slabs.length).toBe(4);
+  });
+});
+
+describe("reading the house from outside", () => {
+  it("makes every storey and the roof solid, and turns the roof to glass from within", () => {
+    const handles = build("outside");
+    const roof = handles.roof!.materials.roof as Material & { opacity: number };
+    const upstairs = handles.levels.get(1)!.materials.wall as Material & { opacity: number };
+    expect(roof.opacity).toBe(1);
+    expect(upstairs.opacity).toBe(1);
+
+    focusLevel(handles, 0);
+    expect(roof.opacity).toBeLessThan(0.3);
+    expect(upstairs.opacity).toBeLessThan(0.3);
+
+    focusLevel(handles, 1);
+    // Reading the top floor: the roof over it would be a lid.
+    expect(roof.opacity).toBeLessThan(0.3);
+  });
+
+  it("lights every room from outside, since the windows are what shows", () => {
+    const handles = build("outside");
+    for (const lamps of handles.lamps.values()) {
+      expect(lamps.every((l) => l.light.visible)).toBe(true);
+    }
+  });
+});
 
 describe("applying the state", () => {
   it("lights a lamp Sowel says is on, and dims one it says is off", () => {

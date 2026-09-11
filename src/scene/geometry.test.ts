@@ -5,7 +5,10 @@ import {
   levelContents,
   levelElevation,
   outdoorRooms,
+  gableRoof,
+  slabPieces,
   stackHeight,
+  stairSteps,
   storeyPitch,
   pieceBox,
   selectableLevels,
@@ -260,16 +263,96 @@ describe("what a level contains", () => {
   });
 
   it("frames a storey at its own height", () => {
-    const slab = plan.levels.find((l) => l.level === 2)!;
+    const slab = plan.levels.find((l) => l.level === 1)!;
     const common = { level: slab, height: plan.height, aspect: 16 / 9, stack: stackHeight(plan) };
-    const up = cameraFor({ ...common, elevation: levelElevation(plan, 2) });
-    const down = cameraFor({ ...common, elevation: levelElevation(plan, -1) });
+    const up = cameraFor({ ...common, elevation: levelElevation(plan, 1) });
+    const down = cameraFor({ ...common, elevation: levelElevation(plan, 0) });
     // Framing the second floor must not frame the cellar.
-    expect(up.target[1]).toBeGreaterThan(down.target[1] + 3);
+    expect(up.target[1]).toBeGreaterThan(down.target[1] + 1);
     expect(up.position[1]).toBeGreaterThan(down.position[1]);
   });
 
-  it("offers the four storeys, lowest first, and not the outdoors", () => {
-    expect(selectableLevels(plan).map((l) => l.level)).toEqual([-1, 0, 1, 2]);
+  it("offers the two storeys, lowest first, and not the outdoors", () => {
+    expect(selectableLevels(plan).map((l) => l.level)).toEqual([0, 1]);
+  });
+});
+
+describe("a slab with a stairwell", () => {
+  it("is four strips around the hole, and its wings", () => {
+    const pieces = slabPieces({
+      level: 1,
+      name: "Étage",
+      x: 0,
+      z: 0,
+      w: 10,
+      d: 8,
+      hole: { x: 3, z: 2, w: 3, d: 2 },
+      parts: [{ x: 10, z: 0, w: 4, d: 4 }],
+    });
+    expect(pieces).toHaveLength(5);
+    const area = pieces.reduce((n, p) => n + p.w * p.d, 0);
+    expect(area).toBeCloseTo(10 * 8 - 3 * 2 + 4 * 4);
+    // Nothing covers the hole.
+    for (const p of pieces) {
+      const overlaps = p.x < 6 && p.x + p.w > 3 && p.z < 4 && p.z + p.d > 2;
+      expect(overlaps, JSON.stringify(p)).toBe(false);
+    }
+  });
+
+  it("is one box when there is no hole", () => {
+    expect(slabPieces({ level: 0, name: "RDC", x: 0, z: 0, w: 5, d: 5 })).toHaveLength(1);
+  });
+});
+
+describe("a run of stairs", () => {
+  it("divides the rise evenly and climbs from the low end", () => {
+    const up = stairSteps({ axis: "z", direction: 1, x: 0, z: 0, w: 1, d: 1.5, y0: 0, y1: 1.2 });
+    expect(up).toHaveLength(6);
+    expect(up[0].z).toBe(0);
+    expect(up[0].y1).toBeCloseTo(0.2);
+    expect(up[5].y1).toBeCloseTo(1.2);
+    // Solid from the floor: every block starts at the run's floor.
+    expect(up.every((s) => s.y0 === 0)).toBe(true);
+  });
+
+  it("puts the first step at the far end when the run climbs backwards", () => {
+    const down = stairSteps({
+      axis: "x",
+      direction: -1,
+      x: 3.5,
+      z: 4,
+      w: 2,
+      d: 1,
+      y0: 1.2,
+      y1: 2.9,
+    });
+    // The lowest step is at the east end, the highest at x = 3.5.
+    expect(down[0].x + down[0].w).toBeCloseTo(5.5);
+    expect(down[down.length - 1].x).toBeCloseTo(3.5);
+  });
+});
+
+describe("a gable roof", () => {
+  const roof = gableRoof(
+    { over: 1, kind: "gable", ridge: "x", x: 0, z: 0, w: 10, d: 8, rise: 2, overhang: 0.5 },
+    2.6,
+  );
+
+  it("has two slopes tilted opposite ways, meeting at the ridge", () => {
+    expect(roof.slopes).toHaveLength(2);
+    expect(roof.slopes[0].tilt).toBeCloseTo(-roof.slopes[1].tilt);
+    // Each slope runs from the eaves (half the depth plus the overhang) to the ridge.
+    expect(roof.slopes[0].down).toBeCloseTo(Math.hypot(4.5, 2));
+    expect(roof.slopes[0].along).toBeCloseTo(11);
+    expect(roof.ridgeY).toBeCloseTo(roof.eavesY + 2);
+  });
+
+  it("closes both ends with a triangle on the wall line, not the overhang", () => {
+    expect(roof.gables.map((g) => g.at)).toEqual([0, 10]);
+    expect(roof.gables[0].points).toEqual([
+      [0, roof.eavesY],
+      [8, roof.eavesY],
+      [4, roof.ridgeY],
+    ]);
   });
 });

@@ -17,21 +17,27 @@
 import {
   BoxGeometry,
   CylinderGeometry,
+  ExtrudeGeometry,
   Group,
   Mesh,
+  Object3D,
   PointLight,
+  Shape,
   SphereGeometry,
   type Material,
 } from "three";
-import type { Plan, Room } from "../plan/types.ts";
+import type { Opening, Plan, Room, Wall } from "../plan/types.ts";
 import type { SceneState } from "../state/scene-state.ts";
 import {
+  gableRoof,
   lampSpots,
   levelContents,
   levelElevation,
   outdoorRooms,
   pieceBox,
   shutterDrop,
+  slabPieces,
+  stairSteps,
   wallPieces,
 } from "./geometry.ts";
 import { copyMaterials, setGhost, type Materials } from "./materials.ts";
@@ -42,6 +48,30 @@ export interface LevelHandles {
   group: Group;
   materials: Materials;
 }
+
+/**
+ * What the visitor is reading: one storey, or the house from outside.
+ *
+ * From outside every storey is solid and the roof is on — the postcard. Inside a
+ * storey the roof and the other storeys turn to glass, because a roof over the
+ * floor being read is a lid.
+ */
+export type Focus = number | "outside";
+
+/**
+ * A door the house reports on. `target` is where Sowel says it should be and the
+ * renderer walks the object there: a swing door's `rotation.y` towards an angle, a
+ * lifting door's `scale.y` towards a drop — the same easing a shutter gets.
+ */
+export interface DoorHandle {
+  kind: "swing" | "lift";
+  object: Object3D;
+  target: number;
+}
+
+/** Where a swing door stops when open, and a lifting one when open. */
+export const SWING_OPEN_RAD = 1.35;
+export const LIFT_OPEN_SCALE = 0.04;
 
 /** What the scene keeps hold of so it can be updated without being rebuilt. */
 export interface HouseHandles {
@@ -61,6 +91,12 @@ export interface HouseHandles {
    */
   shutters: Map<string, { panel: Mesh; height: number; target: number }[]>;
   sensors: Map<string, Mesh>;
+  /** Per room: its window panes, lit from outside when a lamp in the room is on. */
+  panes: Map<string, Mesh[]>;
+  /** Per room, in plan order of its `door:` and `gate:` openings. */
+  doors: Map<string, DoorHandle[]>;
+  /** The roof, which is solid only from outside. Null when the plan has none. */
+  roof: LevelHandles | null;
   people: Map<string, Group>;
   rooms: Map<string, Room>;
 }
@@ -93,8 +129,8 @@ function person(materials: Materials): Group {
 export interface BuildHouseOptions {
   plan: Plan;
   materials: Materials;
-  /** Which storey to show. The outdoors is always shown with it. */
-  level: number;
+  /** Which storey to read, or the house from outside. */
+  level: Focus;
   /** Lamp counts per room, so the right number of lights exist from the start. */
   lampCounts: Record<string, number>;
 }
@@ -118,6 +154,9 @@ export function buildHouse(options: BuildHouseOptions): HouseHandles {
     lamps: new Map(),
     shutters: new Map(),
     sensors: new Map(),
+    panes: new Map(),
+    doors: new Map(),
+    roof: null,
     people: new Map(),
     rooms: new Map(),
   };
@@ -137,6 +176,17 @@ export function buildHouse(options: BuildHouseOptions): HouseHandles {
     root.add(entry.group);
     handles.levels.set(slab.level, entry);
     buildLevel(plan, entry, handles, lampCounts);
+  }
+
+  if ((plan.roofs ?? []).length > 0) {
+    const roof: LevelHandles = {
+      level: 0,
+      group: new Group(),
+      materials: copyMaterials(materials),
+    };
+    root.add(roof.group);
+    handles.roof = roof;
+    buildRoofs(plan, roof);
   }
 
   focusLevel(handles, level);
@@ -169,6 +219,15 @@ function buildOutdoors(plan: Plan, entry: LevelHandles, handles: HouseHandles): 
     const patch = box(room.w, 0.05, room.d, material);
     group.add(at(patch, room.x + room.w / 2, -0.02, room.z + room.d / 2));
   }
+
+  // The drive and the path: decoration, and the reason the garage door opens onto
+  // something rather than onto lawn.
+  for (const patch of plan.patches ?? []) {
+    const material = patch.kind === "drive" ? materials.drive : materials.path;
+    const slab = box(patch.w, 0.05, patch.d, material);
+    slab.castShadow = false;
+    group.add(at(slab, patch.x + patch.w / 2, -0.015, patch.z + patch.d / 2));
+  }
 }
 
 function buildLevel(
@@ -182,8 +241,23 @@ function buildLevel(
 
   const slab = plan.levels.find((l) => l.level === level);
   if (slab) {
-    const floor = box(slab.w, 0.08, slab.d, materials.floor);
-    group.add(at(floor, slab.x + slab.w / 2, -0.04, slab.z + slab.d / 2));
+    for (const piece of slabPieces(slab)) {
+      const floor = box(piece.w, 0.08, piece.d, materials.floor);
+      group.add(at(floor, piece.x + piece.w / 2, -0.04, piece.z + piece.d / 2));
+    }
+  }
+
+  for (const stair of (plan.stairs ?? []).filter((s) => s.level === level)) {
+    for (const run of stair.runs) {
+      for (const step of stairSteps(run)) {
+        const block = box(step.w, step.y1 - step.y0, step.d, materials.step);
+        group.add(at(block, step.x + step.w / 2, (step.y0 + step.y1) / 2, step.z + step.d / 2));
+      }
+    }
+    for (const landing of stair.landings) {
+      const block = box(landing.w, 0.12, landing.d, materials.step);
+      group.add(at(block, landing.x + landing.w / 2, landing.y - 0.06, landing.z + landing.d / 2));
+    }
   }
 
   for (const room of rooms) {
@@ -219,6 +293,13 @@ function buildLevel(
     }
 
     for (const opening of [...wall.openings].sort((a, b) => a.at - b.at)) {
+      if (opening.id && (opening.kind === "door" || opening.kind === "gate")) {
+        const roomId = opening.id.replace(/^(door|gate):/, "").replace(/-\d+$/, "");
+        const list = handles.doors.get(roomId) ?? [];
+        list.push(doorLeaf(wall, opening, plan.thickness, materials, group));
+        handles.doors.set(roomId, list);
+        continue;
+      }
       if (opening.kind !== "window") continue;
       const gh = opening.head - opening.sill;
       const gy = (opening.head + opening.sill) / 2;
@@ -227,6 +308,8 @@ function buildLevel(
           ? box(opening.w, gh, 0.03, materials.glass)
           : box(0.03, gh, opening.w, materials.glass);
       pane.castShadow = false;
+      const paneRoom = (opening.id ?? "").replace(/^window:/, "").replace(/-\d+$/, "");
+      handles.panes.set(paneRoom, [...(handles.panes.get(paneRoom) ?? []), pane]);
       group.add(
         at(
           pane,
@@ -264,6 +347,105 @@ function buildLevel(
 }
 
 /**
+ * A door leaf in its opening: hung on a pivot at one jamb so it swings, or hung
+ * from the lintel so it lifts. Either way it starts shut, and `applyState` says
+ * where it should be.
+ */
+function doorLeaf(
+  wall: Wall,
+  opening: Opening,
+  thickness: number,
+  materials: Materials,
+  group: Group,
+): DoorHandle {
+  const h = opening.head - opening.sill;
+  const w = opening.w - 0.04;
+  const alongX = wall.axis === "x";
+  const cx = alongX ? opening.at : wall.at;
+  const cz = alongX ? wall.at : opening.at;
+
+  if (opening.kind === "gate") {
+    // A sectional door: anchored at the lintel and rolled up, like a shutter, only
+    // the size of a car.
+    const geometry = alongX
+      ? new BoxGeometry(w, h, thickness * 0.4)
+      : new BoxGeometry(thickness * 0.4, h, w);
+    geometry.translate(0, -h / 2, 0);
+    const panel = new Mesh(geometry, materials.door);
+    panel.castShadow = true;
+    panel.position.set(cx, opening.head, cz);
+    group.add(panel);
+    return { kind: "lift", object: panel, target: 1 };
+  }
+
+  // A pivot at the jamb: the leaf hangs off it by half its width, so rotating the
+  // pivot swings the leaf through the doorway rather than around its middle.
+  const pivot = new Group();
+  pivot.position.set(alongX ? cx - w / 2 : cx, opening.sill, alongX ? cz : cz - w / 2);
+  const leaf = new Mesh(
+    alongX ? new BoxGeometry(w, h, 0.05) : new BoxGeometry(0.05, h, w),
+    materials.door,
+  );
+  leaf.castShadow = true;
+  leaf.position.set(alongX ? w / 2 : 0, h / 2, alongX ? 0 : w / 2);
+  pivot.add(leaf);
+  group.add(pivot);
+  return { kind: "swing", object: pivot, target: 0 };
+}
+
+/** The roofs, in a group of their own: their ghosting is not any storey's. */
+function buildRoofs(plan: Plan, entry: LevelHandles): void {
+  const { group, materials } = entry;
+  for (const roof of plan.roofs ?? []) {
+    const elevation = levelElevation(plan, roof.over);
+    if (roof.kind === "flat") {
+      const o = roof.overhang;
+      const slab = box(roof.w + 2 * o, roof.rise, roof.d + 2 * o, materials.roof);
+      group.add(
+        at(slab, roof.x + roof.w / 2, elevation + plan.height + roof.rise / 2, roof.z + roof.d / 2),
+      );
+      continue;
+    }
+
+    const shape = gableRoof(roof, plan.height);
+    const ridgeX = roof.ridge !== "z";
+    for (const slope of shape.slopes) {
+      const slab = box(
+        ridgeX ? slope.along : slope.down,
+        0.12,
+        ridgeX ? slope.down : slope.along,
+        materials.roof,
+      );
+      slab.position.set(slope.position[0], elevation + slope.position[1], slope.position[2]);
+      if (ridgeX) slab.rotation.x = slope.tilt;
+      else slab.rotation.z = slope.tilt;
+      group.add(slab);
+    }
+    for (const gable of shape.gables) {
+      // The triangle is drawn in the plane across the ridge and stood up on the
+      // wall line; a shape's own plane is xy, so the extrusion runs along the
+      // ridge and the rotation puts it there.
+      const outline = new Shape();
+      gable.points.forEach(([across, y], i) =>
+        i === 0 ? outline.moveTo(across, y) : outline.lineTo(across, y),
+      );
+      const geometry = new ExtrudeGeometry(outline, { depth: plan.thickness, bevelEnabled: false });
+      const end = new Mesh(geometry, materials.wall);
+      end.castShadow = true;
+      end.receiveShadow = true;
+      if (ridgeX) {
+        // Shape x → world z, extrusion → world x.
+        end.rotation.y = -Math.PI / 2;
+        end.position.set(gable.at + plan.thickness / 2, elevation, 0);
+      } else {
+        end.position.set(0, elevation, gable.at - plan.thickness / 2);
+      }
+      group.add(end);
+    }
+  }
+}
+
+/**
  * Which storey is being read, and which are context.
  *
  * Mutation only: the ghosting lives in each storey's own materials, so switching
@@ -271,26 +453,34 @@ function buildLevel(
  * A ghosted storey also stops casting shadows and stops lighting the room — its
  * lamp shades keep their colour, which is the part worth seeing from below.
  */
-export function focusLevel(handles: HouseHandles, level: number): void {
+export function focusLevel(handles: HouseHandles, focus: Focus): void {
+  const outside = focus === "outside";
   for (const [id, entry] of handles.levels) {
-    const focused = id === level;
-    setGhost(entry.materials, !focused);
+    const solid = outside || id === focus;
+    setGhost(entry.materials, !solid);
     entry.group.traverse((object) => {
-      if (object instanceof Mesh) object.castShadow = focused;
+      if (object instanceof Mesh) object.castShadow = solid;
+    });
+  }
+  if (handles.roof) {
+    // The roof is the postcard and the lid: on from outside, glass from within.
+    setGhost(handles.roof.materials, !outside);
+    handles.roof.group.traverse((object) => {
+      if (object instanceof Mesh) object.castShadow = outside;
     });
   }
   // The garden turns to glass only when the storey in focus is under it — otherwise
   // the cellar is a room you are told about and never shown. The lawn stops casting
   // with it: a cellar lit through a transparent lawn that still throws the lawn's
   // shadow is a cellar in the dark, which is what the first attempt looked like.
-  const underground = level < 0;
+  const underground = typeof focus === "number" && focus < 0;
   setGhost(handles.outdoor.materials, underground);
   handles.outdoor.group.traverse((object) => {
     if (object instanceof Mesh) object.castShadow = !underground;
   });
 
   for (const [roomId, lamps] of handles.lamps) {
-    const on = handles.rooms.get(roomId)?.level === level;
+    const on = outside || handles.rooms.get(roomId)?.level === focus;
     for (const lamp of lamps) lamp.light.visible = on;
   }
 }
@@ -366,5 +556,29 @@ export function applyState(
 
   for (const [roomId, sensor] of handles.sensors) {
     sensor.material = state.rooms[roomId]?.motion ? materials.sensorOn : materials.sensorOff;
+  }
+
+  // A lit room glows through its windows. Seen from outside at night that is the
+  // whole house: without it the postcard is a dark box with a status line saying
+  // three lights are on somewhere.
+  for (const [roomId, panes] of handles.panes) {
+    const lit = state.rooms[roomId]?.lamps.some((l) => l.on) ?? false;
+    const level = handles.rooms.get(roomId)?.level ?? null;
+    const own = level === null ? handles.outdoor.materials : handles.levels.get(level)?.materials;
+    for (const pane of panes)
+      pane.material = lit ? materials.glassLit : (own?.glass ?? materials.glass);
+  }
+
+  for (const [roomId, doors] of handles.doors) {
+    const room = state.rooms[roomId];
+    doors.forEach((door, i) => {
+      const open = room?.doors[i] ?? false;
+      door.target =
+        door.kind === "swing" ? (open ? SWING_OPEN_RAD : 0) : open ? LIFT_OPEN_SCALE : 1;
+      if (immediate) {
+        if (door.kind === "swing") door.object.rotation.y = door.target;
+        else door.object.scale.y = door.target;
+      }
+    });
   }
 }

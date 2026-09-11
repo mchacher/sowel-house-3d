@@ -11,13 +11,10 @@ here says which phase it serves.
 
 Status: 📝 Draft · 🚧 In progress · ✅ Shipped
 
-| #   | Title                | Status | Summary                                                                                                                             |
-| --- | -------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------- |
-| 001 | The house, read-only | 📝     | Phase 3. The plan as data, the Sowel mapping derived rather than listed, REST + WebSocket, and the scene ported from the prototype. |
-
-_No spec yet. The scene is phase 3 of the project map, the interactions phase 4;
-write them with the `house3d-feature` skill, which creates the folder and the
-row together._
+| #   | Title                    | Status | Summary                                                                                                                                                 |
+| --- | ------------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 001 | The house, read-only     | ✅     | Phase 3. The plan as data, the Sowel mapping derived rather than listed, REST + WebSocket, and the scene ported from the prototype.                     |
+| 002 | A house worth looking at | 🚧     | Phase 3, second pass. A composed plan of a pavilion, two storeys stacked with the one being read solid, a roof, stairs, doors that report, lit windows. |
 
 ## How to use this index after context loss
 

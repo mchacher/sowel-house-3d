@@ -29,7 +29,7 @@ describe("the scene state, from the real showroom", () => {
 
   it("gives each room one shutter slot per window", () => {
     expect(state.rooms.sejour.shutters).toHaveLength(3);
-    expect(state.rooms.cave.shutters).toHaveLength(0);
+    expect(state.rooms.garage.shutters).toHaveLength(0);
     for (const value of state.rooms.sejour.shutters) {
       expect(value === null || (value >= 0 && value <= 100)).toBe(true);
     }
@@ -59,7 +59,7 @@ describe("the scene state, from the real showroom", () => {
   it("falls back no further than the house", () => {
     // The cellar has no thermometer anywhere below the root, so it reads the house
     // average and says so rather than pretending to be measured.
-    expect(state.rooms.cave.temperatureFrom).toBe("Maison");
+    expect(state.rooms.garage.temperatureFrom).toBe("Maison");
   });
 
   it("places the household", () => {
@@ -246,5 +246,26 @@ describe("clearness, inferred because nothing reports it", () => {
 
   it("is clear when nothing reports luminosity at all", () => {
     expect(clearness(null, 50)).toBe(1);
+  });
+});
+
+describe("doors", () => {
+  it("reads open as the complement of the contact, which is true when shut", () => {
+    const state = buildSceneState({ ...base, nowMinutes: 12 * 60 });
+    // The captured showroom had every door shut.
+    expect(state.rooms.entree.doors).toEqual([false]);
+    expect(state.rooms.garage.doors).toEqual([false]);
+    const opened = base.equipments.map((e) =>
+      e.name === "Porte Garage Contact"
+        ? {
+            ...e,
+            dataBindings: e.dataBindings.map((b) =>
+              b.category === "contact_door" ? { ...b, value: false } : b,
+            ),
+          }
+        : e,
+    );
+    const after = buildSceneState({ ...base, equipments: opened, nowMinutes: 12 * 60 });
+    expect(after.rooms.garage.doors).toEqual([true]);
   });
 });

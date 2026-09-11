@@ -6,22 +6,23 @@
  * doors are also the edges of the pathing graph occupants and ghosts walk on.
  * The plan describes geometry only — what a lamp or a shutter is bound to in
  * Sowel is the mapping's job, keyed by the ids declared here.
+ *
+ * `public/plans/showroom.json` is **generated** by `scripts/plan/showroom.ts` from
+ * a description of the rooms and their openings; the walls are derived from the
+ * rooms' edges. Editing the JSON by hand is how a wall ends up running through a
+ * doorway.
  */
 
 export interface Room {
   id: string;
   name: string;
   /**
-   * −1 basement, 0 ground, 1 and 2 upstairs, `null` outdoors.
+   * 0 ground, 1 upstairs, `null` outdoors.
    *
-   * All four are built and stood on each other at their real heights. The one in
-   * focus is solid; the others are glass, so the house reads as a house and what is
-   * upstairs is visible from downstairs without leaving the room being looked at.
-   *
-   * Showing one storey at a time came first, and it was a way of not solving the
-   * occlusion rather than a decision: the floor above hides the interior below
-   * unless something is done about it, and ghosting the materials is that
-   * something. Rooms on different levels share x/z footprints — which is exactly
+   * Every storey is built and stood on the one below at its real height. The one
+   * in focus is solid; the others are glass, so the house reads as a house and
+   * what is upstairs is visible from downstairs without leaving the room being
+   * looked at. Rooms on different levels share x/z footprints — which is exactly
    * what a house is — so the overlap check stays per level.
    */
   level: number | null;
@@ -42,10 +43,20 @@ export interface Room {
   ground?: true;
 }
 
-export type OpeningKind = "door" | "window";
+/**
+ * What a hole in a wall is.
+ *
+ * A `door` with an id (`door:entree-1`) pairs with a contact sensor in its room and
+ * swings when Sowel says it is open; without an id it is a plain doorway. A `gate`
+ * is a door that lifts rather than swings — the garage's — and pairs the same way.
+ */
+export type OpeningKind = "door" | "window" | "gate";
 
 export interface Opening {
-  /** Stable id for the mapping (`window:salon-1`), optional for plain doors. */
+  /**
+   * Stable id for the mapping: `window:salon-1`, `door:entree-1`, `gate:garage-1`.
+   * Optional for a plain doorway.
+   */
   id?: string;
   kind: OpeningKind;
   /** Centre along the wall, in metres from the wall's `from`. */
@@ -74,6 +85,14 @@ export interface Door {
   z: number;
 }
 
+/** An axis-aligned rectangle on the ground, in metres. */
+export interface Rect {
+  x: number;
+  z: number;
+  w: number;
+  d: number;
+}
+
 /**
  * A level's floor slab.
  *
@@ -82,13 +101,48 @@ export interface Door {
  * rooms sit inside it means those gaps are floor rather than holes, and it keeps
  * the plan from inventing a "hallway" room that Sowel has no zone for.
  */
-export interface Level {
+export interface Level extends Rect {
   level: number;
   name: string;
-  x: number;
-  z: number;
-  w: number;
-  d: number;
+  /** Further slabs of the same storey: a wing attached to the body. */
+  parts?: Rect[];
+  /** The stairwell: where the slab is cut so the stairs can come up through it. */
+  hole?: Rect;
+}
+
+/** One straight run of steps, climbing from `y0` at its start to `y1` at its end. */
+export interface StairRun extends Rect {
+  /** Which way it climbs: along z towards +z (south) or −z (north), or along x. */
+  axis: "x" | "z";
+  direction: 1 | -1;
+  y0: number;
+  y1: number;
+}
+
+export interface Stair {
+  /** The storey the stairs start on. */
+  level: number;
+  runs: StairRun[];
+  /** Level platforms between runs, at height `y`. */
+  landings: (Rect & { y: number })[];
+}
+
+export interface Roof extends Rect {
+  /** The storey whose ceiling this roof is. */
+  over: number;
+  /** A gable has two slopes meeting at a ridge; a flat roof is a slab with a lip. */
+  kind: "gable" | "flat";
+  /** Axis the ridge runs along, for a gable. */
+  ridge?: "x" | "z";
+  /** Height of the ridge above the eaves, or of the slab's lip for a flat roof. */
+  rise: number;
+  /** How far the eaves stick out past the walls. */
+  overhang: number;
+}
+
+/** A patch of ground that is not a room: a driveway, a path. Decoration only. */
+export interface Patch extends Rect {
+  kind: "drive" | "path";
 }
 
 export interface Plan {
@@ -101,4 +155,7 @@ export interface Plan {
   /** Pathing graph. `away` is the outside node. */
   doors: Door[];
   awaySpot: [number, number];
+  stairs?: Stair[];
+  roofs?: Roof[];
+  patches?: Patch[];
 }
