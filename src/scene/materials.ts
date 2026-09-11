@@ -6,7 +6,7 @@
  * a house, not a photograph of one, and a phone has to hold a frame rate.
  */
 
-import { Color, MeshStandardMaterial, MeshBasicMaterial, type Material } from "three";
+import { Color, DoubleSide, MeshStandardMaterial, MeshBasicMaterial, type Material } from "three";
 
 export const PALETTE = {
   ocean: 0x1a4f6e,
@@ -84,7 +84,7 @@ export interface Materials {
   lightPool: Material;
   /** The halo round a sensor that sees somebody. */
   halo: Material;
-  /** A radiator or stove that is on. */
+  /** A radiator or stove that is on. A storey's own: a glow through the floor above is not a signal, it is a radiator. */
   warm: Material;
   /** Water in the air over a bed being sprinkled. */
   jet: Material;
@@ -160,10 +160,13 @@ export function makeMaterials(): Materials {
       emissive: new Color(0xff8c40),
       emissiveIntensity: 0.8,
     }),
+    // Double-sided: the cone hangs tip down and is seen from above, which is its
+    // inside, and a single-sided inside is culled — invisible water.
     jet: Object.assign(new MeshBasicMaterial({ color: new Color(0xa8dcf2) }), {
       transparent: true,
       opacity: 0.45,
       depthWrite: false,
+      side: DoubleSide,
     }),
     flowers: [0xe0567a, 0xf2c035, 0xf7f0ea].map((c) => standard(c, { roughness: 0.9 })),
     // Shared and never ghosted, like the shades: a lit window is a signal.
@@ -217,6 +220,7 @@ const GHOSTABLE = [
   "stove",
   "bollard",
   "car",
+  "warm",
 ] as const;
 
 type Ghostable = (typeof GHOSTABLE)[number];
@@ -251,6 +255,7 @@ const SOLID_OPACITY: Record<Ghostable, number> = {
   stove: 1,
   bollard: 1,
   car: 1,
+  warm: 1,
 };
 
 /** Faint enough to see through four of them stacked, present enough to read as a wall. */
@@ -286,6 +291,7 @@ const GHOST_OPACITY: Record<Ghostable, number> = {
   stove: 0.08,
   bollard: 0.1,
   car: 0.08,
+  warm: 0.08,
 };
 
 /** A set sharing the signals and owning its own structure. One per storey. */

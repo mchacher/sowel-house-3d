@@ -514,3 +514,106 @@ describe("the people", () => {
     expect(handles.people.get("p1")?.visible).toBe(false);
   });
 });
+
+describe("the grounds", () => {
+  it("slides the gate its own length when the Portail says open", () => {
+    const handles = build("outside");
+    const gate = handles.gates.get("gate:portail-1")!;
+    expect(gate.kind).toBe("slide");
+    const home = gate.home!;
+    const s = state();
+    s.garden.gates["gate:portail-1"] = true;
+    applyState(handles, s, materials, true);
+    // West, by the gap it closes: 3.2 m.
+    expect(gate.object.position.x).toBeCloseTo(home - 3.2);
+    s.garden.gates["gate:portail-1"] = false;
+    applyState(handles, s, materials, true);
+    expect(gate.object.position.x).toBeCloseTo(home);
+  });
+
+  it("shows the sprinklers' water only while the valve is open", () => {
+    const handles = build("outside");
+    const lawn = handles.watering.get("pelouse")!;
+    const beds = handles.watering.get("plantations")!;
+    expect(lawn.length).toBeGreaterThan(0);
+    // Two beds share the plantations valve: both water at once.
+    expect(beds.length).toBeGreaterThan(1);
+    expect(lawn.every((j) => !j.visible)).toBe(true);
+    const s = state();
+    s.garden.watering.pelouse = true;
+    applyState(handles, s, materials, true);
+    expect(lawn.every((j) => j.visible)).toBe(true);
+    expect(beds.every((j) => !j.visible)).toBe(true);
+  });
+
+  it("rolls the pool cover out as far as Sowel says", () => {
+    const handles = build("outside");
+    const cover = handles.covers.get("piscine")!;
+    const s = state();
+    s.rooms.piscine.cover = 100;
+    applyState(handles, s, materials, true);
+    expect(cover.object.scale.z).toBeLessThan(0.01);
+    s.rooms.piscine.cover = 25;
+    applyState(handles, s, materials, true);
+    expect(cover.object.scale.z).toBeCloseTo(0.75);
+  });
+
+  it("stands the garden's lamps where the plan says, lit whichever storey is read", () => {
+    const handles = build(1);
+    expect(handles.lamps.get("jardin")).toHaveLength(4);
+    expect(handles.lamps.get("piscine")).toHaveLength(1);
+    expect(handles.lamps.get("jardin")!.every((l) => l.light.visible)).toBe(true);
+  });
+});
+
+describe("what a room is furnished with", () => {
+  it("puts a bed in a bedroom, a car in the garage, and nothing in the stairwell", () => {
+    const handles = build(0);
+    const blocks = (level: number, material: Material) =>
+      handles.levels
+        .get(level)!
+        .group.children.filter((c) => c instanceof Mesh && c.material === material);
+    expect(blocks(1, handles.levels.get(1)!.materials.wood).length).toBeGreaterThan(4);
+    expect(blocks(0, handles.levels.get(0)!.materials.car)).toHaveLength(1);
+  });
+
+  it("throws a pool of light under a lamp that is on, and a halo round a sensor that sees", () => {
+    const handles = build(0);
+    const s = state();
+    s.rooms.sejour.lamps = [
+      { on: true, brightness: 1 },
+      { on: false, brightness: 0 },
+      { on: false, brightness: 0 },
+    ];
+    s.rooms.sejour.motion = true;
+    applyState(handles, s, materials, true);
+    const lamps = handles.lamps.get("sejour")!;
+    expect(lamps[0].pool?.visible).toBe(true);
+    expect(lamps[1].pool?.visible).toBe(false);
+    expect(handles.halos.get("sejour")?.visible).toBe(true);
+    expect(handles.halos.get("cuisine")?.visible).toBe(false);
+  });
+
+  it("draws a radiator only where Sowel has one, warm when it is on", () => {
+    const handles = buildHouse({
+      plan,
+      materials,
+      level: 1,
+      lampCounts: LAMP_COUNTS,
+      counts: { heaters: { "chambre-enfant-2": 1 }, stoves: ["sejour"] },
+    });
+    expect(handles.heaters.get("chambre-enfant-2")).toHaveLength(1);
+    expect(handles.heaters.get("chambre-enfant-1")).toBeUndefined();
+    expect(handles.heaters.get("sejour")).toHaveLength(1);
+    const s = state();
+    s.rooms["chambre-enfant-2"].heating = true;
+    applyState(handles, s, materials, true);
+    expect(handles.heaters.get("chambre-enfant-2")![0].body.material).toBe(
+      handles.levels.get(1)!.materials.warm,
+    );
+    // The stove is cold: its window keeps the storey's own dark, which is a copy.
+    expect(handles.heaters.get("sejour")![0].body.material).toBe(
+      handles.levels.get(0)!.materials.dark,
+    );
+  });
+});

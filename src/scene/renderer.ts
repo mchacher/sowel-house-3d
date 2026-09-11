@@ -185,7 +185,16 @@ export class HouseRenderer {
     const z0 = Math.min(...rects.map((r) => r.z));
     const x1 = Math.max(...rects.map((r) => r.x + r.w));
     const z1 = Math.max(...rects.map((r) => r.z + r.d));
-    const footprint = { ...slab, x: x0, z: z0, w: x1 - x0, d: z1 - z0 };
+    // From outside the grounds are the picture, not just the walls: a margin of
+    // garden round the footprint, or the gate and the beds sit on the screen's edge.
+    const margin = this.level === "outside" ? 4.5 : 0;
+    const footprint = {
+      ...slab,
+      x: x0 - margin,
+      z: z0 - margin,
+      w: x1 - x0 + 2 * margin,
+      d: z1 - z0 + 2 * margin,
+    };
     const view = cameraFor({
       level: footprint,
       height: this.plan.height,

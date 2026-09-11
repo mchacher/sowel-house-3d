@@ -123,6 +123,7 @@ const house: HouseSpec = {
     // ── Upstairs ─────────────────────────────────────────────────────────
     {
       id: "salle-de-bain",
+      kind: "bathroom",
       name: "Salle de Bain",
       level: 1,
       x: 0,
@@ -133,6 +134,7 @@ const house: HouseSpec = {
     },
     {
       id: "chambre-enfant-3",
+      kind: "bedroom",
       name: "Chambre Enfant 3",
       level: 1,
       x: 6.5,
@@ -143,6 +145,7 @@ const house: HouseSpec = {
     },
     {
       id: "chambre-parents",
+      kind: "bedroom",
       name: "Chambre Parents",
       level: 1,
       x: 0,
@@ -153,6 +156,7 @@ const house: HouseSpec = {
     },
     {
       id: "chambre-enfant-1",
+      kind: "bedroom",
       name: "Chambre Enfant 1",
       level: 1,
       x: 4,
@@ -163,6 +167,7 @@ const house: HouseSpec = {
     },
     {
       id: "chambre-enfant-2",
+      kind: "bedroom",
       name: "Chambre Enfant 2",
       level: 1,
       x: 7.5,
@@ -175,6 +180,7 @@ const house: HouseSpec = {
     // ── Outdoors ─────────────────────────────────────────────────────────
     {
       id: "jardin",
+      kind: "garden",
       name: "Jardin",
       level: null,
       x: -5,
@@ -183,6 +189,14 @@ const house: HouseSpec = {
       d: 24,
       spot: [-2, 12],
       ground: true,
+      // Four bollards: three along the terrace, one by the olive tree — the four
+      // garden lights Sowel reports, in the order it lists them.
+      lamps: [
+        [1.5, 12.9],
+        [5.25, 12.9],
+        [9, 12.9],
+        [13.2, 11.2],
+      ],
     },
     {
       id: "terrasse",

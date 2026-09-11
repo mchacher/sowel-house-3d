@@ -71,6 +71,7 @@
     },
     {
       "id": "salle-de-bain",
+      "kind": "bathroom",
       "name": "Salle de Bain",
       "level": 1,
       "x": 0,
@@ -81,6 +82,7 @@
     },
     {
       "id": "chambre-enfant-3",
+      "kind": "bedroom",
       "name": "Chambre Enfant 3",
       "level": 1,
       "x": 6.5,
@@ -91,6 +93,7 @@
     },
     {
       "id": "chambre-parents",
+      "kind": "bedroom",
       "name": "Chambre Parents",
       "level": 1,
       "x": 0,
@@ -101,6 +104,7 @@
     },
     {
       "id": "chambre-enfant-1",
+      "kind": "bedroom",
       "name": "Chambre Enfant 1",
       "level": 1,
       "x": 4,
@@ -111,6 +115,7 @@
     },
     {
       "id": "chambre-enfant-2",
+      "kind": "bedroom",
       "name": "Chambre Enfant 2",
       "level": 1,
       "x": 7.5,
@@ -121,6 +126,7 @@
     },
     {
       "id": "jardin",
+      "kind": "garden",
       "name": "Jardin",
       "level": null,
       "x": -5,
@@ -128,7 +134,13 @@
       "w": 26,
       "d": 24,
       "spot": [-2, 12],
-      "ground": true
+      "ground": true,
+      "lamps": [
+        [1.5, 12.9],
+        [5.25, 12.9],
+        [9, 12.9],
+        [13.2, 11.2]
+      ]
     },
     {
       "id": "terrasse",

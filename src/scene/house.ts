@@ -807,7 +807,11 @@ export function applyState(
 
   for (const [roomId, heaters] of handles.heaters) {
     const warm = state.rooms[roomId]?.heating ?? false;
-    for (const heater of heaters) heater.body.material = warm ? materials.warm : heater.cold;
+    const level = handles.rooms.get(roomId)?.level ?? null;
+    // The storey's own warm, so a radiator glowing upstairs ghosts with upstairs.
+    const own =
+      (level === null ? undefined : handles.levels.get(level)?.materials.warm) ?? materials.warm;
+    for (const heater of heaters) heater.body.material = warm ? own : heater.cold;
   }
 
   for (const [id, gate] of handles.gates) {

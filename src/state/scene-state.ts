@@ -173,7 +173,15 @@ function assemble(input: BuildInput, derived: Derived): SceneState {
       heating:
         bindings.heaters.some((h) =>
           booleanOf(h.dataBindings.find((b) => b.alias === "state")?.value),
-        ) || booleanOf(bindings.thermostat?.dataBindings.find((b) => b.alias === "power")?.value),
+        ) ||
+        // The stove's run state lands on `state` (core spec 176 binds it there);
+        // `power` is what the order is called, and some plugins report it too.
+        booleanOf(
+          (
+            bindings.thermostat?.dataBindings.find((b) => b.alias === "state") ??
+            bindings.thermostat?.dataBindings.find((b) => b.alias === "power")
+          )?.value,
+        ),
       cover:
         bindings.cover === null
           ? null
