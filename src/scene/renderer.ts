@@ -139,9 +139,18 @@ export class HouseRenderer {
     this.sun.target.position.copy(this.target);
     this.sun.target.updateMatrixWorld();
 
-    // Below the horizon the sun contributes nothing, and cloud flattens it rather
-    // than dimming it away — an overcast noon is still bright, just shadowless.
-    const daylight = state.sky.isDaylight && state.sky.elevationDeg > 0;
+    // Lit by the sun's height, **not** by `isDaylight`.
+    //
+    // That flag carries the home's `sunriseOffset` and `sunsetOffset` — thirty and
+    // forty-five minutes in the showroom — because it exists to tell a recipe when
+    // to treat the day as begun, not to describe the sky. Keying the scene off it
+    // would leave the house dark for half an hour after a visible sunrise and dark
+    // it three quarters of an hour before dusk. The elevation comes from the raw
+    // sunrise and sunset, so the sky follows the sun and the flag stays what it is.
+    //
+    // Cloud flattens the sun rather than dimming it away: an overcast noon is still
+    // bright, just shadowless.
+    const daylight = state.sky.elevationDeg > 0;
     const clearness = state.sky.clearness;
     this.sun.intensity = daylight ? 0.5 + 1.4 * clearness : 0;
     this.sun.castShadow = daylight && clearness > 0.35;

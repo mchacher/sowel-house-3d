@@ -213,6 +213,16 @@ describe("the sun, interpolated between Sowel's own times", () => {
     expect(sunPosition("07:00", "21:00", 2 * 60, true).isDaylight).toBe(true);
   });
 
+  it("keeps the sun above the horizon through the home's sunrise offset", () => {
+    // Sowel's isDaylight carries the home's offsets — thirty minutes at sunrise in
+    // the showroom — so for half an hour after a visible sunrise the flag says night.
+    // The elevation must not: the scene follows the sun, and the flag stays what it
+    // is, which is the automation's notion of day.
+    const justAfterSunrise = sunPosition("07:19", "20:14", 7 * 60 + 30, false);
+    expect(justAfterSunrise.elevationDeg).toBeGreaterThan(0);
+    expect(justAfterSunrise.isDaylight).toBe(false);
+  });
+
   it("copes with no sunrise at all", () => {
     const polar = sunPosition(null, null, 12 * 60, true);
     expect(Number.isFinite(polar.elevationDeg)).toBe(true);

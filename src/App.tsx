@@ -4,8 +4,10 @@ import { HouseRenderer } from "./scene/renderer.ts";
 import { selectableLevels } from "./scene/geometry.ts";
 import { useHouse } from "./useHouse.ts";
 
-const PLAN_URL = "/plans/showroom.json";
-const MAPPING_URL = "/plans/showroom.mapping.json";
+// Relative to the app's base, so the same build works at the root during a bare
+// `vite dev` and under /maison/ behind the showroom's proxy.
+const PLAN_URL = `${import.meta.env.BASE_URL}plans/showroom.json`;
+const MAPPING_URL = `${import.meta.env.BASE_URL}plans/showroom.mapping.json`;
 
 export function App() {
   const canvas = useRef<HTMLCanvasElement>(null);
