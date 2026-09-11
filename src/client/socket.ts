@@ -18,19 +18,49 @@ export interface SowelEvent {
   [key: string]: unknown;
 }
 
+/**
+ * What this app asks the server to send it.
+ *
+ * A socket that connects and subscribes to nothing is a socket that says nothing:
+ * the server starts every client on `system` only and waits to be told. That is
+ * why the first version connected cleanly and the scene never updated — the status
+ * said "open" and the house sat still, which looks exactly like a rendering bug.
+ */
+export const TOPICS = ["equipments", "zones", "system"] as const;
+
 export interface SocketOptions {
   /** Returns the current access token, or null. Read per connection attempt. */
   token: () => string | null;
   onEvent: (event: SowelEvent) => void;
   onStatus: (status: SocketStatus) => void;
   /** Test seam. Defaults to the global. */
-  make?: (url: string) => WebSocket;
+  make?: (url: string, protocol?: string) => WebSocket;
   /** Test seam, so a test does not wait seconds. */
   now?: () => number;
   origin?: string;
 }
 
 const BACKOFF_MS = [500, 1000, 2000, 5000, 10_000, 20_000];
+
+/**
+ * The events in one frame.
+ *
+ * The server batches: it accumulates events per client and sends
+ * `JSON.stringify(deduped)` — **a bare array**, with no envelope and no `type` of
+ * its own. Only the greeting is a single object. A client that checks `.type` on
+ * the parsed frame therefore drops every batch in silence, keeps a healthy-looking
+ * open socket, and shows a house that never moves. That is what this app did.
+ */
+export function eventsOf(parsed: unknown): SowelEvent[] {
+  const one = (value: unknown): SowelEvent | null =>
+    value !== null && typeof value === "object" && typeof (value as SowelEvent).type === "string"
+      ? (value as SowelEvent)
+      : null;
+
+  if (Array.isArray(parsed)) return parsed.map(one).filter((e): e is SowelEvent => e !== null);
+  const single = one(parsed);
+  return single ? [single] : [];
+}
 
 export class Socket {
   private readonly options: SocketOptions;
@@ -81,29 +111,43 @@ export class Socket {
   }
 
   private url(): string | null {
-    const token = this.options.token();
-    if (!token) return null;
     const origin = this.options.origin;
-    if (origin) {
-      return `${origin.replace(/^http/, "ws")}/ws?token=${encodeURIComponent(token)}`;
-    }
+    if (origin) return `${origin.replace(/^http/, "ws")}/ws`;
     const protocol = location.protocol === "https:" ? "wss:" : "ws:";
-    return `${protocol}//${location.host}/ws?token=${encodeURIComponent(token)}`;
+    return `${protocol}//${location.host}/ws`;
+  }
+
+  /**
+   * The token, as the subprotocol the core actually reads.
+   *
+   * `extractWsToken` in the core takes an `Authorization` header or a
+   * `Sec-WebSocket-Protocol` of `bearer.<token>`, and **nothing else** — a token on
+   * the query string is silently not a token, so the handshake succeeds with a 101
+   * and the server then closes it saying "Authentication required". The browser
+   * WebSocket API cannot set headers, which is exactly why the subprotocol path
+   * exists.
+   */
+  private protocol(): string | null {
+    const token = this.options.token();
+    return token ? `bearer.${token}` : null;
   }
 
   private connect(): void {
     if (this.stopped) return;
     const url = this.url();
-    if (!url) {
+    const protocol = this.protocol();
+    if (!url || !protocol) {
       this.options.onStatus("closed");
       return;
     }
 
     this.options.onStatus(this.attempt === 0 ? "connecting" : "reconnecting");
-    const make = this.options.make ?? ((u: string) => new WebSocket(u));
+    const make =
+      this.options.make ??
+      ((u: string, p?: string) => (p ? new WebSocket(u, p) : new WebSocket(u)));
     let ws: WebSocket;
     try {
-      ws = make(url);
+      ws = make(url, protocol);
     } catch {
       this.scheduleReconnect();
       return;
@@ -112,18 +156,26 @@ export class Socket {
 
     ws.onopen = () => {
       this.attempt = 0;
+      // Subscribe first, announce second: a listener that reacts to "open" by
+      // reading state should not see a socket that is not yet carrying any.
+      try {
+        ws.send(JSON.stringify({ type: "subscribe", topics: [...TOPICS] }));
+      } catch {
+        /* the close handler will deal with it */
+      }
       this.options.onStatus("open");
     };
     ws.onmessage = (message: MessageEvent) => {
-      let event: SowelEvent;
+      let parsed: unknown;
       try {
-        event = JSON.parse(String(message.data)) as SowelEvent;
+        parsed = JSON.parse(String(message.data));
       } catch {
         return; // a frame we cannot read is not a reason to drop the connection
       }
-      if (!event || typeof event.type !== "string") return;
-      if (this.holding) this.queue.push(event);
-      else this.options.onEvent(event);
+      for (const event of eventsOf(parsed)) {
+        if (this.holding) this.queue.push(event);
+        else this.options.onEvent(event);
+      }
     };
     ws.onerror = () => {
       /* onclose follows, and that is where reconnection is decided */

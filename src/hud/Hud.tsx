@@ -20,10 +20,11 @@ interface Props {
   levels: Level[];
   level: number;
   onLevel: (level: number) => void;
+  onRecentre: () => void;
 }
 
 export function Hud(props: Props): React.ReactElement {
-  const { phase, socket, state, levels, level, onLevel } = props;
+  const { phase, socket, state, levels, level, onLevel, onRecentre } = props;
   const trouble = isTrouble(phase, socket, state);
 
   const rooms = state
@@ -91,6 +92,15 @@ export function Hud(props: Props): React.ReactElement {
         )}
 
         <div className="pointer-events-auto flex gap-1 rounded-lg bg-white/80 p-1 shadow-sm backdrop-blur dark:bg-slate-900/80">
+          <button
+            type="button"
+            onClick={onRecentre}
+            title="Recadrer la vue"
+            className="rounded px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-200/70 dark:text-slate-300 dark:hover:bg-slate-700/70"
+          >
+            Recadrer
+          </button>
+          <span aria-hidden className="my-1 w-px bg-slate-300 dark:bg-slate-700" />
           {levels.map((entry) => (
             <button
               key={entry.level}

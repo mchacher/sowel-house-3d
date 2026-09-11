@@ -56,6 +56,7 @@ export function App() {
         levels={plan ? selectableLevels(plan) : []}
         level={level}
         onLevel={setLevel}
+        onRecentre={() => renderer.current?.frameLevel()}
       />
     </main>
   );

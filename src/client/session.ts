@@ -10,8 +10,17 @@
  * one place a visitor types a password should stay the one place.
  */
 
-const ACCESS_KEY = "sowel.accessToken";
-const REFRESH_KEY = "sowel.refreshToken";
+/**
+ * The product UI's own keys, character for character.
+ *
+ * Not a convention worth inventing: this app and the Sowel interface share an
+ * origin in the showroom, so they share `localStorage`, and a visitor logged in by
+ * the landing page must arrive logged in to **both**. Guessing `sowel.accessToken`
+ * meant neither of them saw a session and the landing page's whole point was lost —
+ * found by opening the page, which is the only way it could have been.
+ */
+const ACCESS_KEY = "sowel_access_token";
+const REFRESH_KEY = "sowel_refresh_token";
 
 export type SessionState =
   { kind: "ready"; accessToken: string } | { kind: "absent" } | { kind: "expired" };

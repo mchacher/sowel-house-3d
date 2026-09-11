@@ -20,6 +20,7 @@ import {
   Vector3,
   WebGLRenderer,
 } from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { Plan } from "../plan/types.ts";
 import type { SceneState } from "../state/scene-state.ts";
 import { cameraFor, sunDirection } from "./geometry.ts";
@@ -37,6 +38,7 @@ export class HouseRenderer {
   private readonly scene: Scene;
   private readonly camera: PerspectiveCamera;
   private readonly sun: DirectionalLight;
+  private readonly controls: OrbitControls;
   private readonly target = new Vector3();
   private handles: HouseHandles | null = null;
   private level: number;
@@ -61,6 +63,21 @@ export class HouseRenderer {
     this.scene.background = new Color(PALETTE.light);
 
     this.camera = new PerspectiveCamera(42, 1, 0.1, 400);
+
+    // Orbit, zoom and pan. Without these the scene is a photograph: the first thing
+    // anyone does with a 3D house is try to turn it round, and a view that refuses
+    // reads as broken rather than as read-only.
+    this.controls = new OrbitControls(this.camera, canvas);
+    this.controls.enableDamping = true;
+    this.controls.dampingFactor = 0.08;
+    this.controls.screenSpacePanning = false;
+    this.controls.minDistance = 3;
+    this.controls.maxDistance = 90;
+    // Never below the floor: an under-the-house view is disorienting and shows the
+    // undersides of everything.
+    this.controls.maxPolarAngle = Math.PI * 0.48;
+    this.controls.zoomSpeed = 0.8;
+    this.controls.rotateSpeed = 0.6;
 
     // Three lights and no more: a sun that casts, a sky that fills, and a floor
     // bounce. Anything further is post-processing a phone cannot afford.
@@ -125,17 +142,25 @@ export class HouseRenderer {
       this.placeSun(this.state);
     }
 
+    this.frameLevel();
+  }
+
+  /** Put the camera back where a level is framed. Also what the HUD's reset calls. */
+  frameLevel(): void {
     const slab = this.plan.levels.find((l) => l.level === this.level) ?? this.plan.levels[0];
     const view = cameraFor(slab, this.plan.height, this.aspect());
     this.camera.position.set(...view.position);
     this.target.set(...view.target);
-    this.camera.lookAt(this.target);
+    this.controls.target.copy(this.target);
+    this.controls.update();
   }
 
   private placeSun(state: SceneState): void {
     const d = sunDirection(state.sky.elevationDeg, state.sky.azimuthDeg);
     const distance = 40;
     this.sun.position.set(d.x * distance, Math.max(2, d.y * distance), d.z * distance);
+    // The framed centre, not the orbit target: panning the camera must not swing
+    // the sun across the house.
     this.sun.target.position.copy(this.target);
     this.sun.target.updateMatrixWorld();
 
@@ -186,6 +211,7 @@ export class HouseRenderer {
       const dt = Math.min(0.1, (now - this.last) / 1000);
       this.last = now;
       this.ease(dt);
+      this.controls.update();
       this.renderer.render(this.scene, this.camera);
       this.frame = requestAnimationFrame(tick);
     };
@@ -194,6 +220,7 @@ export class HouseRenderer {
 
   stop(): void {
     cancelAnimationFrame(this.frame);
+    this.controls.dispose();
     this.renderer.dispose();
   }
 
