@@ -14,16 +14,15 @@ export interface Room {
   /**
    * −1 basement, 0 ground, 1 and 2 upstairs, `null` outdoors.
    *
-   * The house has four levels, and stacking them all at once would hide every
-   * interior behind the floor above. So the scene shows **one level at a time**,
-   * with the outdoor rooms always present because they surround the house rather
-   * than sit on a storey. Rooms on different levels may therefore share the same
-   * x/z footprint — which is exactly what a house is — and the overlap check is
-   * per level.
+   * All four are built and stood on each other at their real heights. The one in
+   * focus is solid; the others are glass, so the house reads as a house and what is
+   * upstairs is visible from downstairs without leaving the room being looked at.
    *
-   * An exploded stack, all four levels floated apart, would show the whole house
-   * at a glance and is the better answer eventually. It is also the harder one to
-   * get right, and it belongs in phase 6 with the rest of the polish.
+   * Showing one storey at a time came first, and it was a way of not solving the
+   * occlusion rather than a decision: the floor above hides the interior below
+   * unless something is done about it, and ghosting the materials is that
+   * something. Rooms on different levels share x/z footprints — which is exactly
+   * what a house is — so the overlap check stays per level.
    */
   level: number | null;
   x: number;

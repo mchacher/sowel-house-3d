@@ -65,3 +65,66 @@ export function makeMaterials(): Materials {
     sensorOn: new MeshBasicMaterial({ color: new Color(PALETTE.amber) }),
   };
 }
+
+/**
+ * The materials a storey owns, as opposed to the ones every storey shares.
+ *
+ * A level that is not the one in focus is shown as a ghost, and a ghost is a
+ * property of its materials rather than of its geometry — so each storey is built
+ * with its own copies of these and nothing is rebuilt when the focus moves.
+ *
+ * Lamp shades and sensors are deliberately **not** here: seeing at a glance that a
+ * light is on upstairs is most of the reason for showing upstairs at all, and a
+ * ghosted amber dot is no longer a signal.
+ */
+const GHOSTABLE = ["wall", "floor", "ground", "water", "shutter", "glass"] as const;
+
+type Ghostable = (typeof GHOSTABLE)[number];
+
+/** What each of them looks like when it is the storey being read. */
+const SOLID_OPACITY: Record<Ghostable, number> = {
+  wall: 1,
+  floor: 1,
+  ground: 1,
+  water: 1,
+  shutter: 1,
+  glass: 0.3,
+};
+
+/** Faint enough to see through four of them stacked, present enough to read as a wall. */
+const GHOST_OPACITY: Record<Ghostable, number> = {
+  wall: 0.09,
+  // Fainter than the walls, and deliberately so: a slab is the largest surface in
+  // the scene and the storey in focus is read *through* the one above it. At the
+  // walls' opacity the ground floor came out milky, lit through a lid.
+  floor: 0.05,
+  ground: 0.07,
+  water: 0.14,
+  shutter: 0.08,
+  glass: 0.04,
+};
+
+/** A set sharing the signals and owning its own structure. One per storey. */
+export function copyMaterials(source: Materials): Materials {
+  const copy = { ...source };
+  for (const key of GHOSTABLE) copy[key] = source[key].clone();
+  return copy;
+}
+
+/**
+ * Turn one storey's structure to glass, or back.
+ *
+ * `depthWrite` goes off with it: a ghost that writes depth hides whatever is behind
+ * it, which for a stack of four storeys means the focused one disappears under the
+ * roof above it.
+ */
+export function setGhost(materials: Materials, ghost: boolean): void {
+  for (const key of GHOSTABLE) {
+    const material = materials[key] as Material & { opacity: number; depthWrite: boolean };
+    const opacity = ghost ? GHOST_OPACITY[key] : SOLID_OPACITY[key];
+    material.transparent = opacity < 1;
+    material.opacity = opacity;
+    material.depthWrite = !ghost;
+    material.needsUpdate = true;
+  }
+}

@@ -3,6 +3,10 @@ import {
   cameraFor,
   lampSpots,
   levelContents,
+  levelElevation,
+  outdoorRooms,
+  stackHeight,
+  storeyPitch,
   pieceBox,
   selectableLevels,
   shutterDrop,
@@ -175,8 +179,14 @@ describe("the sun's direction", () => {
 
 describe("framing a level", () => {
   it("puts the camera above the walls and pulls back for a bigger house", () => {
-    const small = cameraFor({ level: 0, name: "a", x: 0, z: 0, w: 6, d: 6 }, 2.6);
-    const big = cameraFor({ level: 0, name: "b", x: 0, z: 0, w: 20, d: 20 }, 2.6);
+    const small = cameraFor({
+      level: { level: 0, name: "a", x: 0, z: 0, w: 6, d: 6 },
+      height: 2.6,
+    });
+    const big = cameraFor({
+      level: { level: 0, name: "b", x: 0, z: 0, w: 20, d: 20 },
+      height: 2.6,
+    });
     expect(small.position[1]).toBeGreaterThan(2.6);
     expect(big.position[1]).toBeGreaterThan(small.position[1]);
     expect(Math.hypot(big.position[0], big.position[2])).toBeGreaterThan(
@@ -185,15 +195,18 @@ describe("framing a level", () => {
   });
 
   it("aims at the level's centre wherever the level is", () => {
-    const shifted = cameraFor({ level: 0, name: "a", x: 10, z: -4, w: 8, d: 6 }, 2.6);
+    const shifted = cameraFor({
+      level: { level: 0, name: "a", x: 10, z: -4, w: 8, d: 6 },
+      height: 2.6,
+    });
     expect(shifted.target[0]).toBe(14);
     expect(shifted.target[2]).toBe(-1);
   });
 
   it("pulls further back on a portrait viewport, which sees less across", () => {
     const level = { level: 0, name: "a", x: 0, z: 0, w: 10, d: 10 };
-    const wide = cameraFor(level, 2.6, 16 / 9);
-    const phone = cameraFor(level, 2.6, 9 / 16);
+    const wide = cameraFor({ level, height: 2.6, aspect: 16 / 9 });
+    const phone = cameraFor({ level, height: 2.6, aspect: 9 / 16 });
     expect(phone.position[0]).toBeGreaterThan(wide.position[0]);
   });
 });
@@ -219,14 +232,41 @@ describe("hanging a room's lamps", () => {
 });
 
 describe("what a level contains", () => {
-  it("shows its own rooms and everything outdoors", () => {
+  it("shows its own rooms and nobody else's", () => {
     const ground = levelContents(plan, 0);
     const ids = ground.rooms.map((r) => r.id);
     expect(ids).toContain("sejour");
-    expect(ids).toContain("jardin");
-    // The outdoors surrounds the house rather than sitting on a storey.
     expect(ids).not.toContain("chambre-parents");
+    // The garden is built once now, beside the storeys — not handed to each of them.
+    expect(ids).not.toContain("jardin");
     expect(ground.walls.every((w) => w.level === 0)).toBe(true);
+  });
+
+  it("keeps the outdoors apart, and on no storey", () => {
+    const ids = outdoorRooms(plan).map((r) => r.id);
+    expect(ids).toContain("jardin");
+    expect(ids).toContain("piscine");
+    expect(outdoorRooms(plan).every((r) => r.level === null)).toBe(true);
+  });
+
+  it("stacks the storeys on each other, the cellar under the ground floor", () => {
+    expect(levelElevation(plan, 0)).toBe(0);
+    expect(levelElevation(plan, 1)).toBeCloseTo(storeyPitch(plan));
+    expect(levelElevation(plan, -1)).toBeCloseTo(-storeyPitch(plan));
+    // Above the wall height: a storey must clear the one below it, not sit in it.
+    expect(storeyPitch(plan)).toBeGreaterThan(plan.height);
+    // The outdoors is at ground level, because that is where the ground is.
+    expect(levelElevation(plan, null)).toBe(0);
+  });
+
+  it("frames a storey at its own height", () => {
+    const slab = plan.levels.find((l) => l.level === 2)!;
+    const common = { level: slab, height: plan.height, aspect: 16 / 9, stack: stackHeight(plan) };
+    const up = cameraFor({ ...common, elevation: levelElevation(plan, 2) });
+    const down = cameraFor({ ...common, elevation: levelElevation(plan, -1) });
+    // Framing the second floor must not frame the cellar.
+    expect(up.target[1]).toBeGreaterThan(down.target[1] + 3);
+    expect(up.position[1]).toBeGreaterThan(down.position[1]);
   });
 
   it("offers the four storeys, lowest first, and not the outdoors", () => {

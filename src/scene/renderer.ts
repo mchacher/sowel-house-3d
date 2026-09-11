@@ -23,8 +23,8 @@ import {
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { Plan } from "../plan/types.ts";
 import type { SceneState } from "../state/scene-state.ts";
-import { cameraFor, sunDirection } from "./geometry.ts";
-import { applyState, buildHouse, syncPeople, type HouseHandles } from "./house.ts";
+import { cameraFor, levelElevation, stackHeight, sunDirection } from "./geometry.ts";
+import { applyState, buildHouse, focusLevel, syncPeople, type HouseHandles } from "./house.ts";
 import { makeMaterials, PALETTE, type Materials } from "./materials.ts";
 
 /** How fast a shutter and a figure catch up with what Sowel said, per second. */
@@ -62,7 +62,15 @@ export class HouseRenderer {
     this.scene = new Scene();
     this.scene.background = new Color(PALETTE.light);
 
-    this.camera = new PerspectiveCamera(42, 1, 0.1, 400);
+    // 0.5…250, not 0.1…400.
+    //
+    // Depth precision is spent near the near plane: a ratio of 4000 leaves so
+    // little of it at house distance that surfaces a few millimetres apart swap
+    // order as the camera moves, which is what "glitches while zooming" is. The
+    // geometry fix is to stop putting surfaces in the same plane; this is the other
+    // half, and the near plane costs nothing because the camera cannot come closer
+    // than three metres anyway.
+    this.camera = new PerspectiveCamera(42, 1, 0.5, 250);
 
     // Orbit, zoom and pan. Without these the scene is a photograph: the first thing
     // anyone does with a 3D house is try to turn it round, and a view that refuses
@@ -72,7 +80,7 @@ export class HouseRenderer {
     this.controls.dampingFactor = 0.08;
     this.controls.screenSpacePanning = false;
     this.controls.minDistance = 3;
-    this.controls.maxDistance = 90;
+    this.controls.maxDistance = 120;
     // Never below the floor: an under-the-house view is disorienting and shows the
     // undersides of everything.
     this.controls.maxPolarAngle = Math.PI * 0.48;
@@ -85,8 +93,9 @@ export class HouseRenderer {
     this.sun.castShadow = true;
     this.sun.shadow.mapSize.set(2048, 2048);
     this.sun.shadow.camera.near = 1;
-    this.sun.shadow.camera.far = 80;
-    const extent = 22;
+    this.sun.shadow.camera.far = 110;
+    // Four storeys stacked are eleven metres tall; a frustum cut for one clips the roof.
+    const extent = 26;
     Object.assign(this.sun.shadow.camera, {
       left: -extent,
       right: extent,
@@ -107,7 +116,10 @@ export class HouseRenderer {
   setLevel(level: number): void {
     if (level === this.level) return;
     this.level = level;
-    this.rebuild();
+    // Every storey is already built and standing. Switching floors is a change of
+    // which one is solid, not a change of what exists.
+    if (this.handles) focusLevel(this.handles, level);
+    this.frameLevel();
   }
 
   get currentLevel(): number {
@@ -148,7 +160,15 @@ export class HouseRenderer {
   /** Put the camera back where a level is framed. Also what the HUD's reset calls. */
   frameLevel(): void {
     const slab = this.plan.levels.find((l) => l.level === this.level) ?? this.plan.levels[0];
-    const view = cameraFor(slab, this.plan.height, this.aspect());
+    const lowest = Math.min(...this.plan.levels.map((l) => l.level));
+    const view = cameraFor({
+      level: slab,
+      height: this.plan.height,
+      aspect: this.aspect(),
+      elevation: levelElevation(this.plan, slab.level),
+      stack: stackHeight(this.plan),
+      lowest: levelElevation(this.plan, lowest),
+    });
     this.camera.position.set(...view.position);
     this.target.set(...view.target);
     this.controls.target.copy(this.target);

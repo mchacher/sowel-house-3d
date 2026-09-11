@@ -25,12 +25,31 @@ import {
 } from "three";
 import type { Plan, Room } from "../plan/types.ts";
 import type { SceneState } from "../state/scene-state.ts";
-import { lampSpots, levelContents, pieceBox, shutterDrop, wallPieces } from "./geometry.ts";
-import type { Materials } from "./materials.ts";
+import {
+  lampSpots,
+  levelContents,
+  levelElevation,
+  outdoorRooms,
+  pieceBox,
+  shutterDrop,
+  wallPieces,
+} from "./geometry.ts";
+import { copyMaterials, setGhost, type Materials } from "./materials.ts";
+
+/** One storey: its own group, at its own height, with its own structural materials. */
+export interface LevelHandles {
+  level: number;
+  group: Group;
+  materials: Materials;
+}
 
 /** What the scene keeps hold of so it can be updated without being rebuilt. */
 export interface HouseHandles {
   root: Group;
+  /** Every storey, built at once. Keyed by `Room.level`. */
+  levels: Map<number, LevelHandles>;
+  /** The ground, the terrace and the pool, which belong to no storey. */
+  outdoor: LevelHandles;
   lamps: Map<string, { light: PointLight; shade: Mesh }[]>;
   /**
    * Per room, in plan window order; the panel is anchored at the lintel.
@@ -83,8 +102,19 @@ export interface BuildHouseOptions {
 export function buildHouse(options: BuildHouseOptions): HouseHandles {
   const { plan, materials, level, lampCounts } = options;
   const root = new Group();
+
+  // The garden is built once, beside the storeys rather than inside each of them.
+  const outdoor: LevelHandles = {
+    level: 0,
+    group: new Group(),
+    materials: copyMaterials(materials),
+  };
+  root.add(outdoor.group);
+
   const handles: HouseHandles = {
     root,
+    levels: new Map(),
+    outdoor,
     lamps: new Map(),
     shutters: new Map(),
     sensors: new Map(),
@@ -92,43 +122,83 @@ export function buildHouse(options: BuildHouseOptions): HouseHandles {
     rooms: new Map(),
   };
 
-  const { rooms, walls } = levelContents(plan, level);
+  buildOutdoors(plan, outdoor, handles);
 
-  // The ground first, so everything else sits on it.
-  const ground = rooms.find((r) => r.ground);
-  if (ground) {
-    const slab = box(ground.w, 0.1, ground.d, materials.ground);
-    root.add(at(slab, ground.x + ground.w / 2, -0.05, ground.z + ground.d / 2));
+  // Every storey, at its own height. Showing one at a time was a way of not solving
+  // the occlusion: a house is four floors and a visitor asking what is upstairs
+  // should not have to leave the room they are looking at to find out.
+  for (const slab of plan.levels) {
+    const entry: LevelHandles = {
+      level: slab.level,
+      group: new Group(),
+      materials: copyMaterials(materials),
+    };
+    entry.group.position.y = levelElevation(plan, slab.level);
+    root.add(entry.group);
+    handles.levels.set(slab.level, entry);
+    buildLevel(plan, entry, handles, lampCounts);
   }
 
-  const slab = plan.levels.find((l) => l.level === level);
-  if (slab) {
-    const floor = box(slab.w, 0.08, slab.d, materials.floor);
-    root.add(at(floor, slab.x + slab.w / 2, -0.04, slab.z + slab.d / 2));
+  focusLevel(handles, level);
+  return handles;
+}
+
+/** The ground and the patches on it. Heights are staggered on purpose — see below. */
+function buildOutdoors(plan: Plan, entry: LevelHandles, handles: HouseHandles): void {
+  const { group, materials } = entry;
+  const rooms = outdoorRooms(plan);
+
+  const ground = rooms.find((r) => r.ground);
+  if (ground) {
+    // Four centimetres under the ground floor's slab, not flush with it.
+    //
+    // They used to share the plane y = 0 exactly, and two coplanar faces are a
+    // coin toss the depth buffer re-tosses every frame: the floor came out
+    // striped with grass, and the stripes crawled as the camera zoomed, because
+    // zooming is what changes depth precision. No amount of material tuning fixes
+    // coplanar geometry; moving one of them does.
+    const slab = box(ground.w, 0.1, ground.d, materials.ground);
+    group.add(at(slab, ground.x + ground.w / 2, -0.09, ground.z + ground.d / 2));
   }
 
   for (const room of rooms) {
     handles.rooms.set(room.id, room);
     if (room.ground) continue;
+    const material = room.id === "piscine" ? materials.water : materials.floor;
+    // Sunk into the ground rather than resting on it: touching faces fight too.
+    const patch = box(room.w, 0.05, room.d, material);
+    group.add(at(patch, room.x + room.w / 2, -0.02, room.z + room.d / 2));
+  }
+}
 
-    // The pool is water; every other outdoor room is a patch of a different ground.
-    if (room.level === null) {
-      const material = room.id === "piscine" ? materials.water : materials.floor;
-      const patch = box(room.w, 0.06, room.d, material);
-      root.add(at(patch, room.x + room.w / 2, 0.01, room.z + room.d / 2));
-      continue;
-    }
+function buildLevel(
+  plan: Plan,
+  entry: LevelHandles,
+  handles: HouseHandles,
+  lampCounts: Record<string, number>,
+): void {
+  const { group, materials, level } = entry;
+  const { rooms, walls } = levelContents(plan, level);
+
+  const slab = plan.levels.find((l) => l.level === level);
+  if (slab) {
+    const floor = box(slab.w, 0.08, slab.d, materials.floor);
+    group.add(at(floor, slab.x + slab.w / 2, -0.04, slab.z + slab.d / 2));
+  }
+
+  for (const room of rooms) {
+    handles.rooms.set(room.id, room);
 
     const lamps: { light: PointLight; shade: Mesh }[] = [];
     for (const [x, y, z] of lampSpots(room, lampCounts[room.id] ?? 0, plan.height)) {
       const shade = new Mesh(new SphereGeometry(0.13, 12, 10), materials.shadeOff);
-      root.add(at(shade, x, y, z));
+      group.add(at(shade, x, y, z));
       // Shadows are off by default: seventeen shadow-casting lights is what costs a
       // phone its frame rate. The renderer turns them on for the level in view.
       const light = new PointLight(0xffd9a0, 0, 6.5);
       light.castShadow = false;
       light.position.set(x, y - 0.1, z);
-      root.add(light);
+      group.add(light);
       lamps.push({ light, shade });
     }
     handles.lamps.set(room.id, lamps);
@@ -137,16 +207,15 @@ export function buildHouse(options: BuildHouseOptions): HouseHandles {
     // in the scene with no physical analogue, and it earns its place by being what
     // a visitor clicks in phase 4.
     const sensor = new Mesh(new SphereGeometry(0.07, 8, 6), materials.sensorOff);
-    root.add(at(sensor, room.x + 0.3, plan.height - 0.2, room.z + 0.3));
+    group.add(at(sensor, room.x + 0.3, plan.height - 0.2, room.z + 0.3));
     handles.sensors.set(room.id, sensor);
   }
 
   // Walls, and the windows and shutters they carry.
-  const shuttersByRoom = new Map<string, { panel: Mesh; height: number; target: number }[]>();
   for (const wall of walls) {
     for (const piece of wallPieces(wall, plan.height)) {
       const b = pieceBox(wall, piece, plan.thickness);
-      root.add(at(box(b.w, b.h, b.d, materials.wall), b.x, b.y, b.z));
+      group.add(at(box(b.w, b.h, b.d, materials.wall), b.x, b.y, b.z));
     }
 
     for (const opening of [...wall.openings].sort((a, b) => a.at - b.at)) {
@@ -158,7 +227,7 @@ export function buildHouse(options: BuildHouseOptions): HouseHandles {
           ? box(opening.w, gh, 0.03, materials.glass)
           : box(0.03, gh, opening.w, materials.glass);
       pane.castShadow = false;
-      root.add(
+      group.add(
         at(
           pane,
           wall.axis === "x" ? opening.at : wall.at,
@@ -184,17 +253,46 @@ export function buildHouse(options: BuildHouseOptions): HouseHandles {
         wall.axis === "x" ? wall.at + offset * outward : opening.at,
       );
       panel.scale.y = 0.0001;
-      root.add(panel);
+      group.add(panel);
 
       const roomId = (opening.id ?? "").replace(/^window:/, "").replace(/-\d+$/, "");
-      const list = shuttersByRoom.get(roomId) ?? [];
+      const list = handles.shutters.get(roomId) ?? [];
       list.push({ panel, height: gh, target: 0 });
-      shuttersByRoom.set(roomId, list);
+      handles.shutters.set(roomId, list);
     }
   }
-  handles.shutters = shuttersByRoom;
+}
 
-  return handles;
+/**
+ * Which storey is being read, and which are context.
+ *
+ * Mutation only: the ghosting lives in each storey's own materials, so switching
+ * floors touches a dozen materials rather than rebuilding seventeen hundred meshes.
+ * A ghosted storey also stops casting shadows and stops lighting the room — its
+ * lamp shades keep their colour, which is the part worth seeing from below.
+ */
+export function focusLevel(handles: HouseHandles, level: number): void {
+  for (const [id, entry] of handles.levels) {
+    const focused = id === level;
+    setGhost(entry.materials, !focused);
+    entry.group.traverse((object) => {
+      if (object instanceof Mesh) object.castShadow = focused;
+    });
+  }
+  // The garden turns to glass only when the storey in focus is under it — otherwise
+  // the cellar is a room you are told about and never shown. The lawn stops casting
+  // with it: a cellar lit through a transparent lawn that still throws the lawn's
+  // shadow is a cellar in the dark, which is what the first attempt looked like.
+  const underground = level < 0;
+  setGhost(handles.outdoor.materials, underground);
+  handles.outdoor.group.traverse((object) => {
+    if (object instanceof Mesh) object.castShadow = !underground;
+  });
+
+  for (const [roomId, lamps] of handles.lamps) {
+    const on = handles.rooms.get(roomId)?.level === level;
+    for (const lamp of lamps) lamp.light.visible = on;
+  }
 }
 
 /**
@@ -221,7 +319,10 @@ export function syncPeople(
     const room = entry.room ? handles.rooms.get(entry.room) : undefined;
     const spot = room ? room.spot : plan.awaySpot;
     figure.visible = entry.room !== null;
-    if (isNew) figure.position.set(spot[0], 0, spot[1]);
+    // Height is set outright, never eased: somebody going upstairs should appear
+    // upstairs, not glide up through the ceiling.
+    figure.position.y = levelElevation(plan, room?.level ?? null);
+    if (isNew) figure.position.set(spot[0], figure.position.y, spot[1]);
   }
   // Somebody Sowel has stopped reporting stops being drawn.
   for (const [id, figure] of handles.people) {

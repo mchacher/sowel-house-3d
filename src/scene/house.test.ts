@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { Mesh, PointLight } from "three";
-import { applyState, buildHouse, syncPeople } from "./house.ts";
+import { Mesh, PointLight, type Material } from "three";
+import { applyState, buildHouse, focusLevel, syncPeople } from "./house.ts";
 import { makeMaterials } from "./materials.ts";
-import { wallPieces } from "./geometry.ts";
+import { levelElevation, wallPieces } from "./geometry.ts";
 import type { Plan } from "../plan/types.ts";
 import type { SceneState } from "../state/scene-state.ts";
 import showroomPlan from "../../public/plans/showroom.json";
@@ -43,21 +43,39 @@ function state(overrides: Partial<SceneState> = {}): SceneState {
 describe("building the house", () => {
   it("builds without a renderer, which is why any of this is testable", () => {
     const handles = build();
-    expect(handles.root.children.length).toBeGreaterThan(20);
+    // A group per storey, plus the outdoors.
+    expect(handles.levels.size).toBe(plan.levels.length);
+    expect(handles.root.children).toHaveLength(plan.levels.length + 1);
   });
 
-  it("raises one mesh per solid wall piece of the level", () => {
+  it("builds every storey at once, each at its own height", () => {
     const handles = build(0);
-    const expected = plan.walls
-      .filter((w) => w.level === 0)
-      .reduce((n, w) => n + wallPieces(w, plan.height).length, 0);
-    // Walls, plus the panes and panels and lamps and sensors; count the walls by
-    // their material, which is the only thing that identifies them.
-    const wallMeshes = handles.root.children.filter(
-      (c) => c instanceof Mesh && c.material === materials.wall,
-    );
-    expect(wallMeshes).toHaveLength(expected);
-    expect(expected).toBeGreaterThan(10);
+    for (const slab of plan.levels) {
+      const entry = handles.levels.get(slab.level);
+      expect(entry, `level ${slab.level}`).toBeDefined();
+      expect(entry!.group.position.y).toBeCloseTo(levelElevation(plan, slab.level));
+      expect(entry!.group.children.length).toBeGreaterThan(3);
+    }
+    // Every room of the house is in the graph, whichever storey is in focus.
+    expect(handles.rooms.has("sejour")).toBe(true);
+    expect(handles.rooms.has("chambre-parents")).toBe(true);
+    expect(handles.rooms.has("cave")).toBe(true);
+  });
+
+  it("raises one mesh per solid wall piece of every level", () => {
+    const handles = build(0);
+    for (const slab of plan.levels) {
+      const expected = plan.walls
+        .filter((w) => w.level === slab.level)
+        .reduce((n, w) => n + wallPieces(w, plan.height).length, 0);
+      const entry = handles.levels.get(slab.level)!;
+      // Walls, plus the panes and panels and lamps and sensors; count the walls by
+      // their material, which is the only thing that identifies them.
+      const wallMeshes = entry.group.children.filter(
+        (c) => c instanceof Mesh && c.material === entry.materials.wall,
+      );
+      expect(wallMeshes, `level ${slab.level}`).toHaveLength(expected);
+    }
   });
 
   it("hangs the lamps the rooms have, and no others", () => {
@@ -65,7 +83,9 @@ describe("building the house", () => {
     expect(handles.lamps.get("sejour")).toHaveLength(3);
     expect(handles.lamps.get("cuisine")).toHaveLength(1);
     expect(handles.lamps.get("escalier") ?? []).toHaveLength(0);
-    const lights = handles.root.children.filter((c) => c instanceof PointLight);
+    const lights = [...handles.levels.values()].flatMap((e) =>
+      e.group.children.filter((c) => c instanceof PointLight),
+    );
     expect(lights).toHaveLength(6);
   });
 
@@ -100,12 +120,81 @@ describe("building the house", () => {
     }
   });
 
-  it("shows only the storey chosen", () => {
-    const upstairs = build(1);
-    expect(upstairs.rooms.has("chambre-parents")).toBe(true);
-    expect(upstairs.rooms.has("sejour")).toBe(false);
+  it("never lays the garden in the same plane as a floor slab", () => {
+    // Two coplanar faces are a coin toss the depth buffer re-tosses every frame,
+    // and the result was grass striped across the ground floor, crawling as the
+    // camera zoomed. The fix is geometric and this is what holds it.
+    const outdoor = handles0().outdoor.group.children.map((c) => c.position.y);
+    const slabTop = 0; // the ground floor slab is 0.08 thick, centred at -0.04
+    for (const y of outdoor) expect(Math.abs(y - slabTop)).toBeGreaterThan(0.01);
   });
 });
+
+describe("choosing a storey", () => {
+  it("makes the chosen one solid and the rest glass, without rebuilding", () => {
+    const handles = build(0);
+    const ground = handles.levels.get(0)!.materials.wall as Material & { opacity: number };
+    const first = handles.levels.get(1)!.materials.wall as Material & { opacity: number };
+    expect(ground.opacity).toBe(1);
+    expect(first.opacity).toBeLessThan(0.3);
+    expect(first.transparent).toBe(true);
+    // A ghost that writes depth hides what is behind it — which is the storey the
+    // visitor is actually reading.
+    expect(first.depthWrite).toBe(false);
+
+    focusLevel(handles, 1);
+    expect(ground.opacity).toBeLessThan(0.3);
+    expect(first.opacity).toBe(1);
+    expect(first.depthWrite).toBe(true);
+  });
+
+  it("keeps the garden solid above ground and turns it to glass below", () => {
+    const handles = build(0);
+    const ground = handles.outdoor.materials.ground as Material & { opacity: number };
+    const casts = () => {
+      const out: boolean[] = [];
+      handles.outdoor.group.traverse((o) => {
+        if (o instanceof Mesh) out.push(o.castShadow);
+      });
+      return out;
+    };
+    expect(ground.opacity).toBe(1);
+    expect(casts().some((c) => c)).toBe(true);
+
+    // The cellar is under the garden: an opaque lawn is a cellar you are told about
+    // and never shown — and a transparent lawn that still casts its shadow is a
+    // cellar shown in the dark, which is no better.
+    focusLevel(handles, -1);
+    expect(ground.opacity).toBeLessThan(0.3);
+    expect(casts().every((c) => c === false)).toBe(true);
+  });
+
+  it("lights only the storey in focus, and leaves every shade readable", () => {
+    const handles = build(0);
+    const sejour = handles.lamps.get("sejour") ?? [];
+    expect(sejour.every((l) => l.light.visible)).toBe(true);
+    focusLevel(handles, 1);
+    // The lamp stops lighting the room; its shade still shows whether it is on,
+    // which is most of the reason for showing the other storeys at all.
+    expect(sejour.every((l) => l.light.visible)).toBe(false);
+    expect(sejour.every((l) => l.shade.visible)).toBe(true);
+  });
+
+  it("stops a ghosted storey casting shadows onto the one being read", () => {
+    const handles = build(0);
+    const upstairs = handles.levels.get(1)!.group;
+    const casters: boolean[] = [];
+    upstairs.traverse((o) => {
+      if (o instanceof Mesh) casters.push(o.castShadow);
+    });
+    expect(casters.length).toBeGreaterThan(10);
+    expect(casters.every((c) => c === false)).toBe(true);
+  });
+});
+
+function handles0() {
+  return build(0);
+}
 
 describe("applying the state", () => {
   it("lights a lamp Sowel says is on, and dims one it says is off", () => {

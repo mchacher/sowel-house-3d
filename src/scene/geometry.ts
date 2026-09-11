@@ -104,25 +104,86 @@ export function sunDirection(
 }
 
 /**
- * Where to put the camera so a level fills the view.
+ * The gap between one storey's floor and the next.
  *
- * An isometric-ish three-quarter view from the south-east, high enough to see over
- * the walls, pulled back by the level's diagonal so a big house and a small one are
- * both framed. The target is the level's centre.
+ * The wall height plus a slab: the storeys sit on each other the way a house does,
+ * rather than floating apart. An exploded stack would read more clearly at a glance
+ * and would also stop reading as a *house*, which is the thing being shown.
  */
-export function cameraFor(
-  level: Level,
-  height: number,
-  aspect = 16 / 9,
-): { position: [number, number, number]; target: [number, number, number] } {
+export function storeyPitch(plan: Plan): number {
+  return plan.height + 0.3;
+}
+
+/** How high a storey's floor sits. The ground floor is the origin; the cellar is under it. */
+export function levelElevation(plan: Plan, level: number | null): number {
+  return level === null ? 0 : level * storeyPitch(plan);
+}
+
+/** Floor of the lowest storey to ceiling of the highest — what the camera must clear. */
+export function stackHeight(plan: Plan): number {
+  const levels = plan.levels.map((l) => l.level);
+  if (levels.length === 0) return plan.height;
+  return (Math.max(...levels) - Math.min(...levels)) * storeyPitch(plan) + plan.height;
+}
+
+/** What the camera has to fit, and which part of it the visitor is reading. */
+export interface Framing {
+  /** The slab being read. Its footprint sets how far back the camera goes. */
+  level: Level;
+  /** Wall height. */
+  height: number;
+  aspect?: number;
+  /** How high the read storey's floor sits. */
+  elevation?: number;
+  /** Floor of the lowest storey to ceiling of the highest. */
+  stack?: number;
+  /** How high the lowest storey's floor sits, so the stack's middle is known. */
+  lowest?: number;
+}
+
+/**
+ * Where to put the camera so the house fits and the chosen storey is what you read.
+ *
+ * Three quarters from the south-east, far enough back for the **whole stack** —
+ * framing the chosen storey alone cropped the three others off the top of the
+ * screen, which is a strange way to show a house. The distance comes from the
+ * bounding sphere and the field of view rather than from a multiplier that happened
+ * to look right for one plan.
+ *
+ * The target is a blend: mostly the storey being read, partly the middle of the
+ * stack, so the cellar is not framed with the sky above it nor the top floor with
+ * the lawn below.
+ */
+export function cameraFor(framing: Framing): {
+  position: [number, number, number];
+  target: [number, number, number];
+} {
+  const { level, height, aspect = 16 / 9, elevation = 0, stack = 0, lowest = 0 } = framing;
   const cx = level.x + level.w / 2;
   const cz = level.z + level.d / 2;
-  const diagonal = Math.hypot(level.w, level.d);
-  // A narrow viewport sees less across, so it needs more distance for the same house.
-  const distance = diagonal * (aspect < 1 ? 1.5 : 1.05);
+
+  const span = Math.max(stack, height);
+  // Half the diagonal of the box the house occupies — the sphere that contains it.
+  const radius = 0.5 * Math.hypot(level.w, level.d, span);
+  // The renderer's vertical field of view. A narrow viewport sees less across, so it
+  // needs the extra distance a portrait phone always needs.
+  const halfFov = (42 / 2) * (Math.PI / 180);
+  const distance = (radius / Math.sin(halfFov)) * (aspect < 1 ? 1.35 : 1);
+
+  const focusY = elevation + height * 0.35;
+  const middleY = lowest + span / 2;
+  const targetY = focusY * 0.55 + middleY * 0.45;
+
+  // A fixed three-quarter direction, normalised so the distance means what it says.
+  const d = [0.62, 0.75, 0.62];
+  const length = Math.hypot(d[0], d[1], d[2]);
   return {
-    position: [cx + distance * 0.62, height + diagonal * 0.75, cz + distance * 0.62],
-    target: [cx, height * 0.35, cz],
+    position: [
+      cx + (d[0] / length) * distance,
+      targetY + (d[1] / length) * distance,
+      cz + (d[2] / length) * distance,
+    ],
+    target: [cx, targetY, cz],
   };
 }
 
@@ -145,12 +206,23 @@ export function lampSpots(room: Room, count: number, height: number): [number, n
   return spots;
 }
 
-/** The rooms and walls of one level, plus everything outdoors, which is always there. */
+/**
+ * The rooms and walls of one storey — that storey's only.
+ *
+ * The outdoors used to come back with every level, because only one storey was ever
+ * built and the garden had to be in it. Now that all four are built at once, the
+ * garden is built once too, beside them rather than in each.
+ */
 export function levelContents(plan: Plan, level: number | null): { rooms: Room[]; walls: Wall[] } {
   return {
-    rooms: plan.rooms.filter((r) => r.level === level || r.level === null),
+    rooms: plan.rooms.filter((r) => r.level === level),
     walls: plan.walls.filter((w) => w.level === level),
   };
+}
+
+/** Everything that is not on a storey: the ground, the terrace, the pool. */
+export function outdoorRooms(plan: Plan): Room[] {
+  return plan.rooms.filter((r) => r.level === null);
 }
 
 /** The levels a viewer can switch between, lowest first. Outdoors is not one. */
