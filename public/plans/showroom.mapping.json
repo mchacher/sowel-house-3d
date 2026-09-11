@@ -15,5 +15,12 @@
     "piscine": "Piscine",
     "terrasse": "Terrasse"
   },
-  "weatherEquipment": "Station Météo"
+  "weatherEquipment": "Station Météo",
+  "gates": {
+    "gate:portail-1": "Portail"
+  },
+  "watering": {
+    "plantations": "Vanne Plantations",
+    "pelouse": "Vanne Pelouse"
+  }
 }

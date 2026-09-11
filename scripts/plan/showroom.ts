@@ -51,14 +51,74 @@ const house: HouseSpec = {
 
   rooms: [
     // ── Ground floor ─────────────────────────────────────────────────────
-    { id: "bureau", name: "Bureau", level: 0, x: 0, z: 0, w: 3.5, d: 3, spot: [1.75, 1.6] },
-    { id: "entree", name: "Entrée", level: 0, x: 3.5, z: 0, w: 3, d: 2.5, spot: [5, 1.3] },
+    {
+      id: "bureau",
+      kind: "office",
+      name: "Bureau",
+      level: 0,
+      x: 0,
+      z: 0,
+      w: 3.5,
+      d: 3,
+      spot: [1.75, 1.6],
+    },
+    {
+      id: "entree",
+      kind: "hall",
+      name: "Entrée",
+      level: 0,
+      x: 3.5,
+      z: 0,
+      w: 3,
+      d: 2.5,
+      spot: [5, 1.3],
+    },
     // The stairs live here: a quarter-turn flight up the east side and across the
     // south, leaving a hall in the north-west corner.
-    { id: "escalier", name: "Escalier", level: 0, x: 3.5, z: 2.5, w: 3, d: 2.5, spot: [4.4, 3.2] },
-    { id: "cuisine", name: "Cuisine", level: 0, x: 6.5, z: 0, w: 4, d: 5, spot: [8.5, 2.6] },
-    { id: "sejour", name: "Séjour", level: 0, x: 0, z: 5, w: 10.5, d: 4.5, spot: [5.2, 7.4] },
-    { id: "garage", name: "Garage", level: 0, x: 10.5, z: 3, w: 5.5, d: 5.5, spot: [13.2, 5.7] },
+    {
+      id: "escalier",
+      kind: "stair",
+      name: "Escalier",
+      level: 0,
+      x: 3.5,
+      z: 2.5,
+      w: 3,
+      d: 2.5,
+      spot: [4.4, 3.2],
+    },
+    {
+      id: "cuisine",
+      kind: "kitchen",
+      name: "Cuisine",
+      level: 0,
+      x: 6.5,
+      z: 0,
+      w: 4,
+      d: 5,
+      spot: [8.5, 2.6],
+    },
+    {
+      id: "sejour",
+      kind: "living",
+      name: "Séjour",
+      level: 0,
+      x: 0,
+      z: 5,
+      w: 10.5,
+      d: 4.5,
+      spot: [5.2, 7.4],
+    },
+    {
+      id: "garage",
+      kind: "garage",
+      name: "Garage",
+      level: 0,
+      x: 10.5,
+      z: 3,
+      w: 5.5,
+      d: 5.5,
+      spot: [13.2, 5.7],
+    },
 
     // ── Upstairs ─────────────────────────────────────────────────────────
     {
@@ -124,8 +184,30 @@ const house: HouseSpec = {
       spot: [-2, 12],
       ground: true,
     },
-    { id: "terrasse", name: "Terrasse", level: null, x: 0, z: 9.5, w: 10.5, d: 3, spot: [5.2, 11] },
-    { id: "piscine", name: "Piscine", level: null, x: 1.5, z: 13.5, w: 8, d: 4, spot: [5.5, 15.5] },
+    {
+      id: "terrasse",
+      kind: "terrace",
+      name: "Terrasse",
+      level: null,
+      x: 0,
+      z: 9.5,
+      w: 10.5,
+      d: 3,
+      spot: [5.2, 11],
+    },
+    {
+      id: "piscine",
+      kind: "pool",
+      name: "Piscine",
+      level: null,
+      x: 1.5,
+      z: 13.5,
+      w: 8,
+      d: 4,
+      spot: [5.5, 15.5],
+      // The pool spot, under water.
+      lamps: [[5.5, 15.5]],
+    },
   ],
 
   // Named by room and side, centred `at` metres from the room's north or west end.
@@ -214,6 +296,53 @@ const house: HouseSpec = {
       solar: { rows: 2, perRow: 4 },
     },
     { over: 0, kind: "flat", x: 10.5, z: 3, w: 5.5, d: 5.5, rise: 0.3, overhang: 0.15 },
+  ],
+
+  // The plot: a hedge all round, the gate across the drive, a gap for the path.
+  fence: {
+    height: 1.4,
+    thickness: 0.5,
+    segments: [
+      // North, along the street: hedge — gap for the path — hedge — gate — hedge.
+      { axis: "x", at: -4, from: -5, to: 4.2 },
+      { axis: "x", at: -4, from: 5.8, to: 16.3 },
+      { axis: "x", at: -4, from: 19.5, to: 21 },
+      { axis: "x", at: 20, from: -5, to: 21 },
+      { axis: "z", at: -5, from: -4, to: 20 },
+      { axis: "z", at: 21, from: -4, to: 20 },
+    ],
+    // Slides west, inside the hedge, when the Portail says it is open.
+    gates: [{ id: "gate:portail-1", axis: "x", at: -3.6, from: 16.3, to: 19.5, slide: -1 }],
+  },
+
+  beds: [
+    // The plantations: a bed along the west of the terrace and one under the
+    // office window, both on the Vanne Plantations.
+    { id: "massif-ouest", kind: "flowers", x: -3.5, z: 9.5, w: 3, d: 6, watering: "plantations" },
+    {
+      id: "massif-nord",
+      kind: "flowers",
+      x: -0.5,
+      z: -2.2,
+      w: 4.5,
+      d: 1.6,
+      watering: "plantations",
+    },
+    // The lawn east of the pool, on the Vanne Pelouse.
+    { id: "pelouse", kind: "lawn", x: 11, z: 10, w: 9, d: 9, watering: "pelouse" },
+  ],
+
+  trees: [
+    { x: -3, z: 17.5, kind: "tree", size: 5 },
+    { x: 19, z: 17.5, kind: "tree", size: 5.5 },
+    { x: -3, z: 1, kind: "tree", size: 4.5 },
+    { x: 13.2, z: 11, kind: "olive", size: 3.2 },
+    { x: 2, z: -2.9, kind: "bush", size: 0.9 },
+    { x: 8, z: -2.9, kind: "bush", size: 1 },
+    { x: 13, z: -2.9, kind: "bush", size: 0.9 },
+    { x: 10.6, z: 14, kind: "bush", size: 1 },
+    { x: 10.6, z: 16.8, kind: "bush", size: 0.9 },
+    { x: 19.5, z: 8, kind: "bush", size: 1.1 },
   ],
 
   patches: [

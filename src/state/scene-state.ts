@@ -29,6 +29,10 @@ export interface RoomState {
   lamps: LampState[];
   /** True open, one per reporting door the plan declares. Null: no contact bound. */
   doors: (boolean | null)[];
+  /** The room is being heated by something of its own: a radiator on, a stove lit. */
+  heating: boolean;
+  /** The pool cover, 0 closed … 100 open, on the pool room. Null: none. */
+  cover: number | null;
   /** What a sensor in the room reports, or false when it has none. */
   motion: boolean;
   temperatureC: number | null;
@@ -51,10 +55,18 @@ export interface SkyState extends SunPosition {
   clearness: number;
 }
 
+export interface GardenState {
+  /** Fence gate id → open, or null when nothing reports on it. */
+  gates: Record<string, boolean | null>;
+  /** Watering group → the valve is open, or null when there is no valve. */
+  watering: Record<string, boolean | null>;
+}
+
 export interface SceneState {
   rooms: Record<string, RoomState>;
   people: { id: string; label: string; room: string | null }[];
   sky: SkyState;
+  garden: GardenState;
   problems: string[];
 }
 
@@ -158,6 +170,15 @@ function assemble(input: BuildInput, derived: Derived): SceneState {
           ? null
           : !booleanOf(contact.dataBindings.find((b) => b.category === "contact_door")?.value),
       ),
+      heating:
+        bindings.heaters.some((h) =>
+          booleanOf(h.dataBindings.find((b) => b.alias === "state")?.value),
+        ) || booleanOf(bindings.thermostat?.dataBindings.find((b) => b.alias === "power")?.value),
+      cover:
+        bindings.cover === null
+          ? null
+          : (numberOf(bindings.cover.dataBindings.find((b) => b.alias === "position")?.value) ??
+            100),
       // The zone's own aggregation is the better answer where it exists: it folds
       // every sensor in the room, including ones the derivation did not pick.
       motion: zone?.motion ?? sensorMotion,
@@ -177,9 +198,24 @@ function assemble(input: BuildInput, derived: Derived): SceneState {
   const rain =
     numberOf(derived.weather?.dataBindings.find((b) => b.category === "rain")?.value) ?? 0;
 
+  // Open is the complement of the contact, as for the doors; a valve reports its
+  // own state directly.
+  const garden: GardenState = { gates: {}, watering: {} };
+  for (const [id, gate] of Object.entries(derived.gates)) {
+    garden.gates[id] =
+      gate === null
+        ? null
+        : !booleanOf(gate.dataBindings.find((b) => b.category === "contact_door")?.value);
+  }
+  for (const [group, valve] of Object.entries(derived.watering)) {
+    garden.watering[group] =
+      valve === null ? null : booleanOf(valve.dataBindings.find((b) => b.alias === "state")?.value);
+  }
+
   return {
     rooms,
     people: derived.people,
+    garden,
     sky: {
       ...sun,
       rainMmPerHour: rain,

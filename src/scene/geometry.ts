@@ -12,7 +12,7 @@
  * is in this file.
  */
 
-import type { Level, Plan, Rect, Roof, Room, StairRun, Wall } from "../plan/types.ts";
+import type { Bed, Level, Plan, Rect, Roof, Room, StairRun, Tree, Wall } from "../plan/types.ts";
 
 /** A solid rectangle of wall: along the wall from `from` to `to`, from `y0` to `y1`. */
 export interface WallPiece {
@@ -422,4 +422,171 @@ export function solarPanels(roof: Roof, wallHeight: number): Panel[] {
 /** The tallest thing on the house above its top storey's walls, for framing. */
 export function roofRise(plan: Plan): number {
   return Math.max(0, ...(plan.roofs ?? []).map((r) => r.rise + 0.05));
+}
+
+/** A block of furniture: a box, and which material it is drawn in. */
+export interface Piece {
+  x: number;
+  y: number;
+  z: number;
+  w: number;
+  h: number;
+  d: number;
+  material: "wood" | "fabric" | "white" | "dark" | "metal" | "car";
+}
+
+/**
+ * What a room of a kind is furnished with, laid out from its corners.
+ *
+ * Not a catalogue — a bed, a wardrobe, a desk, a sofa, a table — enough that a
+ * room reads as what it is at a glance and no more, because every block is drawn
+ * on a phone. Positions are relative to the room, so the same kitchen fits a
+ * kitchen of any size, and nothing is placed within a door's swing of the walls
+ * that carry one: the north wall in most rooms, so furniture keeps to the south.
+ */
+export function furnitureFor(room: Room): Piece[] {
+  const { x, z, w, d } = room;
+  const pieces: Piece[] = [];
+  const add = (
+    px: number,
+    pz: number,
+    pw: number,
+    ph: number,
+    pd: number,
+    material: Piece["material"],
+    py = 0,
+  ): void => {
+    pieces.push({ x: x + px, y: py, z: z + pz, w: pw, h: ph, d: pd, material });
+  };
+  switch (room.kind) {
+    case "bedroom": {
+      // The bed against the south wall, head to it; a wardrobe on the west.
+      const bw = Math.min(1.6, w - 1.2);
+      add((w - bw) / 2, d - 2.1, bw, 0.45, 2.0, "wood");
+      add((w - bw) / 2 + 0.05, d - 2.05, bw - 0.1, 0.2, 1.9, "white", 0.45);
+      add((w - bw) / 2 + 0.1, d - 2.0, bw - 0.2, 0.12, 0.45, "fabric", 0.65);
+      add(0.1, 0.6, 0.6, 2.0, Math.min(1.6, d - 2.9), "wood");
+      break;
+    }
+    case "bathroom": {
+      // A bath along the west, the basin on the east wall.
+      add(0.1, d - 1.9, 0.75, 0.55, 1.7, "white");
+      add(w - 0.7, d / 2 - 0.35, 0.55, 0.85, 0.7, "white");
+      break;
+    }
+    case "kitchen": {
+      // A run of counters along the east wall, a fridge at its end, an island.
+      add(w - 0.65, 0.3, 0.6, 0.9, d - 1.0, "white");
+      add(w - 0.65, d - 1.2, 0.6, 1.9, 0.7, "metal");
+      add(w / 2 - 1.0, d / 2 - 0.45, 1.6, 0.9, 0.9, "wood");
+      break;
+    }
+    case "living": {
+      // An L of sofa round a low table, west half; the dining table east.
+      add(0.6, d - 1.5, 2.6, 0.75, 0.9, "fabric");
+      add(0.6, d - 3.2, 0.9, 0.75, 1.7, "fabric");
+      add(1.9, d - 3.0, 1.1, 0.4, 0.8, "wood");
+      const tx = w * 0.62;
+      add(tx, d / 2 - 0.5, 1.8, 0.75, 1.0, "wood");
+      for (const [cx, cz] of [
+        [tx - 0.5, d / 2 - 0.25],
+        [tx + 1.8, d / 2 - 0.25],
+        [tx + 0.35, d / 2 - 1.0],
+        [tx + 1.0, d / 2 - 1.0],
+        [tx + 0.35, d / 2 + 0.55],
+        [tx + 1.0, d / 2 + 0.55],
+      ]) {
+        add(cx, cz, 0.45, 0.45, 0.45, "dark");
+      }
+      break;
+    }
+    case "office": {
+      // A desk under the window on the north, a chair, a bookcase on the west.
+      add(w / 2 - 0.8, 0.35, 1.6, 0.74, 0.7, "wood");
+      add(w / 2 - 0.25, 1.15, 0.5, 0.5, 0.5, "dark");
+      add(0.1, d - 1.3, 0.35, 1.9, 1.1, "wood");
+      break;
+    }
+    case "hall":
+      // A console by the door.
+      add(w - 1.1, d - 0.5, 1.0, 0.85, 0.35, "wood");
+      break;
+    case "garage": {
+      // The car, nose to the house; shelves on the north wall.
+      const cx = w / 2 - 0.9;
+      add(cx, 0.8, 1.8, 0.55, 4.2, "car", 0.3);
+      add(cx + 0.2, 1.8, 1.4, 0.55, 2.0, "dark", 0.85);
+      for (const [wx, wz] of [
+        [cx - 0.05, 1.4],
+        [cx + 1.55, 1.4],
+        [cx - 0.05, 4.0],
+        [cx + 1.55, 4.0],
+      ]) {
+        add(wx, wz, 0.3, 0.6, 0.6, "dark");
+      }
+      add(0.1, 0.2, w - 0.2, 1.8, 0.4, "metal");
+      break;
+    }
+    default:
+      break;
+  }
+  return pieces;
+}
+
+/**
+ * Where a room's flowers grow: scattered on a grid with a deterministic jitter,
+ * so a bed looks planted rather than tiled and the same bed looks the same on
+ * every load.
+ */
+export function flowerSpots(bed: Bed, spacing = 0.55): [number, number][] {
+  if (bed.kind !== "flowers") return [];
+  const spots: [number, number][] = [];
+  let seed = Math.round((bed.x * 31 + bed.z * 17) * 1000);
+  const jitter = (): number => {
+    seed = (seed * 1103515245 + 12345) % 2147483648;
+    return (seed / 2147483648 - 0.5) * spacing * 0.6;
+  };
+  for (let px = bed.x + spacing / 2; px < bed.x + bed.w; px += spacing) {
+    for (let pz = bed.z + spacing / 2; pz < bed.z + bed.d; pz += spacing) {
+      spots.push([px + jitter(), pz + jitter()]);
+    }
+  }
+  return spots;
+}
+
+/** Where the sprinklers stand on a bed: its centre, and a few more on a big one. */
+export function sprinklerSpots(bed: Bed): [number, number][] {
+  const across = Math.max(1, Math.round(bed.w / 4));
+  const down = Math.max(1, Math.round(bed.d / 4));
+  const spots: [number, number][] = [];
+  for (let i = 0; i < across; i++) {
+    for (let j = 0; j < down; j++) {
+      spots.push([bed.x + ((i + 0.5) * bed.w) / across, bed.z + ((j + 0.5) * bed.d) / down]);
+    }
+  }
+  return spots;
+}
+
+/** A tree as a trunk and a crown of spheres; a bush as a squashed sphere. */
+export interface TreeParts {
+  trunk: { x: number; y: number; z: number; radius: number; height: number } | null;
+  crown: { x: number; y: number; z: number; radius: number }[];
+}
+
+export function treeParts(tree: Tree): TreeParts {
+  const { x, z, size } = tree;
+  if (tree.kind === "bush") {
+    return { trunk: null, crown: [{ x, y: size * 0.45, z, radius: size * 0.55 }] };
+  }
+  const trunkHeight = size * (tree.kind === "olive" ? 0.35 : 0.42);
+  const r = size * (tree.kind === "olive" ? 0.36 : 0.3);
+  return {
+    trunk: { x, y: trunkHeight / 2, z, radius: size * 0.05, height: trunkHeight },
+    crown: [
+      { x, y: trunkHeight + r * 0.8, z, radius: r },
+      { x: x + r * 0.55, y: trunkHeight + r * 0.55, z: z + r * 0.2, radius: r * 0.75 },
+      { x: x - r * 0.5, y: trunkHeight + r * 0.6, z: z - r * 0.3, radius: r * 0.7 },
+      { x, y: trunkHeight + r * 1.45, z, radius: r * 0.65 },
+    ],
+  };
 }

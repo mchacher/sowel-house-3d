@@ -16,4 +16,11 @@ export interface Mapping {
   zones: Record<string, string>;
   /** The equipment carrying the weather, by name. Optional: a house may have none. */
   weatherEquipment?: string;
+  /**
+   * Fence gate id → the equipment reporting on it, by name. Named rather than
+   * derived because the plot belongs to no room, so there is no zone to look in.
+   */
+  gates?: Record<string, string>;
+  /** Watering group (a bed's `watering`) → the valve equipment, by name. */
+  watering?: Record<string, string>;
 }

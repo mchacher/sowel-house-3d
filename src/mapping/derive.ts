@@ -20,6 +20,9 @@ import type { Mapping } from "./types.ts";
 
 const LAMP_TYPES = new Set(["light_onoff", "light_dimmable", "light_color"]);
 const SHUTTER_TYPES = new Set(["shutter", "awning"]);
+const HEATER_TYPES = new Set(["heater"]);
+const THERMOSTAT_TYPES = new Set(["thermostat"]);
+const COVER_TYPES = new Set(["pool_cover"]);
 
 export interface RoomBindings {
   roomId: string;
@@ -46,6 +49,12 @@ export interface RoomBindings {
    * `null` where the room has none.
    */
   doors: (Equipment | null)[];
+  /** Electric radiators in the room: drawn on a wall, warm when on. */
+  heaters: Equipment[];
+  /** A local thermostat — the living room's stove. Drawn as one. */
+  thermostat: Equipment | null;
+  /** The pool's cover, on the pool room. */
+  cover: Equipment | null;
 }
 
 export interface Person {
@@ -60,6 +69,10 @@ export interface Derived {
   rooms: Record<string, RoomBindings>;
   people: Person[];
   weather: Equipment | null;
+  /** Fence gate id → the equipment the mapping names, or null when it is missing. */
+  gates: Record<string, Equipment | null>;
+  /** Watering group → the valve the mapping names, or null. */
+  watering: Record<string, Equipment | null>;
   /** The root zone, whose aggregation carries the house's sunlight. */
   houseZoneId: string | null;
   problems: string[];
@@ -185,6 +198,9 @@ export function derive(
       shutters,
       sensors,
       doors,
+      heaters: inZone.filter((e) => HEATER_TYPES.has(e.type)),
+      thermostat: inZone.find((e) => THERMOSTAT_TYPES.has(e.type)) ?? null,
+      cover: inZone.find((e) => COVER_TYPES.has(e.type)) ?? null,
     };
   }
 
@@ -210,5 +226,21 @@ export function derive(
     }
   }
 
-  return { rooms, people, weather, houseZoneId: root?.id ?? null, problems };
+  // The plot's own equipments, named in the mapping because no room owns them.
+  const named = (
+    table: Record<string, string> | undefined,
+    what: string,
+  ): Record<string, Equipment | null> => {
+    const out: Record<string, Equipment | null> = {};
+    for (const [key, name] of Object.entries(table ?? {})) {
+      const found = equipments.find((e) => e.name === name && e.enabled) ?? null;
+      if (!found) problems.push(`${what} introuvable : « ${name} » (${key})`);
+      out[key] = found;
+    }
+    return out;
+  };
+  const gates = named(mapping.gates, "Portail");
+  const watering = named(mapping.watering, "Vanne");
+
+  return { rooms, people, weather, gates, watering, houseZoneId: root?.id ?? null, problems };
 }

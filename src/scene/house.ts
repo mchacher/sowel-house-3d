@@ -16,6 +16,8 @@
 
 import {
   BoxGeometry,
+  CircleGeometry,
+  ConeGeometry,
   CylinderGeometry,
   ExtrudeGeometry,
   Group,
@@ -29,6 +31,8 @@ import {
 import type { Opening, Plan, Room, Wall } from "../plan/types.ts";
 import type { SceneState } from "../state/scene-state.ts";
 import {
+  flowerSpots,
+  furnitureFor,
   gableRoof,
   lampSpots,
   levelContents,
@@ -39,8 +43,10 @@ import {
   SLAB,
   slabPieces,
   solarPanels,
+  sprinklerSpots,
   stairSteps,
   storeyPitch,
+  treeParts,
   wallPieces,
 } from "./geometry.ts";
 import { copyMaterials, setGhost, type Materials } from "./materials.ts";
@@ -67,9 +73,20 @@ export type Focus = number | "outside";
  * lifting door's `scale.y` towards a drop — the same easing a shutter gets.
  */
 export interface DoorHandle {
-  kind: "swing" | "lift";
+  kind: "swing" | "lift" | "slide" | "cover";
   object: Object3D;
   target: number;
+  /** For a sliding gate: which coordinate it slides along, and where shut is. */
+  axis?: "x" | "z";
+  home?: number;
+}
+
+/** What Sowel reports per room that the graph must be built with the right number of. */
+export interface Counts {
+  lamps: Record<string, number>;
+  heaters: Record<string, number>;
+  /** Rooms with a local thermostat — drawn as a stove. */
+  stoves: string[];
 }
 
 /** Where a swing door stops when open, and a lifting one when open. */
@@ -83,7 +100,7 @@ export interface HouseHandles {
   levels: Map<number, LevelHandles>;
   /** The ground, the terrace and the pool, which belong to no storey. */
   outdoor: LevelHandles;
-  lamps: Map<string, { light: PointLight; shade: Mesh }[]>;
+  lamps: Map<string, { light: PointLight; shade: Mesh; pool: Mesh | null }[]>;
   /**
    * Per room, in plan window order; the panel is anchored at the lintel.
    *
@@ -94,6 +111,16 @@ export interface HouseHandles {
    */
   shutters: Map<string, { panel: Mesh; height: number; target: number }[]>;
   sensors: Map<string, Mesh>;
+  /** The halo round a sensor, shown while it sees somebody. */
+  halos: Map<string, Mesh>;
+  /** Radiators and stoves per room, warm when the room is heating. */
+  heaters: Map<string, { body: Mesh; cold: Material }[]>;
+  /** Fence gates by id, sliding. */
+  gates: Map<string, DoorHandle>;
+  /** Pool covers by room, rolling from the north edge. */
+  covers: Map<string, DoorHandle>;
+  /** The sprinkler jets of each watering group, shown while the valve is open. */
+  watering: Map<string, Object3D[]>;
   /** Per room: its window panes, lit from outside when a lamp in the room is on. */
   panes: Map<string, Mesh[]>;
   /** Per room, in plan order of its `door:` and `gate:` openings. */
@@ -136,6 +163,8 @@ export interface BuildHouseOptions {
   level: Focus;
   /** Lamp counts per room, so the right number of lights exist from the start. */
   lampCounts: Record<string, number>;
+  /** Radiators and stoves, from the derivation; none when absent. */
+  counts?: Partial<Counts>;
 }
 
 export function buildHouse(options: BuildHouseOptions): HouseHandles {
@@ -157,6 +186,11 @@ export function buildHouse(options: BuildHouseOptions): HouseHandles {
     lamps: new Map(),
     shutters: new Map(),
     sensors: new Map(),
+    halos: new Map(),
+    heaters: new Map(),
+    gates: new Map(),
+    covers: new Map(),
+    watering: new Map(),
     panes: new Map(),
     doors: new Map(),
     roof: null,
@@ -178,7 +212,7 @@ export function buildHouse(options: BuildHouseOptions): HouseHandles {
     entry.group.position.y = levelElevation(plan, slab.level);
     root.add(entry.group);
     handles.levels.set(slab.level, entry);
-    buildLevel(plan, entry, handles, lampCounts);
+    buildLevel(plan, entry, handles, lampCounts, options.counts ?? {});
   }
 
   if ((plan.roofs ?? []).length > 0) {
@@ -231,6 +265,164 @@ function buildOutdoors(plan: Plan, entry: LevelHandles, handles: HouseHandles): 
     slab.castShadow = false;
     group.add(at(slab, patch.x + patch.w / 2, -0.015, patch.z + patch.d / 2));
   }
+
+  // The hedge, and the gate that slides along it.
+  const fence = plan.fence;
+  if (fence) {
+    for (const seg of fence.segments) {
+      const length = seg.to - seg.from;
+      const mid = (seg.from + seg.to) / 2;
+      const hedge =
+        seg.axis === "x"
+          ? box(length, fence.height, fence.thickness, materials.hedge)
+          : box(fence.thickness, fence.height, length, materials.hedge);
+      group.add(
+        at(
+          hedge,
+          seg.axis === "x" ? mid : seg.at,
+          fence.height / 2,
+          seg.axis === "x" ? seg.at : mid,
+        ),
+      );
+    }
+    for (const gate of fence.gates) {
+      const length = gate.to - gate.from;
+      const h = fence.height * 0.95;
+      // Slats: a frame and bars rather than a slab, so it reads as a gate and not
+      // as a bit of wall that moves.
+      const panel = new Group();
+      const bar = (px: number, pw: number): void => {
+        const slat =
+          gate.axis === "x" ? box(pw, h, 0.06, materials.metal) : box(0.06, h, pw, materials.metal);
+        slat.position.set(gate.axis === "x" ? px : 0, h / 2, gate.axis === "x" ? 0 : px);
+        panel.add(slat);
+      };
+      for (let u = -length / 2 + 0.08; u <= length / 2 - 0.08; u += 0.22) bar(u, 0.05);
+      const rail =
+        gate.axis === "x"
+          ? box(length, 0.08, 0.08, materials.dark)
+          : box(0.08, 0.08, length, materials.dark);
+      rail.position.y = h - 0.04;
+      const rail2 = rail.clone();
+      rail2.position.y = 0.1;
+      panel.add(rail, rail2);
+      const home = (gate.from + gate.to) / 2;
+      panel.position.set(gate.axis === "x" ? home : gate.at, 0, gate.axis === "x" ? gate.at : home);
+      panel.userData.travel = length * gate.slide;
+      group.add(panel);
+      handles.gates.set(gate.id, {
+        kind: "slide",
+        object: panel,
+        target: 0,
+        axis: gate.axis,
+        home,
+      });
+    }
+  }
+
+  // Beds: soil with flowers, or a lawn; each with the sprinklers its valve drives.
+  for (const bed of plan.beds ?? []) {
+    const patch = box(bed.w, 0.06, bed.d, bed.kind === "lawn" ? materials.lawn : materials.soil);
+    patch.castShadow = false;
+    group.add(at(patch, bed.x + bed.w / 2, -0.01, bed.z + bed.d / 2));
+    flowerSpots(bed).forEach(([fx, fz], i) => {
+      const stem = new Mesh(new CylinderGeometry(0.015, 0.015, 0.3, 5), materials.leaves);
+      group.add(at(stem, fx, 0.17, fz));
+      const head = new Mesh(new SphereGeometry(0.09, 7, 6), materials.flowers[i % 3]);
+      group.add(at(head, fx, 0.36, fz));
+    });
+    if (bed.watering) {
+      const jets: Object3D[] = [];
+      for (const [sx, sz] of sprinklerSpots(bed)) {
+        const post = new Mesh(new CylinderGeometry(0.03, 0.03, 0.25, 6), materials.metal);
+        group.add(at(post, sx, 0.13, sz));
+        // A cone of water, tip down on the sprinkler, hidden until the valve opens.
+        const jet = new Mesh(new ConeGeometry(1.3, 0.9, 14, 1, true), materials.jet);
+        jet.rotation.x = Math.PI;
+        jet.position.set(sx, 0.7, sz);
+        jet.visible = false;
+        group.add(jet);
+        jets.push(jet);
+      }
+      handles.watering.set(bed.watering, [...(handles.watering.get(bed.watering) ?? []), ...jets]);
+    }
+  }
+
+  for (const tree of plan.trees ?? []) {
+    const parts = treeParts(tree);
+    if (parts.trunk) {
+      const t = parts.trunk;
+      const trunk = new Mesh(
+        new CylinderGeometry(t.radius, t.radius * 1.3, t.height, 8),
+        materials.trunk,
+      );
+      trunk.castShadow = true;
+      group.add(at(trunk, t.x, t.y, t.z));
+    }
+    const leaf =
+      tree.kind === "olive"
+        ? materials.olive
+        : tree.kind === "bush"
+          ? materials.hedge
+          : materials.leaves;
+    for (const c of parts.crown) {
+      const crown = new Mesh(new SphereGeometry(c.radius, 10, 8), leaf);
+      crown.castShadow = true;
+      if (tree.kind === "bush") crown.scale.y = 0.75;
+      group.add(at(crown, c.x, c.y, c.z));
+    }
+  }
+
+  // The pool: a coping round the water, and the cover that rolls from its north
+  // edge when Sowel says so.
+  for (const room of rooms) {
+    if (room.kind !== "pool") continue;
+    const c = 0.4;
+    const ring: [number, number, number, number][] = [
+      [room.x - c, room.z - c, room.w + 2 * c, c],
+      [room.x - c, room.z + room.d, room.w + 2 * c, c],
+      [room.x - c, room.z, c, room.d],
+      [room.x + room.w, room.z, c, room.d],
+    ];
+    for (const [rx, rz, rw, rd] of ring) {
+      const coping = box(rw, 0.1, rd, materials.coping);
+      coping.castShadow = false;
+      group.add(at(coping, rx + rw / 2, 0.03, rz + rd / 2));
+    }
+    const geometry = new BoxGeometry(room.w - 0.1, 0.04, room.d);
+    geometry.translate(0, 0, room.d / 2);
+    const cover = new Mesh(geometry, materials.cover);
+    cover.castShadow = false;
+    cover.position.set(room.x + room.w / 2, 0.05, room.z);
+    cover.scale.z = 0.0001;
+    group.add(cover);
+    handles.covers.set(room.id, { kind: "cover", object: cover, target: 0.0001 });
+  }
+
+  // Outdoor lamps stand where the plan says: bollards, and the pool's spot under
+  // the water. Their lights stay on whichever storey is read — the garden is
+  // never the storey out of focus.
+  for (const room of rooms) {
+    const lamps: { light: PointLight; shade: Mesh; pool: Mesh | null }[] = [];
+    for (const [lx, lz] of room.lamps ?? []) {
+      const underwater = room.kind === "pool";
+      const shade = new Mesh(
+        new SphereGeometry(underwater ? 0.12 : 0.1, 10, 8),
+        materials.shadeOff,
+      );
+      if (!underwater) {
+        const post = new Mesh(new CylinderGeometry(0.05, 0.06, 0.7, 8), materials.bollard);
+        group.add(at(post, lx, 0.35, lz));
+      }
+      group.add(at(shade, lx, underwater ? -0.15 : 0.78, lz));
+      const light = new PointLight(underwater ? 0x7fd0ff : 0xffd9a0, 0, underwater ? 7 : 5);
+      light.castShadow = false;
+      light.position.set(lx, underwater ? -0.1 : 0.8, lz);
+      group.add(light);
+      lamps.push({ light, shade, pool: null });
+    }
+    if (lamps.length > 0) handles.lamps.set(room.id, lamps);
+  }
 }
 
 function buildLevel(
@@ -238,6 +430,7 @@ function buildLevel(
   entry: LevelHandles,
   handles: HouseHandles,
   lampCounts: Record<string, number>,
+  counts: Partial<Counts>,
 ): void {
   const { group, materials, level } = entry;
   const { rooms, walls } = levelContents(plan, level);
@@ -272,7 +465,7 @@ function buildLevel(
   for (const room of rooms) {
     handles.rooms.set(room.id, room);
 
-    const lamps: { light: PointLight; shade: Mesh }[] = [];
+    const lamps: { light: PointLight; shade: Mesh; pool: Mesh | null }[] = [];
     for (const [x, y, z] of lampSpots(room, lampCounts[room.id] ?? 0, plan.height)) {
       const shade = new Mesh(new SphereGeometry(0.13, 12, 10), materials.shadeOff);
       group.add(at(shade, x, y, z));
@@ -282,16 +475,52 @@ function buildLevel(
       light.castShadow = false;
       light.position.set(x, y - 0.1, z);
       group.add(light);
-      lamps.push({ light, shade });
+      // The pool of light on the floor: a point light in a stylised room is subtle
+      // by day, and a lamp being on is the first thing a visitor wants to see.
+      const pool = new Mesh(new CircleGeometry(1.15, 24), materials.lightPool);
+      pool.rotation.x = -Math.PI / 2;
+      pool.position.set(x, 0.012, z);
+      pool.visible = false;
+      group.add(pool);
+      lamps.push({ light, shade, pool });
     }
     handles.lamps.set(room.id, lamps);
 
-    // A sensor reads as a small disc near the ceiling corner; it is the only thing
-    // in the scene with no physical analogue, and it earns its place by being what
-    // a visitor clicks in phase 4.
-    const sensor = new Mesh(new SphereGeometry(0.07, 8, 6), materials.sensorOff);
+    // A sensor reads as a small sphere near the ceiling corner, and a halo round
+    // it while it sees somebody. It is the only thing in the scene with no
+    // physical analogue, and it earns its place by being what a visitor clicks in
+    // phase 4.
+    const sensor = new Mesh(new SphereGeometry(0.09, 10, 8), materials.sensorOff);
     group.add(at(sensor, room.x + 0.3, plan.height - 0.2, room.z + 0.3));
     handles.sensors.set(room.id, sensor);
+    const halo = new Mesh(new SphereGeometry(0.32, 12, 10), materials.halo);
+    halo.visible = false;
+    group.add(at(halo, room.x + 0.3, plan.height - 0.2, room.z + 0.3));
+    handles.halos.set(room.id, halo);
+
+    for (const piece of furnitureFor(room)) {
+      const block = box(piece.w, piece.h, piece.d, materials[piece.material]);
+      group.add(at(block, piece.x + piece.w / 2, piece.y + piece.h / 2, piece.z + piece.d / 2));
+    }
+
+    // Radiators on the west wall, a stove in the corner: only where Sowel has one.
+    const heaters: { body: Mesh; cold: Material }[] = [];
+    for (let i = 0; i < (counts.heaters?.[room.id] ?? 0); i++) {
+      const body = box(0.08, 0.6, 1.0, materials.white);
+      group.add(at(body, room.x + 0.13, 0.4, room.z + room.d / 2 + i * 1.3));
+      heaters.push({ body, cold: materials.white });
+    }
+    if (counts.stoves?.includes(room.id)) {
+      const stove = box(0.55, 1.1, 0.55, materials.stove);
+      group.add(at(stove, room.x + 0.5, 0.55, room.z + room.d - 0.6));
+      const pipe = new Mesh(new CylinderGeometry(0.06, 0.06, plan.height - 1.1, 8), materials.dark);
+      group.add(at(pipe, room.x + 0.5, 1.1 + (plan.height - 1.1) / 2, room.z + room.d - 0.6));
+      // The little window in its door is what glows.
+      const window = box(0.3, 0.22, 0.03, materials.dark);
+      group.add(at(window, room.x + 0.5, 0.55, room.z + room.d - 0.6 - 0.28));
+      heaters.push({ body: window, cold: materials.dark });
+    }
+    if (heaters.length > 0) handles.heaters.set(room.id, heaters);
   }
 
   // Walls, and the windows and shutters they carry.
@@ -402,6 +631,11 @@ function doorLeaf(
   return { kind: "swing", object: pivot, target: 0 };
 }
 
+/** How far a sliding gate travels: its own length, signed the way the plan says. */
+function gateLength(gate: DoorHandle): number {
+  return (gate.object.userData.travel as number | undefined) ?? 0;
+}
+
 /** The roofs, in a group of their own: their ghosting is not any storey's. */
 function buildRoofs(plan: Plan, entry: LevelHandles): void {
   const { group, materials } = entry;
@@ -501,7 +735,8 @@ export function focusLevel(handles: HouseHandles, focus: Focus): void {
   });
 
   for (const [roomId, lamps] of handles.lamps) {
-    const on = outside || handles.rooms.get(roomId)?.level === focus;
+    const level = handles.rooms.get(roomId)?.level ?? null;
+    const on = outside || level === null || level === focus;
     for (const lamp of lamps) lamp.light.visible = on;
   }
 }
@@ -562,7 +797,35 @@ export function applyState(
       const on = lit?.on ?? false;
       lamp.light.intensity = on ? 2.2 * Math.max(0.15, lit?.brightness ?? 1) : 0;
       lamp.shade.material = on ? materials.shadeOn : materials.shadeOff;
+      if (lamp.pool) lamp.pool.visible = on;
     });
+  }
+
+  for (const [roomId, halo] of handles.halos) {
+    halo.visible = state.rooms[roomId]?.motion ?? false;
+  }
+
+  for (const [roomId, heaters] of handles.heaters) {
+    const warm = state.rooms[roomId]?.heating ?? false;
+    for (const heater of heaters) heater.body.material = warm ? materials.warm : heater.cold;
+  }
+
+  for (const [id, gate] of handles.gates) {
+    const open = state.garden.gates[id] ?? false;
+    // Slid its own length along the fence, the way the plan says.
+    gate.target = open ? gateLength(gate) : 0;
+    if (immediate && gate.axis) gate.object.position[gate.axis] = (gate.home ?? 0) + gate.target;
+  }
+
+  for (const [roomId, cover] of handles.covers) {
+    const position = state.rooms[roomId]?.cover ?? null;
+    cover.target = Math.max(0.0001, shutterDrop(position));
+    if (immediate) cover.object.scale.z = cover.target;
+  }
+
+  for (const [group, jets] of handles.watering) {
+    const on = state.garden.watering[group] ?? false;
+    for (const jet of jets) jet.visible = on;
   }
 
   for (const [roomId, shutters] of handles.shutters) {

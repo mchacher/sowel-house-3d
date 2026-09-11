@@ -36,7 +36,7 @@ export function App() {
   // Computed once, in the initialiser: nothing here re-probes, and nothing sets it
   // from inside an effect.
   const [webgl] = useState(drawsWebGL);
-  const { phase, socket, plan, state, lampCounts } = useHouse(PLAN_URL, MAPPING_URL);
+  const { phase, socket, plan, state, lampCounts, counts } = useHouse(PLAN_URL, MAPPING_URL);
 
   // The renderer outlives a render, so it is built once the plan is in and torn down
   // with the component — not rebuilt on every state change.
@@ -66,8 +66,8 @@ export function App() {
   }, [plan, webgl]);
 
   useEffect(() => {
-    renderer.current?.setLampCounts(lampCounts);
-  }, [lampCounts]);
+    renderer.current?.setLampCounts(lampCounts, counts);
+  }, [lampCounts, counts]);
 
   useEffect(() => {
     renderer.current?.setLevel(level);

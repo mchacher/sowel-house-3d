@@ -29,6 +29,8 @@ import {
   buildHouse,
   focusLevel,
   syncPeople,
+  type Counts,
+  type DoorHandle,
   type Focus,
   type HouseHandles,
 } from "./house.ts";
@@ -50,6 +52,7 @@ export class HouseRenderer {
   private handles: HouseHandles | null = null;
   private level: Focus;
   private lampCounts: Record<string, number> = {};
+  private counts: Partial<Counts> = {};
   private state: SceneState | null = null;
   private frame = 0;
   private last = 0;
@@ -114,9 +117,10 @@ export class HouseRenderer {
     this.scene.add(new AmbientLight(0xffffff, 0.18));
   }
 
-  /** Lamp counts come from the derivation, so the graph is built with the right ones. */
-  setLampCounts(counts: Record<string, number>): void {
+  /** Counts come from the derivation, so the graph is built with the right ones. */
+  setLampCounts(counts: Record<string, number>, rest: Partial<Counts> = {}): void {
     this.lampCounts = counts;
+    this.counts = rest;
     this.rebuild();
   }
 
@@ -151,6 +155,7 @@ export class HouseRenderer {
       materials: this.materials,
       level: this.level,
       lampCounts: this.lampCounts,
+      counts: this.counts,
     });
     this.scene.add(this.handles.root);
     if (this.state) {
@@ -279,12 +284,28 @@ export class HouseRenderer {
         shutter.panel.scale.y += (shutter.target - shutter.panel.scale.y) * k;
       }
     }
-    for (const doors of this.handles.doors.values()) {
-      for (const door of doors) {
-        if (door.kind === "swing") {
-          door.object.rotation.y += (door.target - door.object.rotation.y) * k;
-        } else {
-          door.object.scale.y += (door.target - door.object.scale.y) * k;
+    const moving: DoorHandle[] = [
+      ...[...this.handles.doors.values()].flat(),
+      ...this.handles.gates.values(),
+      ...this.handles.covers.values(),
+    ];
+    for (const item of moving) {
+      const o = item.object;
+      switch (item.kind) {
+        case "swing":
+          o.rotation.y += (item.target - o.rotation.y) * k;
+          break;
+        case "lift":
+          o.scale.y += (item.target - o.scale.y) * k;
+          break;
+        case "cover":
+          o.scale.z += (item.target - o.scale.z) * k;
+          break;
+        case "slide": {
+          const axis = item.axis ?? "x";
+          const goal = (item.home ?? 0) + item.target;
+          o.position[axis] += (goal - o.position[axis]) * k;
+          break;
         }
       }
     }

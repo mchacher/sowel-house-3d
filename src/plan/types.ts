@@ -13,9 +13,31 @@
  * doorway.
  */
 
+/** What a room is for, which is what it is furnished as. */
+export type RoomKind =
+  | "bedroom"
+  | "bathroom"
+  | "kitchen"
+  | "living"
+  | "office"
+  | "hall"
+  | "stair"
+  | "garage"
+  | "terrace"
+  | "pool"
+  | "garden";
+
 export interface Room {
   id: string;
   name: string;
+  /** Furnished by kind; a room without one is left bare. */
+  kind?: RoomKind;
+  /**
+   * Where this room's lamps stand, for a room whose lamps are not under a ceiling
+   * — the garden's bollards, the pool's underwater spot. Paired in order with the
+   * lamps Sowel reports; indoor rooms hang theirs from `lampSpots` instead.
+   */
+  lamps?: [number, number][];
   /**
    * 0 ground, 1 upstairs, `null` outdoors.
    *
@@ -142,6 +164,50 @@ export interface Roof extends Rect {
   solar?: { rows: number; perRow: number };
 }
 
+/** A run of hedge, on the plot boundary or inside it. */
+export interface FenceSegment {
+  axis: "x" | "z";
+  at: number;
+  from: number;
+  to: number;
+}
+
+/**
+ * A gate in the fence, sliding along it. `from`…`to` is the gap it closes; open, it
+ * has slid its own length towards `slide`. Its id pairs it with a Sowel equipment
+ * through the mapping (`gates`), since the plot is no room's.
+ */
+export interface FenceGate {
+  id: string;
+  axis: "x" | "z";
+  at: number;
+  from: number;
+  to: number;
+  slide: 1 | -1;
+}
+
+export interface Fence {
+  height: number;
+  thickness: number;
+  segments: FenceSegment[];
+  gates: FenceGate[];
+}
+
+/** A flower bed or a lawn, watered by the valve its `watering` group names. */
+export interface Bed extends Rect {
+  id: string;
+  kind: "flowers" | "lawn";
+  watering?: string;
+}
+
+export interface Tree {
+  x: number;
+  z: number;
+  kind: "tree" | "olive" | "bush";
+  /** Roughly its height in metres. */
+  size: number;
+}
+
 /** A patch of ground that is not a room: a driveway, a path. Decoration only. */
 export interface Patch extends Rect {
   kind: "drive" | "path";
@@ -160,4 +226,7 @@ export interface Plan {
   stairs?: Stair[];
   roofs?: Roof[];
   patches?: Patch[];
+  fence?: Fence;
+  beds?: Bed[];
+  trees?: Tree[];
 }

@@ -12,6 +12,8 @@ function state(overrides: Partial<SceneState> = {}): SceneState {
         name: "Séjour",
         shutters: [],
         doors: [],
+        heating: false,
+        cover: null,
         lamps: [
           { on: true, brightness: 1 },
           { on: false, brightness: 0 },
@@ -27,6 +29,7 @@ function state(overrides: Partial<SceneState> = {}): SceneState {
       { id: "b", label: "Adulte 2", room: "away" },
     ],
     sky: { elevationDeg: 30, azimuthDeg: 180, isDaylight: true, rainMmPerHour: 0, clearness: 1 },
+    garden: { gates: {}, watering: {} },
     problems: [],
     ...overrides,
   };

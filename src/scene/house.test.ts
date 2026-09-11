@@ -33,6 +33,8 @@ function state(overrides: Partial<SceneState> = {}): SceneState {
       name: room.name,
       shutters: [],
       doors: [],
+      heating: false,
+      cover: null,
       lamps: [],
       motion: false,
       temperatureC: null,
@@ -44,6 +46,7 @@ function state(overrides: Partial<SceneState> = {}): SceneState {
     rooms,
     people: [],
     sky: { elevationDeg: 40, azimuthDeg: 180, isDaylight: true, rainMmPerHour: 0, clearness: 1 },
+    garden: { gates: {}, watering: {} },
     problems: [],
     ...overrides,
   };
@@ -133,9 +136,23 @@ describe("building the house", () => {
     // Two coplanar faces are a coin toss the depth buffer re-tosses every frame,
     // and the result was grass striped across the ground floor, crawling as the
     // camera zoomed. The fix is geometric and this is what holds it.
-    const outdoor = handles0().outdoor.group.children.map((c) => c.position.y);
-    const slabTop = 0; // the ground floor slab is 0.08 thick, centred at -0.04
-    for (const y of outdoor) expect(Math.abs(y - slabTop)).toBeGreaterThan(0.01);
+    const h = handles0();
+    const flat = new Set([
+      h.outdoor.materials.ground,
+      h.outdoor.materials.floor,
+      h.outdoor.materials.water,
+      h.outdoor.materials.lawn,
+      h.outdoor.materials.soil,
+      h.outdoor.materials.drive,
+      h.outdoor.materials.path,
+    ]);
+    const patches = h.outdoor.group.children.filter(
+      (c) => c instanceof Mesh && flat.has(c.material as Material),
+    );
+    expect(patches.length).toBeGreaterThan(5);
+    const slabTop = 0; // the ground floor slab is SLAB thick, centred at -SLAB / 2
+    for (const patch of patches)
+      expect(Math.abs(patch.position.y - slabTop)).toBeGreaterThan(0.005);
   });
 });
 
