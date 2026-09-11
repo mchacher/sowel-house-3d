@@ -7,6 +7,7 @@ import {
   outdoorRooms,
   gableRoof,
   slabPieces,
+  solarPanels,
   stackHeight,
   stairSteps,
   storeyPitch,
@@ -354,5 +355,47 @@ describe("a gable roof", () => {
       [8, roof.eavesY],
       [4, roof.ridgeY],
     ]);
+  });
+});
+
+describe("the solar array", () => {
+  const roof = {
+    over: 1,
+    kind: "gable" as const,
+    ridge: "x" as const,
+    x: 0,
+    z: 0,
+    w: 10,
+    d: 8,
+    rise: 2,
+    overhang: 0.5,
+    solar: { rows: 2, perRow: 4 },
+  };
+
+  it("lays eight panels on the south slope, lying in its plane, just off it", () => {
+    const panels = solarPanels(roof, 2.6);
+    const shape = gableRoof(roof, 2.6);
+    expect(panels).toHaveLength(8);
+    const south = shape.slopes[1];
+    for (const panel of panels) {
+      expect(panel.tilt).toBeCloseTo(south.tilt);
+      // South of the ridge, and never past the eaves.
+      expect(panel.position[2]).toBeGreaterThan(4);
+      expect(panel.position[2]).toBeLessThan(8.5);
+      // Between the eaves and the ridge in height, and above the slope surface: the
+      // point on the slope directly under it is lower by the lift.
+      const v = (panel.position[2] - south.position[2]) / Math.cos(south.tilt);
+      const onSlope = south.position[1] - v * Math.sin(south.tilt);
+      expect(panel.position[1] - onSlope).toBeGreaterThan(0.03);
+    }
+    // Four across, centred on the roof.
+    const xs = [...new Set(panels.map((p) => p.position[0].toFixed(2)))];
+    expect(xs).toHaveLength(4);
+    expect(panels.reduce((n, p) => n + p.position[0], 0) / 8).toBeCloseTo(5);
+  });
+
+  it("puts none on a flat roof or a roof with no array", () => {
+    expect(solarPanels({ ...roof, solar: undefined }, 2.6)).toEqual([]);
+    expect(solarPanels({ ...roof, kind: "flat" }, 2.6)).toEqual([]);
   });
 });

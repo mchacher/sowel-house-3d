@@ -138,6 +138,8 @@ export interface Roof extends Rect {
   rise: number;
   /** How far the eaves stick out past the walls. */
   overhang: number;
+  /** Solar panels on the sunward slope, in rows along the ridge. */
+  solar?: { rows: number; perRow: number };
 }
 
 /** A patch of ground that is not a room: a driveway, a path. Decoration only. */

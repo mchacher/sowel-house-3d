@@ -36,8 +36,11 @@ import {
   outdoorRooms,
   pieceBox,
   shutterDrop,
+  SLAB,
   slabPieces,
+  solarPanels,
   stairSteps,
+  storeyPitch,
   wallPieces,
 } from "./geometry.ts";
 import { copyMaterials, setGhost, type Materials } from "./materials.ts";
@@ -242,10 +245,16 @@ function buildLevel(
   const slab = plan.levels.find((l) => l.level === level);
   if (slab) {
     for (const piece of slabPieces(slab)) {
-      const floor = box(piece.w, 0.08, piece.d, materials.floor);
-      group.add(at(floor, piece.x + piece.w / 2, -0.04, piece.z + piece.d / 2));
+      const floor = box(piece.w, SLAB, piece.d, materials.floor);
+      group.add(at(floor, piece.x + piece.w / 2, -SLAB / 2, piece.z + piece.d / 2));
     }
   }
+
+  // Walls reach the underside of the slab above, not merely their own height:
+  // a storey's walls stopping short of the next floor is the slot of daylight
+  // described in `storeyPitch`.
+  const hasStoreyAbove = plan.levels.some((l) => l.level === level + 1);
+  const wallTop = hasStoreyAbove ? storeyPitch(plan) : plan.height;
 
   for (const stair of (plan.stairs ?? []).filter((s) => s.level === level)) {
     for (const run of stair.runs) {
@@ -287,7 +296,7 @@ function buildLevel(
 
   // Walls, and the windows and shutters they carry.
   for (const wall of walls) {
-    for (const piece of wallPieces(wall, plan.height)) {
+    for (const piece of wallPieces(wall, wallTop)) {
       const b = pieceBox(wall, piece, plan.thickness);
       group.add(at(box(b.w, b.h, b.d, materials.wall), b.x, b.y, b.z));
     }
@@ -420,6 +429,18 @@ function buildRoofs(plan: Plan, entry: LevelHandles): void {
       if (ridgeX) slab.rotation.x = slope.tilt;
       else slab.rotation.z = slope.tilt;
       group.add(slab);
+    }
+    for (const panel of solarPanels(roof, plan.height)) {
+      const module = box(
+        ridgeX ? panel.along : panel.down,
+        0.05,
+        ridgeX ? panel.down : panel.along,
+        materials.panel,
+      );
+      module.position.set(panel.position[0], elevation + panel.position[1], panel.position[2]);
+      if (ridgeX) module.rotation.x = panel.tilt;
+      else module.rotation.z = panel.tilt;
+      group.add(module);
     }
     for (const gable of shape.gables) {
       // The triangle is drawn in the plane across the ridge and stood up on the

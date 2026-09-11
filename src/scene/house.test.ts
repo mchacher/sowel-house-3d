@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Mesh, PointLight, type Material } from "three";
+import { BoxGeometry, Mesh, PointLight, type Material } from "three";
 import {
   applyState,
   buildHouse,
@@ -240,6 +240,30 @@ describe("the doors the house reports on", () => {
   });
 });
 
+describe("storeys meeting", () => {
+  it("runs the ground-floor walls up to the underside of the floor above", () => {
+    const handles = build(0);
+    const ground = handles.levels.get(0)!;
+    const walls = ground.group.children.filter(
+      (c) => c instanceof Mesh && c.material === ground.materials.wall,
+    ) as Mesh[];
+    const top = Math.max(
+      ...walls.map((m) => m.position.y + (m.geometry as BoxGeometry).parameters.height / 2),
+    );
+    const upstairs = handles.levels.get(1)!.group.position.y;
+    expect(top).toBeCloseTo(upstairs, 5);
+    // And the top storey's walls stop at the wall height, under the roof.
+    const first = handles.levels.get(1)!;
+    const upper = first.group.children.filter(
+      (c) => c instanceof Mesh && c.material === first.materials.wall,
+    ) as Mesh[];
+    const upperTop = Math.max(
+      ...upper.map((m) => m.position.y + (m.geometry as BoxGeometry).parameters.height / 2),
+    );
+    expect(upperTop).toBeCloseTo(plan.height, 5);
+  });
+});
+
 describe("windows at night", () => {
   it("lights a room's panes when one of its lamps is on, and only then", () => {
     const handles = build(0);
@@ -263,8 +287,12 @@ describe("the roof and the stairs", () => {
   it("builds a roof in a group of its own", () => {
     const handles = build(0);
     expect(handles.roof).not.toBeNull();
-    // Two slopes, two gables, and the garage's flat slab.
-    expect(handles.roof!.group.children.length).toBe(5);
+    // Two slopes, eight panels, two gables, and the garage's flat slab.
+    expect(handles.roof!.group.children.length).toBe(13);
+    const panels = handles.roof!.group.children.filter(
+      (c) => c instanceof Mesh && c.material === handles.roof!.materials.panel,
+    );
+    expect(panels).toHaveLength(8);
   });
 
   it("puts the stairs on the storey they start from, climbing to the next", () => {

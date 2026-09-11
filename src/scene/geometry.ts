@@ -103,15 +103,20 @@ export function sunDirection(
   };
 }
 
+/** How thick a floor slab is. The storey above starts on top of it. */
+export const SLAB = 0.08;
+
 /**
- * The gap between one storey's floor and the next.
+ * The gap between one storey's floor and the next: the wall height plus the slab.
  *
- * The wall height plus a slab: the storeys sit on each other the way a house does,
- * rather than floating apart. An exploded stack would read more clearly at a glance
- * and would also stop reading as a *house*, which is the thing being shown.
+ * Exactly that, and not a hand's width more. The first version added thirty
+ * centimetres "for the slab", the slab was eight, and the difference was a slot of
+ * daylight running round the house between the top of the ground-floor walls and
+ * the underside of the floor above — the kind of thing that reads as a bug at a
+ * glance and takes a while to name.
  */
 export function storeyPitch(plan: Plan): number {
-  return plan.height + 0.3;
+  return plan.height + SLAB;
 }
 
 /** How high a storey's floor sits. The ground floor is the origin; the cellar is under it. */
@@ -356,6 +361,62 @@ export function gableRoof(
       ];
 
   return { eavesY, ridgeY, slopes, gables };
+}
+
+/** One solar panel: where its centre sits and how it lies, relative to the storey. */
+export interface Panel {
+  position: [number, number, number];
+  /** Rotation about the ridge axis, radians — the slope's own tilt. */
+  tilt: number;
+  /** Extent along the ridge, and down the slope. */
+  along: number;
+  down: number;
+}
+
+/** A standard module, in metres: along the ridge, and down the slope. */
+export const PANEL_ALONG = 1.05;
+export const PANEL_DOWN = 1.75;
+const PANEL_GAP = 0.06;
+/** How far a panel stands off the roof surface. */
+const PANEL_LIFT = 0.07;
+
+/**
+ * The array on the sunward slope — south for a ridge running east–west, east
+ * otherwise — centred on it, `rows` deep down the slope and `perRow` wide along
+ * the ridge. Each panel lies in the slope's plane, lifted a little off it, which
+ * is what a mounted module looks like and what stops it fighting the roof for
+ * the same pixels.
+ */
+export function solarPanels(roof: Roof, wallHeight: number): Panel[] {
+  if (!roof.solar || roof.kind !== "gable") return [];
+  const { rows, perRow } = roof.solar;
+  const shape = gableRoof(roof, wallHeight);
+  const ridgeX = roof.ridge !== "z";
+  // The second slope faces +z (south) for an x ridge, +x (east) for a z ridge.
+  const slope = shape.slopes[1];
+  const a = Math.abs(slope.tilt);
+  const cos = Math.cos(a);
+  const sin = Math.sin(a);
+  const [cx, cy, cz] = slope.position;
+
+  const panels: Panel[] = [];
+  const spanAlong = perRow * PANEL_ALONG + (perRow - 1) * PANEL_GAP;
+  const spanDown = rows * PANEL_DOWN + (rows - 1) * PANEL_GAP;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < perRow; c++) {
+      // Offsets in the slope's own frame: u along the ridge, v down the slope
+      // (positive towards the eaves), n off the surface.
+      const u = -spanAlong / 2 + PANEL_ALONG / 2 + c * (PANEL_ALONG + PANEL_GAP);
+      const v = -spanDown / 2 + PANEL_DOWN / 2 + r * (PANEL_DOWN + PANEL_GAP);
+      const n = PANEL_LIFT;
+      // Down the south slope is +z and −y; its normal is +y and +z. Mirror for east.
+      const position: [number, number, number] = ridgeX
+        ? [cx + u, cy - v * sin + n * cos, cz + v * cos + n * sin]
+        : [cx + v * cos + n * sin, cy - v * sin + n * cos, cz + u];
+      panels.push({ position, tilt: slope.tilt, along: PANEL_ALONG, down: PANEL_DOWN });
+    }
+  }
+  return panels;
 }
 
 /** The tallest thing on the house above its top storey's walls, for framing. */

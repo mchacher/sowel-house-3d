@@ -17,8 +17,11 @@
 import { writeFileSync } from "node:fs";
 import { composePlan, type HouseSpec } from "../../src/plan/compose.ts";
 import { validatePlan } from "../../src/plan/validate.ts";
+import { storeyPitch } from "../../src/scene/geometry.ts";
 
 const HEIGHT = 2.6;
+/** Where the stairs arrive: the floor of the storey above. */
+const UPSTAIRS = storeyPitch({ height: HEIGHT } as Parameters<typeof storeyPitch>[0]);
 
 const house: HouseSpec = {
   height: HEIGHT,
@@ -190,14 +193,26 @@ const house: HouseSpec = {
       // south to arrive on the upstairs corridor.
       runs: [
         { axis: "z", direction: 1, x: 5.5, z: 2.5, w: 1.0, d: 1.5, y0: 0, y1: 1.2 },
-        { axis: "x", direction: -1, x: 3.5, z: 4.0, w: 2.0, d: 1.0, y0: 1.2, y1: HEIGHT + 0.3 },
+        { axis: "x", direction: -1, x: 3.5, z: 4.0, w: 2.0, d: 1.0, y0: 1.2, y1: UPSTAIRS },
       ],
       landings: [{ x: 5.5, z: 4.0, w: 1.0, d: 1.0, y: 1.2 }],
     },
   ],
 
   roofs: [
-    { over: 1, kind: "gable", ridge: "x", x: 0, z: 0, w: 10.5, d: 9.5, rise: 2.4, overhang: 0.45 },
+    // Eight panels — 4 kWc in the simulator — on the south slope, over the terrace.
+    {
+      over: 1,
+      kind: "gable",
+      ridge: "x",
+      x: 0,
+      z: 0,
+      w: 10.5,
+      d: 9.5,
+      rise: 2.4,
+      overhang: 0.45,
+      solar: { rows: 2, perRow: 4 },
+    },
     { over: 0, kind: "flat", x: 10.5, z: 3, w: 5.5, d: 5.5, rise: 0.3, overhang: 0.15 },
   ],
 

@@ -21,6 +21,7 @@ export const PALETTE = {
   person: 0x1a4f6e,
   glass: 0xbfd8e6,
   roof: 0x4f6675,
+  panel: 0x1d3557,
   door: 0x7f95a3,
   step: 0xd3dde3,
   drive: 0xb9bfc4,
@@ -35,6 +36,7 @@ export interface Materials {
   shutter: Material;
   glass: Material;
   roof: Material;
+  panel: Material;
   door: Material;
   step: Material;
   drive: Material;
@@ -66,6 +68,8 @@ export function makeMaterials(): Materials {
       roughness: 0.1,
     }),
     roof: standard(PALETTE.roof, { roughness: 0.85 }),
+    // Glass over cells: the one shiny thing on the house.
+    panel: standard(PALETTE.panel, { roughness: 0.25, metalness: 0.35 }),
     door: standard(PALETTE.door, { roughness: 0.7 }),
     step: standard(PALETTE.step, { roughness: 0.9 }),
     drive: standard(PALETTE.drive, { roughness: 1 }),
@@ -110,6 +114,7 @@ const GHOSTABLE = [
   "shutter",
   "glass",
   "roof",
+  "panel",
   "door",
   "step",
   "drive",
@@ -127,6 +132,7 @@ const SOLID_OPACITY: Record<Ghostable, number> = {
   shutter: 1,
   glass: 0.3,
   roof: 1,
+  panel: 1,
   door: 1,
   step: 1,
   drive: 1,
@@ -145,6 +151,7 @@ const GHOST_OPACITY: Record<Ghostable, number> = {
   shutter: 0.08,
   glass: 0.04,
   roof: 0.07,
+  panel: 0.12,
   door: 0.09,
   step: 0.09,
   drive: 0.1,
