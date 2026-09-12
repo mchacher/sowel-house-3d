@@ -29,7 +29,7 @@ describe("the scene state, from the real showroom", () => {
 
   it("gives each room one shutter slot per window", () => {
     expect(state.rooms.sejour.shutters).toHaveLength(3);
-    expect(state.rooms.cave.shutters).toHaveLength(0);
+    expect(state.rooms.garage.shutters).toHaveLength(0);
     for (const value of state.rooms.sejour.shutters) {
       expect(value === null || (value >= 0 && value <= 100)).toBe(true);
     }
@@ -59,7 +59,10 @@ describe("the scene state, from the real showroom", () => {
   it("falls back no further than the house", () => {
     // The cellar has no thermometer anywhere below the root, so it reads the house
     // average and says so rather than pretending to be measured.
-    expect(state.rooms.cave.temperatureFrom).toBe("Maison");
+    // The garage sits under the ground floor, whose stove reports a temperature;
+    // the bathroom's storey has none, so it climbs to the house.
+    expect(state.rooms.garage.temperatureFrom).toBe("RDC");
+    expect(state.rooms["salle-de-bain"].temperatureFrom).toBe("Maison");
   });
 
   it("places the household", () => {
@@ -213,6 +216,16 @@ describe("the sun, interpolated between Sowel's own times", () => {
     expect(sunPosition("07:00", "21:00", 2 * 60, true).isDaylight).toBe(true);
   });
 
+  it("keeps the sun above the horizon through the home's sunrise offset", () => {
+    // Sowel's isDaylight carries the home's offsets — thirty minutes at sunrise in
+    // the showroom — so for half an hour after a visible sunrise the flag says night.
+    // The elevation must not: the scene follows the sun, and the flag stays what it
+    // is, which is the automation's notion of day.
+    const justAfterSunrise = sunPosition("07:19", "20:14", 7 * 60 + 30, false);
+    expect(justAfterSunrise.elevationDeg).toBeGreaterThan(0);
+    expect(justAfterSunrise.isDaylight).toBe(false);
+  });
+
   it("copes with no sunrise at all", () => {
     const polar = sunPosition(null, null, 12 * 60, true);
     expect(Number.isFinite(polar.elevationDeg)).toBe(true);
@@ -236,5 +249,26 @@ describe("clearness, inferred because nothing reports it", () => {
 
   it("is clear when nothing reports luminosity at all", () => {
     expect(clearness(null, 50)).toBe(1);
+  });
+});
+
+describe("doors", () => {
+  it("reads open as the complement of the contact, which is true when shut", () => {
+    const state = buildSceneState({ ...base, nowMinutes: 12 * 60 });
+    // The captured showroom had every door shut.
+    expect(state.rooms.entree.doors).toEqual([false]);
+    expect(state.rooms.garage.doors).toEqual([false]);
+    const opened = base.equipments.map((e) =>
+      e.name === "Porte Garage Contact"
+        ? {
+            ...e,
+            dataBindings: e.dataBindings.map((b) =>
+              b.category === "contact_door" ? { ...b, value: false } : b,
+            ),
+          }
+        : e,
+    );
+    const after = buildSceneState({ ...base, equipments: opened, nowMinutes: 12 * 60 });
+    expect(after.rooms.garage.doors).toEqual([true]);
   });
 });

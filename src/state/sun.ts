@@ -18,6 +18,16 @@ export interface SunPosition {
   elevationDeg: number;
   /** Degrees clockwise from north: sunrise in the east, sunset in the west. */
   azimuthDeg: number;
+  /**
+   * Sowel's own daylight flag — **an automation signal, not a description of the
+   * sky.**
+   *
+   * It carries the home's `sunriseOffset` and `sunsetOffset` (thirty and forty-five
+   * minutes in the showroom), because it exists to tell a recipe when to treat the
+   * day as begun. Lighting a scene with it would leave the house dark for half an
+   * hour after a visible sunrise. The scene uses `elevationDeg`; this is for saying
+   * "jour" or "nuit" in words, where the home's own notion is the right one.
+   */
   isDaylight: boolean;
 }
 

@@ -16,9 +16,7 @@ describe("the showroom plan", () => {
     // The two describe the same building. A second vocabulary for the same rooms
     // would be a translation table waiting to go stale.
     const expected = [
-      "atelier",
       "bureau",
-      "cave",
       "chambre-enfant-1",
       "chambre-enfant-2",
       "chambre-enfant-3",
@@ -32,6 +30,7 @@ describe("the showroom plan", () => {
       "salle-de-bain",
       "sejour",
       "terrasse",
+      "wc",
     ];
     expect(plan.rooms.map((r) => r.id).sort()).toEqual(expected);
   });
@@ -40,41 +39,73 @@ describe("the showroom plan", () => {
     // Floor areas come from the thermal model, so the house a visitor sees and the
     // house the physics runs on are the same size.
     const expected: Record<string, number> = {
-      entree: 8,
-      sejour: 38,
-      cuisine: 14,
-      bureau: 12,
-      "chambre-parents": 16,
-      "chambre-enfant-1": 12,
-      "salle-de-bain": 7,
-      "chambre-enfant-2": 11,
-      "chambre-enfant-3": 11,
-      escalier: 9,
-      garage: 22,
-      cave: 14,
-      atelier: 18,
-      terrasse: 25,
+      entree: 7.5,
+      sejour: 47,
+      cuisine: 20,
+      bureau: 10.5,
+      "chambre-parents": 18,
+      "chambre-enfant-1": 15.75,
+      "salle-de-bain": 10.5,
+      "chambre-enfant-2": 13.5,
+      "chambre-enfant-3": 16,
+      escalier: 7.5,
+      garage: 30,
+      terrasse: 31.5,
       piscine: 32,
-      jardin: 400,
+      wc: 3,
     };
     for (const room of plan.rooms) {
+      // The ground is the world, not a room: its size is whatever frames the house.
+      if (room.ground) continue;
       const want = expected[room.id];
       const got = room.w * room.d;
       expect(Math.abs(got - want) / want, `${room.id}: ${got} vs ${want} m²`).toBeLessThan(0.06);
     }
   });
 
-  it("puts every room inside its level's slab", () => {
+  it("puts every room inside its level's slab, wings included", () => {
     for (const room of plan.rooms) {
       if (room.level === null) continue;
       const slab = plan.levels.find((l) => l.level === room.level);
       expect(slab, `no slab for level ${room.level}`).toBeDefined();
       if (!slab) continue;
-      expect(room.x).toBeGreaterThanOrEqual(slab.x - 1e-9);
-      expect(room.z).toBeGreaterThanOrEqual(slab.z - 1e-9);
-      expect(room.x + room.w).toBeLessThanOrEqual(slab.x + slab.w + 1e-9);
-      expect(room.z + room.d).toBeLessThanOrEqual(slab.z + slab.d + 1e-9);
+      const parts = [slab, ...(slab.parts ?? [])];
+      const within = parts.some(
+        (p) =>
+          room.x >= p.x - 1e-9 &&
+          room.z >= p.z - 1e-9 &&
+          room.x + room.w <= p.x + p.w + 1e-9 &&
+          room.z + room.d <= p.z + p.d + 1e-9,
+      );
+      expect(within, `${room.id} is off its slab`).toBe(true);
     }
+  });
+
+  it("is a pavilion: two storeys, a roof over the top one, stairs between them", () => {
+    expect(plan.levels.map((l) => l.level)).toEqual([0, 1]);
+    expect(plan.roofs?.some((r) => r.kind === "gable" && r.over === 1)).toBe(true);
+    expect(plan.stairs?.[0]?.level).toBe(0);
+    // The stairs arrive at the upper floor, and the slab is cut for them.
+    const top = Math.max(...(plan.stairs?.[0]?.runs.map((r) => r.y1) ?? [0]));
+    expect(top).toBeGreaterThan(plan.height);
+    expect(plan.levels.find((l) => l.level === 1)?.hole).toBeDefined();
+  });
+
+  it("names every room and level in both languages", () => {
+    for (const room of plan.rooms) expect(room.nameEn, room.id).toBeTruthy();
+    for (const level of plan.levels) expect(level.nameEn, level.name).toBeTruthy();
+  });
+
+  it("reports on the front door, the terrace door and the garage door", () => {
+    const ids = plan.walls.flatMap((w) => w.openings.filter((o) => o.id && o.kind !== "window"));
+    expect(ids.map((o) => o.id).sort()).toEqual([
+      "door:entree-1",
+      "door:sejour-1",
+      "gate:garage-1",
+    ]);
+    const gate = ids.find((o) => o.kind === "gate");
+    // Wide enough for a car, which is the point of it.
+    expect(gate?.w).toBeGreaterThanOrEqual(2.4);
   });
 
   it("gives every window an id, because a shutter binds to one", () => {

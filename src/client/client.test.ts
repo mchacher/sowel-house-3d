@@ -1,9 +1,26 @@
 import { describe, expect, it, vi } from "vitest";
 import { Session } from "./session.ts";
 import { Rest, SowelUnauthorised, SowelUnreachable } from "./rest.ts";
-import { Socket, type SocketStatus, type SowelEvent } from "./socket.ts";
+import { eventsOf, Socket, type SocketStatus, type SowelEvent } from "./socket.ts";
 
 describe("Session", () => {
+  it("reads the keys the product UI writes, so one login serves both", () => {
+    // The showroom serves this app and the Sowel interface on one origin, so they
+    // share localStorage. Guessing the key names meant neither saw a session.
+    const store: Record<string, string> = {
+      sowel_access_token: "a",
+      sowel_refresh_token: "r",
+    };
+    vi.stubGlobal("localStorage", {
+      getItem: (k: string) => store[k] ?? null,
+      setItem: (k: string, v: string) => {
+        store[k] = v;
+      },
+    });
+    expect(new Session().state).toEqual({ kind: "ready", accessToken: "a" });
+    vi.unstubAllGlobals();
+  });
+
   it("reports absence rather than guessing", () => {
     const session = new Session("", { accessToken: null, refreshToken: null });
     expect(session.state).toEqual({ kind: "absent" });
@@ -113,20 +130,27 @@ describe("Rest", () => {
 /** A WebSocket just real enough to drive the reconnection logic. */
 class FakeSocket {
   static made: FakeSocket[] = [];
+  readonly protocol: string | undefined;
   onopen: (() => void) | null = null;
   onclose: (() => void) | null = null;
   onerror: (() => void) | null = null;
   onmessage: ((e: MessageEvent) => void) | null = null;
   closed = false;
   readonly url: string;
+  sent: string[] = [];
 
-  constructor(url: string) {
+  constructor(url: string, protocol?: string) {
     this.url = url;
+    this.protocol = protocol;
     FakeSocket.made.push(this);
   }
 
   close(): void {
     this.closed = true;
+  }
+
+  send(data: string): void {
+    this.sent.push(data);
   }
 
   deliver(data: unknown): void {
@@ -144,17 +168,52 @@ describe("Socket", () => {
       origin: "http://sowel",
       onEvent: (e) => events.push(e),
       onStatus: (s) => statuses.push(s),
-      make: (url) => new FakeSocket(url) as unknown as WebSocket,
+      make: (url, protocol) => new FakeSocket(url, protocol) as unknown as WebSocket,
     });
     return { socket, events, statuses };
   }
 
-  it("puts the token on the query string and announces itself", () => {
+  it("sends the token as the subprotocol the core actually reads", () => {
+    // `extractWsToken` in the core takes an Authorization header or a
+    // `bearer.<token>` subprotocol and nothing else. A token on the query string
+    // gets a 101 and is then closed with "Authentication required" — which is
+    // exactly what the scene showed as a permanent "Reconnexion…".
     const { socket, statuses } = harness();
     socket.start();
-    expect(FakeSocket.made[0].url).toBe("ws://sowel/ws?token=t");
+    expect(FakeSocket.made[0].url).toBe("ws://sowel/ws");
+    expect(FakeSocket.made[0].protocol).toBe("bearer.t");
+    expect(FakeSocket.made[0].url).not.toContain("token=");
     expect(statuses).toEqual(["connecting"]);
     socket.stop();
+  });
+
+  it("subscribes on open, because the server sends nothing until asked", () => {
+    // A socket that connects and subscribes to nothing says nothing: the server
+    // starts every client on `system` only. The first version did exactly that, and
+    // the scene sat still behind a status that said "open".
+    const { socket } = harness();
+    socket.start();
+    const ws = FakeSocket.made[0];
+    ws.onopen?.();
+    expect(ws.sent).toHaveLength(1);
+    expect(JSON.parse(ws.sent[0])).toEqual({
+      type: "subscribe",
+      topics: ["equipments", "zones", "system"],
+    });
+    socket.stop();
+  });
+
+  it("subscribes again after a reconnection", async () => {
+    vi.useFakeTimers();
+    const { socket } = harness();
+    socket.start();
+    FakeSocket.made[0].onopen?.();
+    FakeSocket.made[0].onclose?.();
+    await vi.advanceTimersByTimeAsync(600);
+    FakeSocket.made[1].onopen?.();
+    expect(FakeSocket.made[1].sent).toHaveLength(1);
+    socket.stop();
+    vi.useRealTimers();
   });
 
   it("holds events until released, then replays them in order", () => {
@@ -170,6 +229,20 @@ describe("Socket", () => {
     expect(events.map((e) => e.type)).toEqual(["a", "b"]);
     ws.deliver({ type: "c" });
     expect(events.map((e) => e.type)).toEqual(["a", "b", "c"]);
+    socket.stop();
+  });
+
+  it("reads a batch, because the server sends a bare array", () => {
+    // `JSON.stringify(deduped)` on the server: no envelope, no type of its own.
+    // Checking `.type` on the frame drops every batch in silence and leaves a
+    // healthy-looking socket above a house that never moves.
+    const { socket, events } = harness();
+    socket.start();
+    socket.release();
+    const ws = FakeSocket.made[0];
+    ws.onopen?.();
+    ws.deliver([{ type: "equipment.data.changed" }, { type: "zone.data.changed" }]);
+    expect(events.map((e) => e.type)).toEqual(["equipment.data.changed", "zone.data.changed"]);
     socket.stop();
   });
 
@@ -222,5 +295,27 @@ describe("Socket", () => {
     socket.start();
     expect(FakeSocket.made).toHaveLength(0);
     expect(statuses).toEqual(["closed"]);
+  });
+});
+
+describe("eventsOf", () => {
+  it("takes a batch", () => {
+    expect(eventsOf([{ type: "a" }, { type: "b" }]).map((e) => e.type)).toEqual(["a", "b"]);
+  });
+
+  it("takes the greeting, which is a lone object", () => {
+    expect(eventsOf({ type: "connected", version: "1.68.0" })).toHaveLength(1);
+  });
+
+  it("drops what has no type, without dropping its neighbours", () => {
+    expect(
+      eventsOf([{ type: "a" }, { noType: 1 }, null, 7, { type: "b" }]).map((e) => e.type),
+    ).toEqual(["a", "b"]);
+  });
+
+  it("takes an empty batch as nothing at all", () => {
+    expect(eventsOf([])).toEqual([]);
+    expect(eventsOf(null)).toEqual([]);
+    expect(eventsOf("nope")).toEqual([]);
   });
 });

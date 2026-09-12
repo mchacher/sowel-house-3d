@@ -11,11 +11,17 @@
     "chambre-enfant-3": "Chambre Enfant 3",
     "escalier": "Escalier",
     "garage": "Garage",
-    "cave": "Cave",
-    "atelier": "Atelier",
     "jardin": "Jardin",
     "piscine": "Piscine",
-    "terrasse": "Terrasse"
+    "terrasse": "Terrasse",
+    "wc": "WC"
   },
-  "weatherEquipment": "Station Météo"
+  "weatherEquipment": "Station Météo",
+  "gates": {
+    "gate:portail-1": "Portail"
+  },
+  "watering": {
+    "plantations": "Vanne Plantations",
+    "pelouse": "Vanne Pelouse"
+  }
 }

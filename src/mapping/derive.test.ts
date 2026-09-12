@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { derive, isOccupant, windowsOfRoom } from "./derive.ts";
+import { derive, doorsOfRoom, isOccupant, windowsOfRoom } from "./derive.ts";
 import type { Mapping } from "./types.ts";
 import type { Plan } from "../plan/types.ts";
 import type { Equipment, Zone } from "../sowel/types.ts";
@@ -29,7 +29,7 @@ describe("deriving against the real showroom", () => {
     const total = Object.values(result.rooms).reduce((n, r) => n + r.lamps.length, 0);
     expect(total).toBeGreaterThanOrEqual(14);
     expect(result.rooms.sejour.lamps.length).toBeGreaterThan(0);
-    expect(result.rooms.cave.lamps.length).toBeGreaterThan(0);
+    expect(result.rooms.garage.lamps.length).toBeGreaterThan(0);
   });
 
   it("pairs a shutter with each window the plan declares", () => {
@@ -44,7 +44,7 @@ describe("deriving against the real showroom", () => {
   });
 
   it("finds a motion sensor in the rooms that have one", () => {
-    expect(result.rooms.cave.sensors.length).toBeGreaterThan(0);
+    expect(result.rooms.garage.sensors.length).toBeGreaterThan(0);
     expect(result.rooms.garage.sensors.length).toBeGreaterThan(0);
   });
 
@@ -71,12 +71,12 @@ describe("deriving against the real showroom", () => {
 
 describe("deriving when something is wrong", () => {
   it("names a zone Sowel does not have, and carries on", () => {
-    const broken: Mapping = { ...mapping, zones: { ...mapping.zones, cave: "Cellier" } };
+    const broken: Mapping = { ...mapping, zones: { ...mapping.zones, garage: "Remise" } };
     const result = derive(plan, broken, zones, equipments);
-    expect(result.problems).toContain("Pièce inconnue de Sowel : cave (zone « Cellier »)");
+    expect(result.problems).toContain("Pièce inconnue de Sowel : garage (zone « Remise »)");
     // The rest of the house still builds.
     expect(result.rooms.sejour).toBeDefined();
-    expect(result.rooms.cave).toBeUndefined();
+    expect(result.rooms.garage).toBeUndefined();
   });
 
   it("names a room the mapping forgot", () => {
@@ -156,5 +156,29 @@ describe("isOccupant", () => {
       dataBindings: [{ ...equipments[0].dataBindings[0], alias: "zone", value: "sejour" }],
     };
     expect(isOccupant(half)).toBe(false);
+  });
+});
+
+describe("doors that report", () => {
+  const result = derive(plan, mapping, zones, equipments);
+
+  it("lists a room's reporting doors in plan order", () => {
+    expect(doorsOfRoom(plan, "entree")).toEqual(["door:entree-1"]);
+    expect(doorsOfRoom(plan, "garage")).toEqual(["gate:garage-1"]);
+    expect(doorsOfRoom(plan, "cuisine")).toEqual([]);
+  });
+
+  it("pairs each with a contact sensor of the zone, and nothing else", () => {
+    // The showroom reports on exactly these three: the front door, the terrace
+    // door and the garage door. Each pairs with the contact in its zone.
+    for (const room of ["entree", "sejour", "garage"]) {
+      const doors = result.rooms[room].doors;
+      expect(doors, room).toHaveLength(1);
+      expect(
+        doors[0]?.dataBindings.some((b) => b.category === "contact_door"),
+        room,
+      ).toBe(true);
+    }
+    expect(result.rooms.cuisine.doors).toEqual([]);
   });
 });

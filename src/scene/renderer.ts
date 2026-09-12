@@ -20,11 +20,22 @@ import {
   Vector3,
   WebGLRenderer,
 } from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { Plan } from "../plan/types.ts";
 import type { SceneState } from "../state/scene-state.ts";
-import { cameraFor, sunDirection } from "./geometry.ts";
-import { applyState, buildHouse, syncPeople, type HouseHandles } from "./house.ts";
+import { cameraFor, levelElevation, roofRise, stackHeight, sunDirection } from "./geometry.ts";
+import {
+  applyState,
+  buildHouse,
+  focusLevel,
+  syncPeople,
+  type Counts,
+  type DoorHandle,
+  type Focus,
+  type HouseHandles,
+} from "./house.ts";
 import { makeMaterials, PALETTE, type Materials } from "./materials.ts";
+import type { Lang } from "../i18n.ts";
 
 /** How fast a shutter and a figure catch up with what Sowel said, per second. */
 const EASE_PER_SECOND = 3.5;
@@ -37,18 +48,22 @@ export class HouseRenderer {
   private readonly scene: Scene;
   private readonly camera: PerspectiveCamera;
   private readonly sun: DirectionalLight;
+  private readonly controls: OrbitControls;
   private readonly target = new Vector3();
   private handles: HouseHandles | null = null;
-  private level: number;
+  private level: Focus;
   private lampCounts: Record<string, number> = {};
+  private counts: Partial<Counts> = {};
+  private lang: Lang = "fr";
   private state: SceneState | null = null;
   private frame = 0;
   private last = 0;
 
-  constructor(canvas: HTMLCanvasElement, plan: Plan, level = 0) {
+  constructor(canvas: HTMLCanvasElement, plan: Plan, level: Focus = 0, lang: Lang = "fr") {
     this.canvas = canvas;
     this.plan = plan;
     this.level = level;
+    this.lang = lang;
     this.materials = makeMaterials();
 
     this.renderer = new WebGLRenderer({ canvas, antialias: true });
@@ -60,7 +75,30 @@ export class HouseRenderer {
     this.scene = new Scene();
     this.scene.background = new Color(PALETTE.light);
 
-    this.camera = new PerspectiveCamera(42, 1, 0.1, 400);
+    // 0.5…250, not 0.1…400.
+    //
+    // Depth precision is spent near the near plane: a ratio of 4000 leaves so
+    // little of it at house distance that surfaces a few millimetres apart swap
+    // order as the camera moves, which is what "glitches while zooming" is. The
+    // geometry fix is to stop putting surfaces in the same plane; this is the other
+    // half, and the near plane costs nothing because the camera cannot come closer
+    // than three metres anyway.
+    this.camera = new PerspectiveCamera(42, 1, 0.5, 250);
+
+    // Orbit, zoom and pan. Without these the scene is a photograph: the first thing
+    // anyone does with a 3D house is try to turn it round, and a view that refuses
+    // reads as broken rather than as read-only.
+    this.controls = new OrbitControls(this.camera, canvas);
+    this.controls.enableDamping = true;
+    this.controls.dampingFactor = 0.08;
+    this.controls.screenSpacePanning = false;
+    this.controls.minDistance = 3;
+    this.controls.maxDistance = 120;
+    // Never below the floor: an under-the-house view is disorienting and shows the
+    // undersides of everything.
+    this.controls.maxPolarAngle = Math.PI * 0.48;
+    this.controls.zoomSpeed = 0.8;
+    this.controls.rotateSpeed = 0.6;
 
     // Three lights and no more: a sun that casts, a sky that fills, and a floor
     // bounce. Anything further is post-processing a phone cannot afford.
@@ -68,8 +106,9 @@ export class HouseRenderer {
     this.sun.castShadow = true;
     this.sun.shadow.mapSize.set(2048, 2048);
     this.sun.shadow.camera.near = 1;
-    this.sun.shadow.camera.far = 80;
-    const extent = 22;
+    this.sun.shadow.camera.far = 110;
+    // Four storeys stacked are eleven metres tall; a frustum cut for one clips the roof.
+    const extent = 26;
     Object.assign(this.sun.shadow.camera, {
       left: -extent,
       right: extent,
@@ -81,19 +120,30 @@ export class HouseRenderer {
     this.scene.add(new AmbientLight(0xffffff, 0.18));
   }
 
-  /** Lamp counts come from the derivation, so the graph is built with the right ones. */
-  setLampCounts(counts: Record<string, number>): void {
+  /** Counts come from the derivation, so the graph is built with the right ones. */
+  setLampCounts(counts: Record<string, number>, rest: Partial<Counts> = {}): void {
     this.lampCounts = counts;
+    this.counts = rest;
     this.rebuild();
   }
 
-  setLevel(level: number): void {
+  /** The signs are drawn at build time, so a new language is a rebuild. Rare. */
+  setLang(lang: Lang): void {
+    if (lang === this.lang) return;
+    this.lang = lang;
+    if (this.handles) this.rebuild();
+  }
+
+  setLevel(level: Focus): void {
     if (level === this.level) return;
     this.level = level;
-    this.rebuild();
+    // Every storey is already built and standing. Switching floors is a change of
+    // which one is solid, not a change of what exists.
+    if (this.handles) focusLevel(this.handles, level);
+    this.frameLevel();
   }
 
-  get currentLevel(): number {
+  get currentLevel(): Focus {
     return this.level;
   }
 
@@ -115,6 +165,8 @@ export class HouseRenderer {
       materials: this.materials,
       level: this.level,
       lampCounts: this.lampCounts,
+      counts: this.counts,
+      lang: this.lang,
     });
     this.scene.add(this.handles.root);
     if (this.state) {
@@ -125,23 +177,70 @@ export class HouseRenderer {
       this.placeSun(this.state);
     }
 
-    const slab = this.plan.levels.find((l) => l.level === this.level) ?? this.plan.levels[0];
-    const view = cameraFor(slab, this.plan.height, this.aspect());
+    this.frameLevel();
+  }
+
+  /** Put the camera back where a level is framed. Also what the HUD's reset calls. */
+  frameLevel(): void {
+    const lowest = Math.min(...this.plan.levels.map((l) => l.level));
+    // From outside the house is framed as a whole, roof included, read from its
+    // ground floor; a storey is framed at its own height.
+    const slab =
+      this.level === "outside"
+        ? (this.plan.levels.find((l) => l.level === lowest) ?? this.plan.levels[0])
+        : (this.plan.levels.find((l) => l.level === this.level) ?? this.plan.levels[0]);
+    // The footprint framed is the storey's body and its wings together: framing the
+    // body alone left the garage half off the right of the screen.
+    const rects = [slab, ...(slab.parts ?? [])];
+    const x0 = Math.min(...rects.map((r) => r.x));
+    const z0 = Math.min(...rects.map((r) => r.z));
+    const x1 = Math.max(...rects.map((r) => r.x + r.w));
+    const z1 = Math.max(...rects.map((r) => r.z + r.d));
+    // From outside the grounds are the picture, not just the walls: a margin of
+    // garden round the footprint, or the gate and the beds sit on the screen's edge.
+    const margin = this.level === "outside" ? 4.5 : 0;
+    const footprint = {
+      ...slab,
+      x: x0 - margin,
+      z: z0 - margin,
+      w: x1 - x0 + 2 * margin,
+      d: z1 - z0 + 2 * margin,
+    };
+    const view = cameraFor({
+      level: footprint,
+      height: this.plan.height,
+      aspect: this.aspect(),
+      elevation: levelElevation(this.plan, slab.level),
+      stack: stackHeight(this.plan) + roofRise(this.plan),
+      lowest: levelElevation(this.plan, lowest),
+    });
     this.camera.position.set(...view.position);
     this.target.set(...view.target);
-    this.camera.lookAt(this.target);
+    this.controls.target.copy(this.target);
+    this.controls.update();
   }
 
   private placeSun(state: SceneState): void {
     const d = sunDirection(state.sky.elevationDeg, state.sky.azimuthDeg);
     const distance = 40;
     this.sun.position.set(d.x * distance, Math.max(2, d.y * distance), d.z * distance);
+    // The framed centre, not the orbit target: panning the camera must not swing
+    // the sun across the house.
     this.sun.target.position.copy(this.target);
     this.sun.target.updateMatrixWorld();
 
-    // Below the horizon the sun contributes nothing, and cloud flattens it rather
-    // than dimming it away — an overcast noon is still bright, just shadowless.
-    const daylight = state.sky.isDaylight && state.sky.elevationDeg > 0;
+    // Lit by the sun's height, **not** by `isDaylight`.
+    //
+    // That flag carries the home's `sunriseOffset` and `sunsetOffset` — thirty and
+    // forty-five minutes in the showroom — because it exists to tell a recipe when
+    // to treat the day as begun, not to describe the sky. Keying the scene off it
+    // would leave the house dark for half an hour after a visible sunrise and dark
+    // it three quarters of an hour before dusk. The elevation comes from the raw
+    // sunrise and sunset, so the sky follows the sun and the flag stays what it is.
+    //
+    // Cloud flattens the sun rather than dimming it away: an overcast noon is still
+    // bright, just shadowless.
+    const daylight = state.sky.elevationDeg > 0;
     const clearness = state.sky.clearness;
     this.sun.intensity = daylight ? 0.5 + 1.4 * clearness : 0;
     this.sun.castShadow = daylight && clearness > 0.35;
@@ -177,6 +276,7 @@ export class HouseRenderer {
       const dt = Math.min(0.1, (now - this.last) / 1000);
       this.last = now;
       this.ease(dt);
+      this.controls.update();
       this.renderer.render(this.scene, this.camera);
       this.frame = requestAnimationFrame(tick);
     };
@@ -185,6 +285,7 @@ export class HouseRenderer {
 
   stop(): void {
     cancelAnimationFrame(this.frame);
+    this.controls.dispose();
     this.renderer.dispose();
   }
 
@@ -201,6 +302,31 @@ export class HouseRenderer {
     for (const shutters of this.handles.shutters.values()) {
       for (const shutter of shutters) {
         shutter.panel.scale.y += (shutter.target - shutter.panel.scale.y) * k;
+      }
+    }
+    const moving: DoorHandle[] = [
+      ...[...this.handles.doors.values()].flat(),
+      ...this.handles.gates.values(),
+      ...this.handles.covers.values(),
+    ];
+    for (const item of moving) {
+      const o = item.object;
+      switch (item.kind) {
+        case "swing":
+          o.rotation.y += (item.target - o.rotation.y) * k;
+          break;
+        case "lift":
+          o.scale.y += (item.target - o.scale.y) * k;
+          break;
+        case "cover":
+          o.scale.z += (item.target - o.scale.z) * k;
+          break;
+        case "slide": {
+          const axis = item.axis ?? "x";
+          const goal = (item.home ?? 0) + item.target;
+          o.position[axis] += (goal - o.position[axis]) * k;
+          break;
+        }
       }
     }
     for (const entry of this.state?.people ?? []) {

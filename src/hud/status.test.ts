@@ -11,6 +11,9 @@ function state(overrides: Partial<SceneState> = {}): SceneState {
         id: "sejour",
         name: "Séjour",
         shutters: [],
+        doors: [],
+        heating: false,
+        cover: null,
         lamps: [
           { on: true, brightness: 1 },
           { on: false, brightness: 0 },
@@ -26,6 +29,7 @@ function state(overrides: Partial<SceneState> = {}): SceneState {
       { id: "b", label: "Adulte 2", room: "away" },
     ],
     sky: { elevationDeg: 30, azimuthDeg: 180, isDaylight: true, rainMmPerHour: 0, clearness: 1 },
+    garden: { gates: {}, watering: {} },
     problems: [],
     ...overrides,
   };
@@ -101,5 +105,30 @@ describe("the one line a visitor reads", () => {
         expect(line.length, `${phase.kind}/${socket}`).toBeGreaterThan(0);
       }
     }
+  });
+});
+
+describe("a browser that will not draw", () => {
+  // The failure this covers was a blank white page: WebGL threw inside an effect,
+  // React unmounted the tree, and nothing at all was left to read. The data was
+  // arriving the whole time.
+  it("says so, and says the house is still there", () => {
+    const line = statusLine({ kind: "no-webgl" }, "open", state());
+    expect(line).toContain("WebGL");
+    expect(line).toContain("la maison est là");
+  });
+
+  it("reads as trouble even when everything else is healthy", () => {
+    expect(isTrouble({ kind: "no-webgl" }, "open", state())).toBe(true);
+  });
+});
+
+describe("in English", () => {
+  it("says the same things in the visitor's language", () => {
+    const line = statusLine(live, "open", state(), "en");
+    expect(line).toContain("1 person at home");
+    expect(line).toContain("1 light on");
+    expect(line).toContain("day");
+    expect(statusLine({ kind: "no-session" }, "open", null, "en")).toContain("No session");
   });
 });

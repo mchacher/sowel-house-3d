@@ -20,6 +20,9 @@ import type { Mapping } from "./types.ts";
 
 const LAMP_TYPES = new Set(["light_onoff", "light_dimmable", "light_color"]);
 const SHUTTER_TYPES = new Set(["shutter", "awning"]);
+const HEATER_TYPES = new Set(["heater"]);
+const THERMOSTAT_TYPES = new Set(["thermostat"]);
+const COVER_TYPES = new Set(["pool_cover"]);
 
 export interface RoomBindings {
   roomId: string;
@@ -40,6 +43,18 @@ export interface RoomBindings {
   shutters: (Equipment | null)[];
   /** Equipments carrying a motion binding. A room may have several. */
   sensors: Equipment[];
+  /**
+   * One per door of the room the plan gave an id — the front door, the terrace
+   * door, the garage — paired in plan order with the zone's contact sensors.
+   * `null` where the room has none.
+   */
+  doors: (Equipment | null)[];
+  /** Electric radiators in the room: drawn on a wall, warm when on. */
+  heaters: Equipment[];
+  /** A local thermostat — the living room's stove. Drawn as one. */
+  thermostat: Equipment | null;
+  /** The pool's cover, on the pool room. */
+  cover: Equipment | null;
 }
 
 export interface Person {
@@ -54,6 +69,10 @@ export interface Derived {
   rooms: Record<string, RoomBindings>;
   people: Person[];
   weather: Equipment | null;
+  /** Fence gate id → the equipment the mapping names, or null when it is missing. */
+  gates: Record<string, Equipment | null>;
+  /** Watering group → the valve the mapping names, or null. */
+  watering: Record<string, Equipment | null>;
   /** The root zone, whose aggregation carries the house's sunlight. */
   houseZoneId: string | null;
   problems: string[];
@@ -66,6 +85,20 @@ export function windowsOfRoom(plan: Plan, roomId: string): string[] {
     for (const opening of wall.openings) {
       if (opening.kind !== "window" || !opening.id) continue;
       if (opening.id.replace(/^window:/, "").replace(/-\d+$/, "") === roomId) ids.push(opening.id);
+    }
+  }
+  return ids;
+}
+
+/** Ids of a room's reporting doors — `door:` and `gate:` openings — in plan order. */
+export function doorsOfRoom(plan: Plan, roomId: string): string[] {
+  const ids: string[] = [];
+  for (const wall of plan.walls) {
+    for (const opening of wall.openings) {
+      if ((opening.kind !== "door" && opening.kind !== "gate") || !opening.id) continue;
+      if (opening.id.replace(/^(door|gate):/, "").replace(/-\d+$/, "") === roomId) {
+        ids.push(opening.id);
+      }
     }
   }
   return ids;
@@ -144,6 +177,12 @@ export function derive(
       );
     }
 
+    // Doors pair with contact sensors the way shutters pair with windows: in
+    // order, and by nothing else. A contact on a window would take a door's place,
+    // and the plan has no way to tell them apart; the showroom has none.
+    const contacts = inZone.filter((e) => hasCategory(e, "contact_door"));
+    const doors = doorsOfRoom(plan, room.id).map((_, i) => contacts[i] ?? null);
+
     const chain: { id: string; name: string }[] = [];
     for (let z: Zone | undefined = zone; z; z = zones.find((c) => c.id === z?.parentId)) {
       chain.push({ id: z.id, name: z.name });
@@ -158,6 +197,10 @@ export function derive(
       lamps,
       shutters,
       sensors,
+      doors,
+      heaters: inZone.filter((e) => HEATER_TYPES.has(e.type)),
+      thermostat: inZone.find((e) => THERMOSTAT_TYPES.has(e.type)) ?? null,
+      cover: inZone.find((e) => COVER_TYPES.has(e.type)) ?? null,
     };
   }
 
@@ -183,5 +226,21 @@ export function derive(
     }
   }
 
-  return { rooms, people, weather, houseZoneId: root?.id ?? null, problems };
+  // The plot's own equipments, named in the mapping because no room owns them.
+  const named = (
+    table: Record<string, string> | undefined,
+    what: string,
+  ): Record<string, Equipment | null> => {
+    const out: Record<string, Equipment | null> = {};
+    for (const [key, name] of Object.entries(table ?? {})) {
+      const found = equipments.find((e) => e.name === name && e.enabled) ?? null;
+      if (!found) problems.push(`${what} introuvable : « ${name} » (${key})`);
+      out[key] = found;
+    }
+    return out;
+  };
+  const gates = named(mapping.gates, "Portail");
+  const watering = named(mapping.watering, "Vanne");
+
+  return { rooms, people, weather, gates, watering, houseZoneId: root?.id ?? null, problems };
 }
