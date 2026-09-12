@@ -122,3 +122,13 @@ describe("a browser that will not draw", () => {
     expect(isTrouble({ kind: "no-webgl" }, "open", state())).toBe(true);
   });
 });
+
+describe("in English", () => {
+  it("says the same things in the visitor's language", () => {
+    const line = statusLine(live, "open", state(), "en");
+    expect(line).toContain("1 person at home");
+    expect(line).toContain("1 light on");
+    expect(line).toContain("day");
+    expect(statusLine({ kind: "no-session" }, "open", null, "en")).toContain("No session");
+  });
+});

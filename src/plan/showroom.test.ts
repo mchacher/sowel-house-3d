@@ -91,6 +91,11 @@ describe("the showroom plan", () => {
     expect(plan.levels.find((l) => l.level === 1)?.hole).toBeDefined();
   });
 
+  it("names every room and level in both languages", () => {
+    for (const room of plan.rooms) expect(room.nameEn, room.id).toBeTruthy();
+    for (const level of plan.levels) expect(level.nameEn, level.name).toBeTruthy();
+  });
+
   it("reports on the front door, the terrace door and the garage door", () => {
     const ids = plan.walls.flatMap((w) => w.openings.filter((o) => o.id && o.kind !== "window"));
     expect(ids.map((o) => o.id).sort()).toEqual([

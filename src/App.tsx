@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Hud } from "./hud/Hud.tsx";
 import { HouseRenderer } from "./scene/renderer.ts";
 import type { Focus } from "./scene/house.ts";
+import { detectLang, rememberLang, type Lang } from "./i18n.ts";
 import { selectableLevels } from "./scene/geometry.ts";
 import { useHouse } from "./useHouse.ts";
 
@@ -33,6 +34,11 @@ export function App() {
   const canvas = useRef<HTMLCanvasElement>(null);
   const renderer = useRef<HouseRenderer | null>(null);
   const [level, setLevel] = useState<Focus>(0);
+  const [lang, setLang] = useState<Lang>(detectLang);
+  // The renderer is built once the plan is in, which is after the first render:
+  // it takes the language of that moment from a ref, and later changes through
+  // setLang. Reading `lang` in the build effect would rebuild the house per word.
+  const langRef = useRef(lang);
   // Computed once, in the initialiser: nothing here re-probes, and nothing sets it
   // from inside an effect.
   const [webgl] = useState(drawsWebGL);
@@ -47,7 +53,7 @@ export function App() {
     // scene is a degraded demo; losing the tree is a white page.
     let house: HouseRenderer;
     try {
-      house = new HouseRenderer(canvas.current, plan, level);
+      house = new HouseRenderer(canvas.current, plan, level, langRef.current);
     } catch {
       return;
     }
@@ -70,6 +76,11 @@ export function App() {
   }, [lampCounts, counts]);
 
   useEffect(() => {
+    langRef.current = lang;
+    renderer.current?.setLang(lang);
+  }, [lang]);
+
+  useEffect(() => {
     renderer.current?.setLevel(level);
   }, [level]);
 
@@ -88,6 +99,11 @@ export function App() {
         level={level}
         onLevel={setLevel}
         onRecentre={() => renderer.current?.frameLevel()}
+        lang={lang}
+        onLang={(next) => {
+          rememberLang(next);
+          setLang(next);
+        }}
       />
     </main>
   );

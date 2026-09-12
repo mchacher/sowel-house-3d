@@ -24,6 +24,7 @@ export interface LampState {
 export interface RoomState {
   id: string;
   name: string;
+  nameEn?: string;
   /** 0 closed … 100 open, one per window the plan declares. Null: no shutter. */
   shutters: (number | null)[];
   lamps: LampState[];
@@ -158,6 +159,7 @@ function assemble(input: BuildInput, derived: Derived): SceneState {
     rooms[room.id] = {
       id: room.id,
       name: room.name,
+      ...(room.nameEn ? { nameEn: room.nameEn } : {}),
       shutters: bindings.shutters.map((shutter) =>
         shutter === null
           ? null

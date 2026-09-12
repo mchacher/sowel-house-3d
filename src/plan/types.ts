@@ -30,7 +30,10 @@ export type RoomKind =
 
 export interface Room {
   id: string;
+  /** French, as the showroom's zones are named. */
   name: string;
+  /** The English name, for a visitor whose Sowel speaks it. */
+  nameEn?: string;
   /** Furnished by kind; a room without one is left bare. */
   kind?: RoomKind;
   /**
@@ -127,6 +130,7 @@ export interface Rect {
 export interface Level extends Rect {
   level: number;
   name: string;
+  nameEn?: string;
   /** Further slabs of the same storey: a wing attached to the body. */
   parts?: Rect[];
   /** The stairwell: where the slab is cut so the stairs can come up through it. */

@@ -53,6 +53,7 @@ import {
   wallPieces,
 } from "./geometry.ts";
 import { copyMaterials, setGhost, type Materials } from "./materials.ts";
+import { named, type Lang } from "../i18n.ts";
 
 /** One storey: its own group, at its own height, with its own structural materials. */
 export interface LevelHandles {
@@ -72,12 +73,17 @@ export interface LevelHandles {
 function roomSign(text: string): Sprite | null {
   if (typeof document === "undefined") return null;
   const canvas = document.createElement("canvas");
-  canvas.width = 512;
-  canvas.height = 128;
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
+  // Sized to the words: a canvas as wide as the name needs, plus a margin, so
+  // "Chambre Enfant 1" is not cut at the frame and "WC" is not a long empty sign.
+  const font = "600 60px Inter, system-ui, sans-serif";
+  ctx.font = font;
+  const width = ctx.measureText(text.toUpperCase()).width;
+  canvas.width = Math.min(1024, Math.max(256, Math.ceil(width) + 72));
+  canvas.height = 128;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.font = "600 60px Inter, system-ui, sans-serif";
+  ctx.font = font;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   // White with an ocean outline: readable on a pale wall by day and on the same
@@ -94,7 +100,8 @@ function roomSign(text: string): Sprite | null {
     opacity: 0.95,
   });
   const sprite = new Sprite(material);
-  sprite.scale.set(2.0, 0.5, 1);
+  // Half a metre tall, as wide as its canvas is in proportion.
+  sprite.scale.set((0.5 * canvas.width) / canvas.height, 0.5, 1);
   return sprite;
 }
 
@@ -205,6 +212,8 @@ export interface BuildHouseOptions {
   lampCounts: Record<string, number>;
   /** Radiators and stoves, from the derivation; none when absent. */
   counts?: Partial<Counts>;
+  /** The language the signs are written in. */
+  lang?: Lang;
 }
 
 export function buildHouse(options: BuildHouseOptions): HouseHandles {
@@ -254,7 +263,7 @@ export function buildHouse(options: BuildHouseOptions): HouseHandles {
     entry.group.position.y = levelElevation(plan, slab.level);
     root.add(entry.group);
     handles.levels.set(slab.level, entry);
-    buildLevel(plan, entry, handles, lampCounts, options.counts ?? {});
+    buildLevel(plan, entry, handles, lampCounts, options.counts ?? {}, options.lang ?? "fr");
   }
 
   if ((plan.roofs ?? []).length > 0) {
@@ -474,6 +483,7 @@ function buildLevel(
   handles: HouseHandles,
   lampCounts: Record<string, number>,
   counts: Partial<Counts>,
+  lang: Lang,
 ): void {
   const { group, materials, level } = entry;
   const { rooms, walls } = levelContents(plan, level);
@@ -548,7 +558,7 @@ function buildLevel(
     }
 
     // The room's name, hung over its spot under the ceiling. A legend without one.
-    const label = roomSign(room.name);
+    const label = roomSign(named(room, lang));
     if (label) {
       label.position.set(room.spot[0], plan.height - 0.55, room.spot[1]);
       group.add(label);

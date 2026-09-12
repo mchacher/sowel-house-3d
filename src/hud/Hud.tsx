@@ -11,6 +11,7 @@ import type { SocketStatus } from "../client/socket.ts";
 import type { Level } from "../plan/types.ts";
 import type { Focus } from "../scene/house.ts";
 import { isTrouble, statusLine, type AppPhase } from "./status.ts";
+import { named, strings, type Lang } from "../i18n.ts";
 
 export type { AppPhase };
 
@@ -22,10 +23,13 @@ interface Props {
   level: Focus;
   onLevel: (level: Focus) => void;
   onRecentre: () => void;
+  lang: Lang;
+  onLang: (lang: Lang) => void;
 }
 
 export function Hud(props: Props): React.ReactElement {
-  const { phase, socket, state, levels, level, onLevel, onRecentre } = props;
+  const { phase, socket, state, levels, level, onLevel, onRecentre, lang, onLang } = props;
+  const t = strings(lang);
   const trouble = isTrouble(phase, socket, state);
 
   const rooms = state
@@ -44,22 +48,31 @@ export function Hud(props: Props): React.ReactElement {
               : "bg-white/80 text-slate-700 dark:bg-slate-900/80 dark:text-slate-200"
           }`}
         >
-          {statusLine(phase, socket, state)}
+          {statusLine(phase, socket, state, lang)}
         </div>
+
+        <button
+          type="button"
+          onClick={() => onLang(lang === "fr" ? "en" : "fr")}
+          title={lang === "fr" ? "Switch to English" : "Passer en français"}
+          className="pointer-events-auto rounded-lg bg-white/80 px-2.5 py-2 text-xs font-semibold text-slate-600 shadow-sm backdrop-blur hover:bg-white dark:bg-slate-900/80 dark:text-slate-300"
+        >
+          {lang === "fr" ? "EN" : "FR"}
+        </button>
 
         {phase.kind === "no-session" && (
           <a
             className="pointer-events-auto rounded-lg bg-[#1A4F6E] px-3 py-2 text-sm font-semibold text-white shadow-sm"
             href="/bienvenue"
           >
-            Page d'accueil
+            {t.home}
           </a>
         )}
 
         {state && state.problems.length > 1 && (
           <details className="pointer-events-auto rounded-lg bg-white/80 px-3 py-2 text-xs text-slate-600 shadow-sm backdrop-blur dark:bg-slate-900/80 dark:text-slate-300">
             <summary className="cursor-pointer font-medium">
-              {state.problems.length} anomalies
+              {t.anomalies(state.problems.length)}
             </summary>
             <ul className="mt-1 list-disc pl-4">
               {state.problems.map((problem) => (
@@ -79,7 +92,7 @@ export function Hud(props: Props): React.ReactElement {
                 className="flex items-center justify-between gap-3 px-1 py-0.5 text-slate-700 dark:text-slate-200"
               >
                 <span className="truncate">
-                  {room.name}
+                  {named(room, lang)}
                   {room.motion && <span className="ml-1 text-[#F2C035]">●</span>}
                 </span>
                 <span className="font-mono tabular-nums text-slate-500 dark:text-slate-400">
@@ -100,10 +113,10 @@ export function Hud(props: Props): React.ReactElement {
             <button
               type="button"
               onClick={onRecentre}
-              title="Recadrer la vue"
+              title={t.recentre}
               className="rounded px-2.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-200/70 dark:text-slate-300 dark:hover:bg-slate-700/70"
             >
-              Recadrer
+              {t.recentre}
             </button>
             <span aria-hidden className="my-1 w-px bg-slate-300 dark:bg-slate-700" />
             {/* From outside: every storey solid and the roof on. The postcard. */}
@@ -117,7 +130,7 @@ export function Hud(props: Props): React.ReactElement {
                   : "text-slate-600 hover:bg-slate-200/70 dark:text-slate-300 dark:hover:bg-slate-700/70"
               }`}
             >
-              Extérieur
+              {t.outside}
             </button>
             {levels.map((entry) => (
               <button
@@ -131,7 +144,7 @@ export function Hud(props: Props): React.ReactElement {
                     : "text-slate-600 hover:bg-slate-200/70 dark:text-slate-300 dark:hover:bg-slate-700/70"
                 }`}
               >
-                {entry.name}
+                {named(entry, lang)}
               </button>
             ))}
           </div>

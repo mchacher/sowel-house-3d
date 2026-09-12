@@ -35,6 +35,7 @@ import {
   type HouseHandles,
 } from "./house.ts";
 import { makeMaterials, PALETTE, type Materials } from "./materials.ts";
+import type { Lang } from "../i18n.ts";
 
 /** How fast a shutter and a figure catch up with what Sowel said, per second. */
 const EASE_PER_SECOND = 3.5;
@@ -53,14 +54,16 @@ export class HouseRenderer {
   private level: Focus;
   private lampCounts: Record<string, number> = {};
   private counts: Partial<Counts> = {};
+  private lang: Lang = "fr";
   private state: SceneState | null = null;
   private frame = 0;
   private last = 0;
 
-  constructor(canvas: HTMLCanvasElement, plan: Plan, level: Focus = 0) {
+  constructor(canvas: HTMLCanvasElement, plan: Plan, level: Focus = 0, lang: Lang = "fr") {
     this.canvas = canvas;
     this.plan = plan;
     this.level = level;
+    this.lang = lang;
     this.materials = makeMaterials();
 
     this.renderer = new WebGLRenderer({ canvas, antialias: true });
@@ -124,6 +127,13 @@ export class HouseRenderer {
     this.rebuild();
   }
 
+  /** The signs are drawn at build time, so a new language is a rebuild. Rare. */
+  setLang(lang: Lang): void {
+    if (lang === this.lang) return;
+    this.lang = lang;
+    if (this.handles) this.rebuild();
+  }
+
   setLevel(level: Focus): void {
     if (level === this.level) return;
     this.level = level;
@@ -156,6 +166,7 @@ export class HouseRenderer {
       level: this.level,
       lampCounts: this.lampCounts,
       counts: this.counts,
+      lang: this.lang,
     });
     this.scene.add(this.handles.root);
     if (this.state) {
