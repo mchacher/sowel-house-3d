@@ -62,6 +62,8 @@ const house: HouseSpec = {
       d: 3,
       spot: [1.75, 1.6],
     },
+    // Off the corridor behind the study, where a pavilion keeps it.
+    { id: "wc", kind: "wc", name: "WC", level: 0, x: 0, z: 3, w: 1.5, d: 2, spot: [0.75, 4] },
     {
       id: "entree",
       kind: "hall",
@@ -259,6 +261,7 @@ const house: HouseSpec = {
     { room: "bureau", side: "E", at: 1.2, w: 0.9, to: "entree" },
     { room: "escalier", side: "N", at: 1.0, w: 1.2, to: "entree" },
     { room: "escalier", side: "W", at: 0.6, w: 1.0 },
+    { room: "wc", side: "E", at: 1.2, w: 0.7 },
     { room: "sejour", side: "N", at: 1.7, w: 1.0 },
     { room: "cuisine", side: "S", at: 2.0, w: 2.4, head: 2.3, to: "sejour" },
     { room: "cuisine", side: "E", at: 4.05, w: 0.9, to: "garage" },
@@ -272,6 +275,7 @@ const house: HouseSpec = {
   // Through the corridors and the landing, which belong to no room.
   links: [
     ["escalier", "sejour"],
+    ["escalier", "wc"],
     ["escalier", "salle-de-bain"],
     ["escalier", "chambre-parents"],
     ["escalier", "chambre-enfant-1"],

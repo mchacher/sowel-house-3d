@@ -13,7 +13,8 @@
     "garage": "Garage",
     "jardin": "Jardin",
     "piscine": "Piscine",
-    "terrasse": "Terrasse"
+    "terrasse": "Terrasse",
+    "wc": "WC"
   },
   "weatherEquipment": "Station Météo",
   "gates": {

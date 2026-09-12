@@ -59,7 +59,10 @@ describe("the scene state, from the real showroom", () => {
   it("falls back no further than the house", () => {
     // The cellar has no thermometer anywhere below the root, so it reads the house
     // average and says so rather than pretending to be measured.
-    expect(state.rooms.garage.temperatureFrom).toBe("Maison");
+    // The garage sits under the ground floor, whose stove reports a temperature;
+    // the bathroom's storey has none, so it climbs to the house.
+    expect(state.rooms.garage.temperatureFrom).toBe("RDC");
+    expect(state.rooms["salle-de-bain"].temperatureFrom).toBe("Maison");
   });
 
   it("places the household", () => {

@@ -16,7 +16,10 @@
 
 import {
   BoxGeometry,
+  CanvasTexture,
   CircleGeometry,
+  Sprite,
+  SpriteMaterial,
   ConeGeometry,
   CylinderGeometry,
   ExtrudeGeometry,
@@ -56,6 +59,43 @@ export interface LevelHandles {
   level: number;
   group: Group;
   materials: Materials;
+  /** The room names, hung in the rooms and faded with the storey. */
+  labels: Sprite[];
+}
+
+/**
+ * A room's name on a small sign that always faces the camera, hung near the
+ * ceiling so no wardrobe stands in front of it. Built only where there is a
+ * document to draw on: the scene graph is otherwise constructible in node, and the
+ * tests that prove it should stay that way.
+ */
+function roomSign(text: string): Sprite | null {
+  if (typeof document === "undefined") return null;
+  const canvas = document.createElement("canvas");
+  canvas.width = 512;
+  canvas.height = 128;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.font = "600 60px Inter, system-ui, sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  // White with an ocean outline: readable on a pale wall by day and on the same
+  // wall gone slate at night, when a plain blue vanished into it.
+  ctx.lineWidth = 9;
+  ctx.strokeStyle = "rgba(26, 79, 110, 0.95)";
+  ctx.strokeText(text.toUpperCase(), canvas.width / 2, canvas.height / 2);
+  ctx.fillStyle = "rgba(255, 255, 255, 0.96)";
+  ctx.fillText(text.toUpperCase(), canvas.width / 2, canvas.height / 2);
+  const material = new SpriteMaterial({
+    map: new CanvasTexture(canvas),
+    transparent: true,
+    depthWrite: false,
+    opacity: 0.95,
+  });
+  const sprite = new Sprite(material);
+  sprite.scale.set(2.0, 0.5, 1);
+  return sprite;
 }
 
 /**
@@ -176,6 +216,7 @@ export function buildHouse(options: BuildHouseOptions): HouseHandles {
     level: 0,
     group: new Group(),
     materials: copyMaterials(materials),
+    labels: [],
   };
   root.add(outdoor.group);
 
@@ -208,6 +249,7 @@ export function buildHouse(options: BuildHouseOptions): HouseHandles {
       level: slab.level,
       group: new Group(),
       materials: copyMaterials(materials),
+      labels: [],
     };
     entry.group.position.y = levelElevation(plan, slab.level);
     root.add(entry.group);
@@ -220,6 +262,7 @@ export function buildHouse(options: BuildHouseOptions): HouseHandles {
       level: 0,
       group: new Group(),
       materials: copyMaterials(materials),
+      labels: [],
     };
     root.add(roof.group);
     handles.roof = roof;
@@ -500,7 +543,16 @@ function buildLevel(
 
     for (const piece of furnitureFor(room)) {
       const block = box(piece.w, piece.h, piece.d, materials[piece.material]);
+      if (piece.material === "glass" || piece.material === "water") block.castShadow = false;
       group.add(at(block, piece.x + piece.w / 2, piece.y + piece.h / 2, piece.z + piece.d / 2));
+    }
+
+    // The room's name, hung over its spot under the ceiling. A legend without one.
+    const label = roomSign(room.name);
+    if (label) {
+      label.position.set(room.spot[0], plan.height - 0.55, room.spot[1]);
+      group.add(label);
+      entry.labels.push(label);
     }
 
     // Radiators on the west wall, a stove in the corner: only where Sowel has one.
@@ -713,6 +765,7 @@ export function focusLevel(handles: HouseHandles, focus: Focus): void {
   for (const [id, entry] of handles.levels) {
     const solid = outside || id === focus;
     setGhost(entry.materials, !solid);
+    for (const label of entry.labels) label.material.opacity = solid ? 0.95 : 0.08;
     entry.group.traverse((object) => {
       if (object instanceof Mesh) object.castShadow = solid;
     });

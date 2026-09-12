@@ -5,6 +5,7 @@ import {
   levelContents,
   levelElevation,
   outdoorRooms,
+  furnitureFor,
   gableRoof,
   slabPieces,
   solarPanels,
@@ -397,5 +398,38 @@ describe("the solar array", () => {
   it("puts none on a flat roof or a roof with no array", () => {
     expect(solarPanels({ ...roof, solar: undefined }, 2.6)).toEqual([]);
     expect(solarPanels({ ...roof, kind: "flat" }, 2.6)).toEqual([]);
+  });
+});
+
+describe("furnishing", () => {
+  const room = (kind: "bathroom" | "wc" | "stair") => ({
+    id: kind,
+    name: kind,
+    kind,
+    level: 1,
+    x: 2,
+    z: 3,
+    w: 3.5,
+    d: 3,
+    spot: [3, 4] as [number, number],
+  });
+
+  it("keeps every piece inside its room", () => {
+    for (const kind of ["bathroom", "wc"] as const) {
+      const r = room(kind);
+      for (const piece of furnitureFor(r)) {
+        expect(piece.x, `${kind} ${piece.material}`).toBeGreaterThanOrEqual(r.x - 1e-9);
+        expect(piece.z).toBeGreaterThanOrEqual(r.z - 1e-9);
+        expect(piece.x + piece.w).toBeLessThanOrEqual(r.x + r.w + 1e-9);
+        expect(piece.z + piece.d).toBeLessThanOrEqual(r.z + r.d + 1e-9);
+      }
+    }
+  });
+
+  it("gives a bathroom a bath with water in it and a glass shower, and a stairwell nothing", () => {
+    const pieces = furnitureFor(room("bathroom"));
+    expect(pieces.some((p) => p.material === "water")).toBe(true);
+    expect(pieces.some((p) => p.material === "glass")).toBe(true);
+    expect(furnitureFor(room("stair"))).toEqual([]);
   });
 });

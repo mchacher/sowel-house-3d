@@ -432,7 +432,7 @@ export interface Piece {
   w: number;
   h: number;
   d: number;
-  material: "wood" | "fabric" | "white" | "dark" | "metal" | "car";
+  material: "wood" | "fabric" | "white" | "dark" | "metal" | "car" | "glass" | "water";
 }
 
 /**
@@ -469,9 +469,24 @@ export function furnitureFor(room: Room): Piece[] {
       break;
     }
     case "bathroom": {
-      // A bath along the west, the basin on the east wall.
-      add(0.1, d - 1.9, 0.75, 0.55, 1.7, "white");
-      add(w - 0.7, d / 2 - 0.35, 0.55, 0.85, 0.7, "white");
+      // A bath along the west with water in it, a glass shower cabin in the
+      // south-east corner, the basin on a cabinet against the east wall, the toilet
+      // beside the door. Enough that nobody has to ask what room this is.
+      add(0.1, d - 1.9, 0.8, 0.55, 1.75, "white");
+      add(0.2, d - 1.8, 0.6, 0.06, 1.55, "water", 0.42);
+      add(w - 1.0, d - 1.0, 0.9, 2.0, 0.9, "glass");
+      add(w - 1.0, d - 1.0, 0.9, 0.08, 0.9, "white");
+      add(w - 0.6, 0.9, 0.55, 0.8, 0.9, "wood");
+      add(w - 0.55, 0.95, 0.45, 0.12, 0.8, "white", 0.8);
+      add(w - 0.5, 0.15, 0.4, 0.42, 0.6, "white");
+      add(w - 0.45, 0.05, 0.3, 0.75, 0.15, "white", 0.42);
+      break;
+    }
+    case "wc": {
+      // The pan against the far wall, its cistern behind it, a hand basin by the door.
+      add(w / 2 - 0.2, 0.15, 0.4, 0.42, 0.6, "white");
+      add(w / 2 - 0.2, 0.05, 0.4, 0.75, 0.15, "white", 0.42);
+      add(w - 0.45, d - 0.55, 0.35, 0.85, 0.35, "white");
       break;
     }
     case "kitchen": {

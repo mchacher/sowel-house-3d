@@ -17,6 +17,7 @@
 export type RoomKind =
   | "bedroom"
   | "bathroom"
+  | "wc"
   | "kitchen"
   | "living"
   | "office"

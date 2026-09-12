@@ -30,6 +30,7 @@ describe("the showroom plan", () => {
       "salle-de-bain",
       "sejour",
       "terrasse",
+      "wc",
     ];
     expect(plan.rooms.map((r) => r.id).sort()).toEqual(expected);
   });
@@ -51,6 +52,7 @@ describe("the showroom plan", () => {
       garage: 30,
       terrasse: 31.5,
       piscine: 32,
+      wc: 3,
     };
     for (const room of plan.rooms) {
       // The ground is the world, not a room: its size is whatever frames the house.
