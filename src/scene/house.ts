@@ -16,10 +16,11 @@
 
 import {
   BoxGeometry,
+  Color,
+  Vector2,
+  ShaderMaterial,
   CanvasTexture,
   CircleGeometry,
-  MeshBasicMaterial,
-  RingGeometry,
   Sprite,
   SpriteMaterial,
   ConeGeometry,
@@ -87,85 +88,102 @@ export function setDrop(shutter: ShutterHandle, drop: number): void {
 }
 
 /**
- * The water of a pool, moving. While the filtration pump runs, ripples and streaks
- * of foam come off the return jets and run down the pool with the current; while
- * the heat pump heats, the same flow turns warm — orange, a warm plume spreading
- * from each jet, steam rising off it. The machines themselves are not drawn: boxes
- * on the pool's edge were ugly, and the water says what they do.
+ * The water of a pool, moving. While the filtration pump runs, small waves leave
+ * the return jets at the end away from the roller and spread down the pool,
+ * growing and fading as they go; while the heat pump heats, they leave the jets
+ * orange and cool as they travel, over a faint warm glow at the jets.
  *
- * `applyState` sets `pump` and `heating`; `animateWater` does the rest each frame.
+ * One plane the size of the water, drawn by a shader: nothing can spill past the
+ * pool's edge. The first version was rings, streaks, fans and steam hung over the
+ * water — they reached the lawn, and the streaks looked like an arcade game's shots.
+ *
+ * `applyState` sets `pump` and `heating`; `animateWater` fades towards them and
+ * moves the waves each frame.
  */
 export interface PoolFlow {
   pump: boolean;
   heating: boolean;
-  /** Where each return jet is, and which way it pushes the water. */
-  jets: { x: number; z: number; dx: number; dz: number }[];
-  ripples: { mesh: Mesh; jet: number; phase: number }[];
-  streaks: { mesh: Mesh; jet: number; phase: number; lateral: number }[];
-  plumes: Mesh[];
-  steam: { mesh: Mesh; jet: number; phase: number; drift: number }[];
+  surface: Mesh;
+  /** 0…1, eased towards `pump`, and towards `heating`. */
+  on: number;
+  heat: number;
+  /** The last time `animateWater` saw, for the easing. */
+  last: number | null;
 }
 
-const FOAM = 0xeaf8ff;
-/** Water coming back warm. Orange, which nobody reads as anything else. */
-export const WARM_WATER = 0xff8a3d;
-const RIPPLE_S = 2.4;
-const STREAK_S = 3.2;
-const STEAM_S = 3.0;
+const FOAM = 0xf2fbff;
+/** Water coming back warm. */
+export const WARM_WATER = 0xff9a4d;
+/** How quickly the waves fade in and out, per second. */
+const WATER_FADE_PER_S = 1.5;
 
-function fade(color: number, opacity: number): MeshBasicMaterial {
-  return new MeshBasicMaterial({ color, transparent: true, opacity, depthWrite: false });
-}
+const WATER_VERTEX = /* glsl */ `
+  varying vec2 vUv;
+  void main() {
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
 
-function pale(mesh: Mesh): MeshBasicMaterial {
-  return mesh.material as MeshBasicMaterial;
+// p.x runs from the jets' end down the pool, p.y across it, both in metres. Waves
+// ring out from a point just behind the jets' wall: arcs a wavelength apart,
+// moving west, growing as they go, strongest down the middle and gone before the
+// far end. One source on purpose — two drew interference, a mesh over the water.
+// Warm water starts orange at the jets and cools to foam as it travels.
+const WATER_FRAGMENT = /* glsl */ `
+  uniform float uTime;
+  uniform float uOn;
+  uniform float uHeat;
+  uniform vec2 uSize;
+  uniform vec3 uFoam;
+  uniform vec3 uWarm;
+  varying vec2 vUv;
+
+  void main() {
+    vec2 p = vec2((1.0 - vUv.x) * uSize.x, vUv.y * uSize.y);
+    vec2 d = vec2(p.x + 1.2, p.y - uSize.y * 0.5);
+    float r = length(d) + 0.04 * sin(p.y * 2.1 + uTime * 0.8);
+    float crest = pow(0.5 + 0.5 * sin(6.28318 * (r / 0.85 - uTime * 0.42)), 10.0);
+    float fade = exp(-p.x / (uSize.x * 0.3));
+    float middle = exp(-pow((p.y - uSize.y * 0.5) / (uSize.y * 0.42), 2.0));
+    float edge = smoothstep(0.0, 0.25, p.y) * smoothstep(0.0, 0.25, uSize.y - p.y)
+      * smoothstep(0.0, 0.15, p.x);
+    float warmth = uHeat * (1.0 - smoothstep(0.0, uSize.x * 0.55, p.x));
+    float glow = uHeat * 0.22 * exp(-p.x / (uSize.x * 0.18));
+    float a = crest * fade * middle * 0.6;
+    vec3 wave = mix(uFoam, uWarm, warmth);
+    vec3 color = (wave * a + uWarm * glow) / max(a + glow, 1e-4);
+    gl_FragColor = vec4(color, clamp((a + glow) * edge * uOn, 0.0, 1.0));
+    #include <colorspace_fragment>
+  }
+`;
+
+/** The water's shader uniforms, typed. */
+function waterUniforms(flow: PoolFlow): {
+  uTime: { value: number };
+  uOn: { value: number };
+  uHeat: { value: number };
+} {
+  return (flow.surface.material as ShaderMaterial).uniforms as ReturnType<typeof waterUniforms>;
 }
 
 /**
- * One frame of the pools' water, at `t` seconds. Everything cycles on its own
- * phase, so the jets pulse rather than blink. Under a closed cover nothing shows.
+ * One frame of the pools' water, at `t` seconds: the waves move, and fade towards
+ * what the pump and the heat pump are doing. Under a closed cover nothing shows.
  */
 export function animateWater(handles: HouseHandles, t: number): void {
   for (const [roomId, flow] of handles.pools) {
+    const dt = flow.last === null ? 1 : Math.max(0, t - flow.last);
+    flow.last = t;
+    const k = 1 - Math.exp(-WATER_FADE_PER_S * dt);
+    flow.on += ((flow.pump ? 1 : 0) - flow.on) * k;
+    flow.heat += ((flow.heating ? 1 : 0) - flow.heat) * k;
     const shut = (handles.covers.get(roomId)?.drop ?? 0) > 0.95;
-    const on = flow.pump && !shut;
-    const warm = on && flow.heating;
-    const color = warm ? WARM_WATER : FOAM;
-    for (const ripple of flow.ripples) {
-      const p = (t / RIPPLE_S + ripple.phase) % 1;
-      const s = 0.15 + p * 1.15;
-      ripple.mesh.visible = on;
-      ripple.mesh.scale.set(s, s, 1);
-      pale(ripple.mesh).opacity = 0.6 * (1 - p);
-      pale(ripple.mesh).color.setHex(color);
-    }
-    for (const streak of flow.streaks) {
-      const jet = flow.jets[streak.jet];
-      const p = (t / STREAK_S + streak.phase) % 1;
-      const reach = 0.3 + p * 3.4;
-      const side = streak.lateral * (0.3 + p * 0.9);
-      streak.mesh.visible = on;
-      streak.mesh.position.x = jet.x + jet.dx * reach - jet.dz * side;
-      streak.mesh.position.z = jet.z + jet.dz * reach + jet.dx * side;
-      pale(streak.mesh).opacity = 0.6 * Math.sin(p * Math.PI);
-      pale(streak.mesh).color.setHex(color);
-    }
-    for (const plume of flow.plumes) {
-      plume.visible = warm;
-      pale(plume).opacity = 0.2 + 0.07 * Math.sin(t * 1.7);
-    }
-    for (const puff of flow.steam) {
-      const jet = flow.jets[puff.jet];
-      const p = (t / STEAM_S + puff.phase) % 1;
-      puff.mesh.visible = warm;
-      puff.mesh.position.set(
-        jet.x + jet.dx * (0.6 + p * 0.5) - jet.dz * puff.drift * p,
-        0.08 + p * 0.9,
-        jet.z + jet.dz * (0.6 + p * 0.5) + jet.dx * puff.drift * p,
-      );
-      puff.mesh.scale.setScalar(0.6 + p * 1.4);
-      pale(puff.mesh).opacity = 0.4 * Math.sin(p * Math.PI);
-    }
+    const u = waterUniforms(flow);
+    u.uTime.value = t;
+    u.uOn.value = flow.on;
+    u.uHeat.value = flow.heat;
+    flow.surface.visible = !shut && flow.on > 0.01;
   }
 }
 
@@ -843,60 +861,39 @@ function buildOutdoors(
     group.add(roller);
     handles.covers.set(room.id, { panel: cover, height: length, slats, drop: 0, target: 0 });
 
-    // The return jets, at the end away from the roller, pushing the water down the
-    // pool's length; and what moves off them, hidden until the pump runs. Just over
-    // the water and under the cover's slats, so a closing cover hides it.
-    const jets = [0.3, 0.7].map((f) =>
-      long
-        ? { x: room.x + room.w - 0.05, z: room.z + room.d * f, dx: -1, dz: 0 }
-        : { x: room.x + room.w * f, z: room.z + room.d - 0.05, dx: 0, dz: -1 },
+    // The moving water: a plane over it, exactly its size, just above the surface
+    // and under the cover's slats, so a closing cover hides it. Its x runs towards
+    // the end away from the roller, where the return jets are.
+    const surface = new Mesh(
+      new PlaneGeometry(length, width),
+      new ShaderMaterial({
+        vertexShader: WATER_VERTEX,
+        fragmentShader: WATER_FRAGMENT,
+        transparent: true,
+        depthWrite: false,
+        uniforms: {
+          uTime: { value: 0 },
+          uOn: { value: 0 },
+          uHeat: { value: 0 },
+          uSize: { value: new Vector2(length, width) },
+          uFoam: { value: new Color(FOAM) },
+          uWarm: { value: new Color(WARM_WATER) },
+        },
+      }),
     );
-    const flow: PoolFlow = {
+    surface.rotation.set(-Math.PI / 2, 0, long ? 0 : -Math.PI / 2);
+    surface.position.set(room.x + room.w / 2, 0.016, room.z + room.d / 2);
+    surface.visible = false;
+    surface.castShadow = false;
+    group.add(surface);
+    handles.pools.set(room.id, {
       pump: false,
       heating: false,
-      jets,
-      ripples: [],
-      streaks: [],
-      plumes: [],
-      steam: [],
-    };
-    const plume = fade(WARM_WATER, 0.2);
-    jets.forEach((jet, j) => {
-      // Flat things lie in their own xy plane, turned to face up; this turn first
-      // points their x the way the jet pushes.
-      const heading = Math.atan2(-jet.dz, jet.dx);
-      const flat = (mesh: Mesh, y: number): Mesh => {
-        mesh.rotation.set(-Math.PI / 2, 0, heading);
-        mesh.position.set(jet.x, y, jet.z);
-        mesh.visible = false;
-        group.add(mesh);
-        return mesh;
-      };
-      const nozzle = new Mesh(new CylinderGeometry(0.06, 0.06, 0.02, 12), materials.metal);
-      group.add(at(nozzle, jet.x, 0.012, jet.z));
-      for (let i = 0; i < 3; i++) {
-        const ring = flat(new Mesh(new RingGeometry(0.8, 1, 32), fade(FOAM, 0)), 0.02 + i * 0.001);
-        ring.position.x += jet.dx * 0.3;
-        ring.position.z += jet.dz * 0.3;
-        flow.ripples.push({ mesh: ring, jet: j, phase: i / 3 });
-      }
-      for (let i = 0; i < 6; i++) {
-        const streak = flat(new Mesh(new PlaneGeometry(0.45, 0.08), fade(FOAM, 0)), 0.024);
-        flow.streaks.push({ mesh: streak, jet: j, phase: i / 6, lateral: ((i * 5) % 6) / 5 - 0.5 });
-      }
-      [1.2, 2.2, 3.2].forEach((r, k) => {
-        flow.plumes.push(
-          flat(new Mesh(new CircleGeometry(r, 24, -0.55, 1.1), plume), 0.014 + k * 0.001),
-        );
-      });
-      for (let i = 0; i < 4; i++) {
-        const puff = new Mesh(new SphereGeometry(0.16, 8, 6), fade(0xffffff, 0));
-        puff.visible = false;
-        group.add(puff);
-        flow.steam.push({ mesh: puff, jet: j, phase: i / 4, drift: (i % 2 ? 1 : -1) * 0.2 });
-      }
+      surface,
+      on: 0,
+      heat: 0,
+      last: null,
     });
-    handles.pools.set(room.id, flow);
   }
 
   // Outdoor lights stand where the plan's fixtures say — lanterns on the terrace
@@ -1582,6 +1579,10 @@ export function applyState(
     // Heating shows only on water that moves: the heat pump is interlocked on the
     // pump, and a warm plume on still water would say otherwise.
     flow.heating = flow.pump && room?.poolHeating === true;
+    if (immediate) {
+      flow.on = flow.pump ? 1 : 0;
+      flow.heat = flow.heating ? 1 : 0;
+    }
   }
 
   for (const [group, jets] of handles.watering) {

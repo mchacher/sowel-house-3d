@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BoxGeometry, Mesh, MeshBasicMaterial, PointLight, type Material } from "three";
+import { BoxGeometry, Mesh, PlaneGeometry, PointLight, ShaderMaterial, type Material } from "three";
 import {
   applyState,
   buildHouse,
@@ -7,7 +7,6 @@ import {
   LIFT_OPEN_SCALE,
   animateWater,
   setDrop,
-  WARM_WATER,
   SWING_OPEN_RAD,
   syncPeople,
   type Focus,
@@ -586,48 +585,52 @@ describe("the grounds", () => {
     expect(cover.panel.position.x).toBeCloseTo(pool.x);
   });
 
-  it("stirs the water off the jets while the pump runs, and warms it while the heat pump heats", () => {
+  it("moves the water while the pump runs, warm while the heat pump heats, inside the pool", () => {
     const handles = build("outside");
     const flow = handles.pools.get("piscine")!;
-    expect(flow.jets).toHaveLength(2);
+    const pool = plan.rooms.find((r) => r.id === "piscine")!;
+    const uniforms = (flow.surface.material as ShaderMaterial).uniforms;
     const s = state();
     applyState(handles, s, materials, true);
     animateWater(handles, 1);
-    expect(flow.ripples.some((r) => r.mesh.visible)).toBe(false);
+    expect(flow.surface.visible).toBe(false);
+
+    // Exactly the water's size, over its middle: nothing reaches the lawn.
+    const size = (flow.surface.geometry as PlaneGeometry).parameters;
+    expect(Math.max(size.width, size.height)).toBeCloseTo(Math.max(pool.w, pool.d));
+    expect(Math.min(size.width, size.height)).toBeCloseTo(Math.min(pool.w, pool.d));
+    expect(flow.surface.position.x).toBeCloseTo(pool.x + pool.w / 2);
+    expect(flow.surface.position.z).toBeCloseTo(pool.z + pool.d / 2);
 
     s.rooms.piscine.pump = true;
     applyState(handles, s, materials, true);
-    animateWater(handles, 1);
-    expect(flow.ripples.every((r) => r.mesh.visible)).toBe(true);
-    expect(flow.streaks.every((r) => r.mesh.visible)).toBe(true);
-    expect(flow.plumes.some((p) => p.visible)).toBe(false);
-    // Streaks run down the pool, away from the jets at its east end.
-    const pool = plan.rooms.find((r) => r.id === "piscine")!;
-    for (const streak of flow.streaks) {
-      expect(streak.mesh.position.x).toBeLessThan(pool.x + pool.w);
-      expect(streak.mesh.position.x).toBeGreaterThan(pool.x);
-    }
+    animateWater(handles, 2);
+    expect(flow.surface.visible).toBe(true);
+    expect(uniforms.uOn.value).toBeCloseTo(1);
+    expect(uniforms.uHeat.value).toBeCloseTo(0);
+    expect(uniforms.uTime.value).toBe(2);
 
     s.rooms.piscine.poolHeating = true;
     applyState(handles, s, materials, true);
-    animateWater(handles, 1);
-    expect(flow.plumes.every((p) => p.visible)).toBe(true);
-    expect(flow.steam.every((p) => p.mesh.visible)).toBe(true);
-    const ring = flow.ripples[0].mesh.material as MeshBasicMaterial;
-    expect(ring.color.getHex()).toBe(WARM_WATER);
+    animateWater(handles, 3);
+    expect(uniforms.uHeat.value).toBeCloseTo(1);
 
-    // No flow, no warm water, whatever the heat pump says.
+    // No flow, no warm water, whatever the heat pump says; and it fades rather
+    // than blinks.
     s.rooms.piscine.pump = false;
-    applyState(handles, s, materials, true);
-    animateWater(handles, 1);
-    expect(flow.plumes.some((p) => p.visible)).toBe(false);
+    applyState(handles, s, materials, false);
+    animateWater(handles, 3.1);
+    expect(uniforms.uOn.value).toBeGreaterThan(0.5);
+    expect(uniforms.uOn.value).toBeLessThan(1);
+    animateWater(handles, 10);
+    expect(flow.surface.visible).toBe(false);
 
     // Under a closed cover, nothing shows.
     s.rooms.piscine.pump = true;
     s.rooms.piscine.cover = 0;
     applyState(handles, s, materials, true);
-    animateWater(handles, 1);
-    expect(flow.ripples.some((r) => r.mesh.visible)).toBe(false);
+    animateWater(handles, 11);
+    expect(flow.surface.visible).toBe(false);
   });
 
   it("stands the garden's lamps where the plan says, lit whichever storey is read", () => {

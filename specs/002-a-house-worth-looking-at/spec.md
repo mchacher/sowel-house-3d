@@ -129,9 +129,12 @@ the stove, heat pumps nobody recognised. What changed:
   stay out.
 - **FR10 — The pool's water.** The pool zone's `pool_pump` and `pool_heat_pump`
   become `RoomState.pump` and `poolHeating` — the heat pump's run state, which the
-  simulator interlocks on the pump. While the pump runs, ripples and foam streaks come
-  off two return jets at the end away from the roller and run down the pool; while
-  the heat pump heats, the same flow turns orange, with a warm plume and steam. A
-  closed cover hides it all. The pool's machines are not drawn — boxes on its edge
-  were ugly, and the water says what they do. The house's heat pump is, against the
-  west wall.
+  simulator interlocks on the pump. While the pump runs, small waves ring out from
+  the end away from the roller and travel down the pool, growing and fading; while
+  the heat pump heats, they leave orange and cool as they go, over a faint warm glow
+  at the jets. One plane exactly the water's size, drawn by a shader, so nothing
+  reaches past the edge; it fades in and out, and a closed cover hides it. (A first
+  cut hung rings, streaks, fans and steam over the water: they spilled onto the
+  lawn and looked like an arcade game.) The pool's machines are not drawn — boxes
+  on its edge were ugly, and the water says what they do. The house's heat pump is,
+  against the west wall.
