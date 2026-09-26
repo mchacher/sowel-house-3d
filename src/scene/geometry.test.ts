@@ -13,6 +13,7 @@ import {
   stairSteps,
   storeyPitch,
   pieceBox,
+  ROOF_SLAB,
   selectableLevels,
   shutterDrop,
   sunDirection,
@@ -338,24 +339,40 @@ describe("a gable roof", () => {
   const roof = gableRoof(
     { over: 1, kind: "gable", ridge: "x", x: 0, z: 0, w: 10, d: 8, rise: 2, overhang: 0.5 },
     2.6,
+    0.2,
   );
 
   it("has two slopes tilted opposite ways, meeting at the ridge", () => {
     expect(roof.slopes).toHaveLength(2);
     expect(roof.slopes[0].tilt).toBeCloseTo(-roof.slopes[1].tilt);
-    // Each slope runs from the eaves (half the depth plus the overhang) to the ridge.
-    expect(roof.slopes[0].down).toBeCloseTo(Math.hypot(4.5, 2));
+    // Pitched by the rise over half the depth, and running on past the wall line
+    // to the eaves' edge.
+    expect(Math.tan(Math.abs(roof.slopes[0].tilt))).toBeCloseTo(2 / 4);
+    expect(roof.slopes[0].down).toBeCloseTo(4.5 * (Math.hypot(4, 2) / 4));
     expect(roof.slopes[0].along).toBeCloseTo(11);
-    expect(roof.ridgeY).toBeCloseTo(roof.eavesY + 2);
+    expect(roof.ridgeY).toBeCloseTo(2.6 + 2);
   });
 
-  it("closes both ends with a triangle on the wall line, not the overhang", () => {
+  it("sits on the walls: its underside meets their top on the wall line", () => {
+    // The slot between the walls and the roof was a dark line round the storey.
+    const slope = roof.slopes[0];
+    const tilt = Math.abs(slope.tilt);
+    const lift = ROOF_SLAB / 2 / Math.cos(tilt);
+    // The slab's centre line, plumb over the wall line at z = 0, less half a slab.
+    const underside = slope.position[1] - (slope.position[2] - 0) * Math.tan(tilt) - lift;
+    expect(underside).toBeCloseTo(2.6);
+    expect(roof.eavesY).toBeLessThan(2.6);
+  });
+
+  it("closes both ends with a triangle from the top of the walls, as wide as they are thick", () => {
     expect(roof.gables.map((g) => g.at)).toEqual([0, 10]);
-    expect(roof.gables[0].points).toEqual([
-      [0, roof.eavesY],
-      [8, roof.eavesY],
-      [4, roof.ridgeY],
-    ]);
+    const [a, b, apex] = roof.gables[0].points;
+    expect(a).toEqual([-0.1, 2.6]);
+    expect(b).toEqual([8.1, 2.6]);
+    expect(apex[0]).toBe(4);
+    // Up into the slabs at the ridge, never short of them.
+    expect(apex[1]).toBeGreaterThan(roof.ridgeY);
+    expect(apex[1]).toBeLessThan(roof.ridgeTop);
   });
 });
 

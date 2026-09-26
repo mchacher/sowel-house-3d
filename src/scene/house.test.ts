@@ -316,8 +316,8 @@ describe("the roof and the stairs", () => {
   it("builds a roof in a group of its own", () => {
     const handles = build(0);
     expect(handles.roof).not.toBeNull();
-    // Two slopes, eight panels, two gables, and the garage's flat slab.
-    expect(handles.roof!.group.children.length).toBe(13);
+    // Two slopes, a ridge cap, eight panels, two gables, and the garage's flat slab.
+    expect(handles.roof!.group.children.length).toBe(14);
     const panels = handles.roof!.group.children.filter(
       (c) => c instanceof Mesh && c.material === handles.roof!.materials.panel,
     );

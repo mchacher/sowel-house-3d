@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { validatePlan } from "./validate.ts";
 import type { Plan } from "./types.ts";
-import { furnitureFor, type Piece } from "../scene/geometry.ts";
+import { furnitureFor, stoveSpot, type Piece } from "../scene/geometry.ts";
 // The app fetches the plan at runtime, because it is data a deployment swaps. The
 // test imports it so the app tier needs no node types for a file read.
 import showroom from "../../public/plans/showroom.json";
@@ -130,6 +130,18 @@ describe("the showroom plan", () => {
       axis === "x"
         ? ([at - w / 2, at + w / 2, wallAt - reach, wallAt + reach] as const)
         : ([wallAt - reach, wallAt + reach, at - w / 2, at + w / 2] as const);
+
+    it("keeps the stove's corner clear, wherever a room could have one", () => {
+      for (const room of plan.rooms.filter((r) => r.kind === "living")) {
+        const spot = stoveSpot(room);
+        for (const piece of furnitureFor(room).filter((p) => !flat(p))) {
+          expect(
+            overlaps(piece, spot.x, spot.x + spot.w, spot.z, spot.z + spot.d),
+            `${room.id} ${piece.material} at ${piece.x},${piece.z}`,
+          ).toBe(false);
+        }
+      }
+    });
 
     it("furnishes every bedroom, and no two alike", () => {
       const bedrooms = plan.rooms.filter((room) => room.kind === "bedroom");

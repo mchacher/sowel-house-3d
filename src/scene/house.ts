@@ -31,6 +31,7 @@ import {
   PointLight,
   Shape,
   SphereGeometry,
+  TorusGeometry,
   type Material,
 } from "three";
 import type { Fixture, Machine, Opening, Plan, Room, Side, Wall } from "../plan/types.ts";
@@ -46,11 +47,13 @@ import {
   levelElevation,
   outdoorRooms,
   pieceBox,
+  ROOF_SLAB,
   shutterDrop,
   SLAB,
   slabPieces,
   solarPanels,
   sprinklerSpots,
+  stoveSpot,
   stairSteps,
   storeyPitch,
   treeParts,
@@ -297,36 +300,55 @@ function buildLamp(
 /** The machines outside: a box, and a fan or a filter to say what it is. */
 function buildMachine(machine: Machine, materials: Materials, group: Group): void {
   const [fx, fz] = FACING[machine.face];
-  const along = machine.face === "N" || machine.face === "S";
-  const size =
-    machine.kind === "pool-pump"
-      ? [0.45, 0.35, 0.35]
-      : machine.kind === "heat-pump"
-        ? [0.95, 0.7, 0.36]
-        : [0.85, 0.75, 0.5];
-  const [w, h, d] = along ? size : [size[2], size[1], size[0]];
-  const body = box(w, h, d, materials.metal);
-  group.add(at(body, machine.x, h / 2, machine.z));
+  // Built facing +z and turned to its face: +z goes to (fx, fz).
+  const unit = new Group();
+  unit.position.set(machine.x, 0, machine.z);
+  unit.rotation.y = Math.atan2(fx, fz);
+  group.add(unit);
+  const add = (mesh: Mesh, x: number, y: number, z: number): Mesh => {
+    mesh.position.set(x, y, z);
+    mesh.castShadow = true;
+    unit.add(mesh);
+    return mesh;
+  };
+
   if (machine.kind === "pool-pump") {
-    const filter = new Mesh(new CylinderGeometry(0.18, 0.18, 0.62, 14), materials.white);
-    filter.castShadow = true;
-    group.add(
-      at(
-        filter,
-        machine.x - fx * 0.05 + (along ? 0.4 : 0),
-        0.31,
-        machine.z - fz * 0.05 + (along ? 0 : 0.4),
-      ),
-    );
+    add(box(0.45, 0.35, 0.35, materials.metal), 0, 0.175, 0);
+    add(new Mesh(new CylinderGeometry(0.18, 0.18, 0.62, 14), materials.white), 0.4, 0.31, -0.05);
     return;
   }
-  // The fan, on the face it blows out of.
-  const fan = new Mesh(new CylinderGeometry(0.24, 0.24, 0.03, 20), materials.dark);
-  fan.rotation.set(along ? Math.PI / 2 : 0, 0, along ? 0 : Math.PI / 2);
-  const depth = along ? d : w;
-  group.add(
-    at(fan, machine.x + fx * (depth / 2 + 0.01), h / 2, machine.z + fz * (depth / 2 + 0.01)),
+
+  // An outdoor unit, the way everybody pictures a heat pump: a white casing on two
+  // feet, a big round grille over the fan on its face, louvres beside it. The first
+  // one was a grey block with a dark disc, and nobody took it for one.
+  const [w, h, d] = machine.kind === "heat-pump" ? [0.95, 0.7, 0.36] : [0.9, 0.78, 0.5];
+  const lift = 0.1;
+  for (const x of [-w / 2 + 0.12, w / 2 - 0.12]) {
+    add(box(0.08, lift, d + 0.08, materials.dark), x, lift / 2, 0);
+  }
+  add(box(w, h, d, materials.white), 0, lift + h / 2, 0);
+  const r = h * 0.36;
+  const fanX = -w / 2 + r + 0.08;
+  const cy = lift + h / 2;
+  const face = d / 2;
+  const disc = add(new Mesh(new CylinderGeometry(r, r, 0.02, 28), materials.dark), fanX, cy, face);
+  disc.rotation.x = Math.PI / 2;
+  const hub = add(
+    new Mesh(new CylinderGeometry(0.05, 0.05, 0.03, 12), materials.metal),
+    fanX,
+    cy,
+    face + 0.01,
   );
+  hub.rotation.x = Math.PI / 2;
+  add(new Mesh(new TorusGeometry(r, 0.012, 6, 32), materials.metal), fanX, cy, face + 0.02);
+  add(new Mesh(new TorusGeometry(r * 0.6, 0.008, 6, 24), materials.metal), fanX, cy, face + 0.02);
+  add(box(2 * r, 0.012, 0.012, materials.metal), fanX, cy, face + 0.02);
+  add(box(0.012, 2 * r, 0.012, materials.metal), fanX, cy, face + 0.02);
+  const louvreX = (fanX + r + w / 2) / 2;
+  const louvreW = w / 2 - (fanX + r) - 0.08;
+  for (let i = 0; i < 5; i++) {
+    add(box(louvreW, 0.018, 0.012, materials.dark), louvreX, lift + 0.2 + i * 0.07, face + 0.004);
+  }
 }
 
 /**
@@ -389,9 +411,9 @@ export interface HouseHandles {
    * Per room, in plan window order; the panel is anchored at the lintel.
    *
    * `target` is where Sowel says it should be, as a drop in 0…1. The renderer walks
-   * `panel.scale.y` towards it, which is what makes a shutter slide instead of
-   * jumping — so nothing but `applyState` writes the target and nothing but the
-   * easing writes the scale.
+   * `drop` towards it, which is what makes a shutter come down slat by slat instead
+   * of jumping — so nothing but `applyState` writes the target and nothing but the
+   * easing writes the drop.
    */
   shutters: Map<string, ShutterHandle[]>;
   sensors: Map<string, Mesh>;
@@ -857,13 +879,16 @@ function buildLevel(
       heaters.push({ body, cold: materials.white });
     }
     if (counts.stoves?.includes(room.id)) {
+      const spot = stoveSpot(room);
+      const sx = spot.x + spot.w / 2;
+      const sz = spot.z + spot.d / 2;
       const stove = box(0.55, 1.1, 0.55, materials.stove);
-      group.add(at(stove, room.x + 0.5, 0.55, room.z + room.d - 0.6));
+      group.add(at(stove, sx, 0.55, sz));
       const pipe = new Mesh(new CylinderGeometry(0.06, 0.06, plan.height - 1.1, 8), materials.dark);
-      group.add(at(pipe, room.x + 0.5, 1.1 + (plan.height - 1.1) / 2, room.z + room.d - 0.6));
+      group.add(at(pipe, sx, 1.1 + (plan.height - 1.1) / 2, sz));
       // The little window in its door is what glows.
       const window = box(0.3, 0.22, 0.03, materials.dark);
-      group.add(at(window, room.x + 0.5, 0.55, room.z + room.d - 0.6 - 0.28));
+      group.add(at(window, sx, 0.55, sz - 0.28));
       heaters.push({ body: window, cold: materials.dark });
     }
     if (heaters.length > 0) handles.heaters.set(room.id, heaters);
@@ -1225,12 +1250,12 @@ function buildRoofs(plan: Plan, entry: LevelHandles): void {
       continue;
     }
 
-    const shape = gableRoof(roof, plan.height);
+    const shape = gableRoof(roof, plan.height, plan.thickness);
     const ridgeX = roof.ridge !== "z";
     for (const slope of shape.slopes) {
       const slab = box(
         ridgeX ? slope.along : slope.down,
-        0.12,
+        ROOF_SLAB,
         ridgeX ? slope.down : slope.along,
         materials.roof,
       );
@@ -1239,6 +1264,12 @@ function buildRoofs(plan: Plan, entry: LevelHandles): void {
       else slab.rotation.z = slope.tilt;
       group.add(slab);
     }
+    // A ridge cap over the notch the two slabs leave where they meet.
+    const along = shape.slopes[0].along;
+    const cap = ridgeX
+      ? box(along, 0.1, 0.28, materials.roof)
+      : box(0.28, 0.1, along, materials.roof);
+    group.add(at(cap, roof.x + roof.w / 2, elevation + shape.ridgeTop - 0.03, roof.z + roof.d / 2));
     for (const panel of solarPanels(roof, plan.height)) {
       const module = box(
         ridgeX ? panel.along : panel.down,

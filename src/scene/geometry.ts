@@ -319,6 +319,9 @@ export interface GableEnd {
   points: [number, number][];
 }
 
+/** How thick a roof's slabs are. */
+export const ROOF_SLAB = 0.12;
+
 /**
  * The geometry of a gable roof, relative to the storey it sits on.
  *
@@ -326,23 +329,40 @@ export interface GableEnd {
  * gable triangles closing the ends on the wall line. `y` is measured from the
  * storey's floor; the caller adds the storey's elevation by placing it in the
  * storey's group.
+ *
+ * The slopes' underside passes through the top of the walls, on the wall line,
+ * and `rise` above it at the ridge; the gables fill exactly that, from the top of
+ * the walls up, as wide as the walls are thick. The first version started the
+ * slopes and the gables 5 cm above the walls and pitched the gables steeper than
+ * the roof, and the slot showed as a dark line all round the top storey.
  */
 export function gableRoof(
   roof: Roof,
   wallHeight: number,
-): { eavesY: number; ridgeY: number; slopes: RoofSlope[]; gables: GableEnd[] } {
+  thickness = 0,
+): {
+  eavesY: number;
+  ridgeY: number;
+  /** The top of the slopes where they meet: where a ridge cap sits. */
+  ridgeTop: number;
+  slopes: RoofSlope[];
+  gables: GableEnd[];
+} {
   const o = roof.overhang;
-  const eavesY = wallHeight + 0.05;
-  const ridgeY = eavesY + roof.rise;
   const ridgeX = roof.ridge !== "z";
-  // Half the span across the ridge, and the slope's length down it.
-  const half = (ridgeX ? roof.d : roof.w) / 2 + o;
-  const down = Math.hypot(half, roof.rise);
-  const tilt = Math.atan2(roof.rise, half);
+  // From the wall line to the ridge, and from the eaves' edge to it.
+  const span = (ridgeX ? roof.d : roof.w) / 2;
+  const half = span + o;
+  const tilt = Math.atan2(roof.rise, span);
+  const down = half / Math.cos(tilt);
+  // Half a slab, measured plumb: the underside is the line, the slab sits on it.
+  const lift = ROOF_SLAB / 2 / Math.cos(tilt);
+  const eavesY = wallHeight - o * Math.tan(tilt);
+  const ridgeY = wallHeight + roof.rise;
   const along = (ridgeX ? roof.w : roof.d) + 2 * o;
   const cx = roof.x + roof.w / 2;
   const cz = roof.z + roof.d / 2;
-  const my = eavesY + roof.rise / 2;
+  const my = (eavesY + ridgeY) / 2 + lift;
 
   const slopes: RoofSlope[] = ridgeX
     ? [
@@ -357,10 +377,11 @@ export function gableRoof(
   const lo = ridgeX ? roof.z : roof.x;
   const hi = ridgeX ? roof.z + roof.d : roof.x + roof.w;
   const mid = (lo + hi) / 2;
+  const t = thickness / 2;
   const triangle: [number, number][] = [
-    [lo, eavesY],
-    [hi, eavesY],
-    [mid, ridgeY],
+    [lo - t, wallHeight],
+    [hi + t, wallHeight],
+    [mid, ridgeY + lift],
   ];
   const gables: GableEnd[] = ridgeX
     ? [
@@ -372,7 +393,7 @@ export function gableRoof(
         { at: roof.z + roof.d, points: triangle },
       ];
 
-  return { eavesY, ridgeY, slopes, gables };
+  return { eavesY, ridgeY, ridgeTop: ridgeY + 2 * lift, slopes, gables };
 }
 
 /** One solar panel: where its centre sits and how it lies, relative to the storey. */
@@ -433,7 +454,7 @@ export function solarPanels(roof: Roof, wallHeight: number): Panel[] {
 
 /** The tallest thing on the house above its top storey's walls, for framing. */
 export function roofRise(plan: Plan): number {
-  return Math.max(0, ...(plan.roofs ?? []).map((r) => r.rise + 0.05));
+  return Math.max(0, ...(plan.roofs ?? []).map((r) => r.rise + 0.3));
 }
 
 /** A block of furniture: a box, and which material it is drawn in. */
@@ -487,6 +508,14 @@ export function floorFor(room: Room): "floorWood" | "floorTile" | "floorConcrete
     default:
       return null;
   }
+}
+
+/**
+ * Where a room's stove stands, as a footprint: its south-west corner. Furniture
+ * keeps clear of it — the sofa once stood half inside it.
+ */
+export function stoveSpot(room: Room): Rect {
+  return { x: room.x + 0.2, z: room.z + room.d - 0.9, w: 0.6, d: 0.6 };
 }
 
 /** How thick a floor covering is; a rug lies on it. */
@@ -835,14 +864,15 @@ export function furnitureFor(room: Room): Piece[] {
       break;
     }
     case "living": {
-      // An L of sofa round a low table on a rug, west half; the dining table east.
-      add(1.3, d - 3.5, 2.3, 0.012, 2.0, "accent", FLOORING);
-      add(1.42, d - 3.38, 2.06, 0.016, 1.76, "white", FLOORING);
-      add(0.6, d - 1.5, 2.6, 0.42, 0.9, "accent");
-      add(0.6, d - 0.8, 2.6, 0.4, 0.2, "accent", 0.42);
-      add(0.6, d - 3.2, 0.9, 0.42, 1.7, "accent");
-      add(0.6, d - 3.2, 0.2, 0.4, 1.7, "accent", 0.42);
-      add(1.9, d - 3.0, 1.1, 0.4, 0.8, "wood");
+      // An L of sofa round a low table on a rug, west half, clear of the stove's
+      // corner and facing it; the dining table east.
+      add(1.8, d - 3.5, 2.3, 0.012, 2.0, "accent", FLOORING);
+      add(1.92, d - 3.38, 2.06, 0.016, 1.76, "white", FLOORING);
+      add(1.1, d - 1.5, 2.6, 0.42, 0.9, "accent");
+      add(1.1, d - 0.8, 2.6, 0.4, 0.2, "accent", 0.42);
+      add(1.1, d - 3.2, 0.9, 0.42, 1.7, "accent");
+      add(1.1, d - 3.2, 0.2, 0.4, 1.7, "accent", 0.42);
+      add(2.4, d - 3.0, 1.1, 0.4, 0.8, "wood");
       const tx = w * 0.62;
       add(tx, d / 2 - 0.5, 1.8, 0.75, 1.0, "wood");
       for (const [cx, cz] of [
