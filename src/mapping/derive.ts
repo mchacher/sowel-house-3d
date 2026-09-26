@@ -23,6 +23,8 @@ const SHUTTER_TYPES = new Set(["shutter", "awning"]);
 const HEATER_TYPES = new Set(["heater"]);
 const THERMOSTAT_TYPES = new Set(["thermostat"]);
 const COVER_TYPES = new Set(["pool_cover"]);
+const POOL_PUMP_TYPES = new Set(["pool_pump"]);
+const POOL_HEATER_TYPES = new Set(["pool_heat_pump"]);
 
 export interface RoomBindings {
   roomId: string;
@@ -55,6 +57,10 @@ export interface RoomBindings {
   thermostat: Equipment | null;
   /** The pool's cover, on the pool room. */
   cover: Equipment | null;
+  /** The pool's filtration pump: the water moves while it runs. */
+  pump: Equipment | null;
+  /** The pool's heat pump: the water coming back in is warm while it heats. */
+  poolHeater: Equipment | null;
 }
 
 export interface Person {
@@ -243,6 +249,8 @@ export function derive(
       heaters: inZone.filter((e) => HEATER_TYPES.has(e.type)),
       thermostat: inZone.find((e) => THERMOSTAT_TYPES.has(e.type)) ?? null,
       cover: inZone.find((e) => COVER_TYPES.has(e.type)) ?? null,
+      pump: inZone.find((e) => POOL_PUMP_TYPES.has(e.type)) ?? null,
+      poolHeater: inZone.find((e) => POOL_HEATER_TYPES.has(e.type)) ?? null,
     };
   }
 

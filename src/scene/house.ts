@@ -18,6 +18,8 @@ import {
   BoxGeometry,
   CanvasTexture,
   CircleGeometry,
+  MeshBasicMaterial,
+  RingGeometry,
   Sprite,
   SpriteMaterial,
   ConeGeometry,
@@ -82,6 +84,89 @@ export interface ShutterHandle {
 export function setDrop(shutter: ShutterHandle, drop: number): void {
   shutter.drop = drop;
   shutter.panel.count = Math.max(0, Math.min(shutter.slats, Math.round(drop * shutter.slats)));
+}
+
+/**
+ * The water of a pool, moving. While the filtration pump runs, ripples and streaks
+ * of foam come off the return jets and run down the pool with the current; while
+ * the heat pump heats, the same flow turns warm — orange, a warm plume spreading
+ * from each jet, steam rising off it. The machines themselves are not drawn: boxes
+ * on the pool's edge were ugly, and the water says what they do.
+ *
+ * `applyState` sets `pump` and `heating`; `animateWater` does the rest each frame.
+ */
+export interface PoolFlow {
+  pump: boolean;
+  heating: boolean;
+  /** Where each return jet is, and which way it pushes the water. */
+  jets: { x: number; z: number; dx: number; dz: number }[];
+  ripples: { mesh: Mesh; jet: number; phase: number }[];
+  streaks: { mesh: Mesh; jet: number; phase: number; lateral: number }[];
+  plumes: Mesh[];
+  steam: { mesh: Mesh; jet: number; phase: number; drift: number }[];
+}
+
+const FOAM = 0xeaf8ff;
+/** Water coming back warm. Orange, which nobody reads as anything else. */
+export const WARM_WATER = 0xff8a3d;
+const RIPPLE_S = 2.4;
+const STREAK_S = 3.2;
+const STEAM_S = 3.0;
+
+function fade(color: number, opacity: number): MeshBasicMaterial {
+  return new MeshBasicMaterial({ color, transparent: true, opacity, depthWrite: false });
+}
+
+function pale(mesh: Mesh): MeshBasicMaterial {
+  return mesh.material as MeshBasicMaterial;
+}
+
+/**
+ * One frame of the pools' water, at `t` seconds. Everything cycles on its own
+ * phase, so the jets pulse rather than blink. Under a closed cover nothing shows.
+ */
+export function animateWater(handles: HouseHandles, t: number): void {
+  for (const [roomId, flow] of handles.pools) {
+    const shut = (handles.covers.get(roomId)?.drop ?? 0) > 0.95;
+    const on = flow.pump && !shut;
+    const warm = on && flow.heating;
+    const color = warm ? WARM_WATER : FOAM;
+    for (const ripple of flow.ripples) {
+      const p = (t / RIPPLE_S + ripple.phase) % 1;
+      const s = 0.15 + p * 1.15;
+      ripple.mesh.visible = on;
+      ripple.mesh.scale.set(s, s, 1);
+      pale(ripple.mesh).opacity = 0.6 * (1 - p);
+      pale(ripple.mesh).color.setHex(color);
+    }
+    for (const streak of flow.streaks) {
+      const jet = flow.jets[streak.jet];
+      const p = (t / STREAK_S + streak.phase) % 1;
+      const reach = 0.3 + p * 3.4;
+      const side = streak.lateral * (0.3 + p * 0.9);
+      streak.mesh.visible = on;
+      streak.mesh.position.x = jet.x + jet.dx * reach - jet.dz * side;
+      streak.mesh.position.z = jet.z + jet.dz * reach + jet.dx * side;
+      pale(streak.mesh).opacity = 0.6 * Math.sin(p * Math.PI);
+      pale(streak.mesh).color.setHex(color);
+    }
+    for (const plume of flow.plumes) {
+      plume.visible = warm;
+      pale(plume).opacity = 0.2 + 0.07 * Math.sin(t * 1.7);
+    }
+    for (const puff of flow.steam) {
+      const jet = flow.jets[puff.jet];
+      const p = (t / STEAM_S + puff.phase) % 1;
+      puff.mesh.visible = warm;
+      puff.mesh.position.set(
+        jet.x + jet.dx * (0.6 + p * 0.5) - jet.dz * puff.drift * p,
+        0.08 + p * 0.9,
+        jet.z + jet.dz * (0.6 + p * 0.5) + jet.dx * puff.drift * p,
+      );
+      puff.mesh.scale.setScalar(0.6 + p * 1.4);
+      pale(puff.mesh).opacity = 0.4 * Math.sin(p * Math.PI);
+    }
+  }
 }
 
 /** A slat and the gap under it, metres. Roughly what a PVC roller shutter has. */
@@ -425,6 +510,8 @@ export interface HouseHandles {
   gates: Map<string, DoorHandle>;
   /** Pool covers by room: a roller shutter lying on the water. */
   covers: Map<string, ShutterHandle>;
+  /** The water moving in each pool: its jets, and what they show. */
+  pools: Map<string, PoolFlow>;
   /** The sprinkler jets of each watering group, shown while the valve is open. */
   watering: Map<string, Object3D[]>;
   /** Per room: its window panes, lit from outside when a lamp in the room is on. */
@@ -499,6 +586,7 @@ export function buildHouse(options: BuildHouseOptions): HouseHandles {
     heaters: new Map(),
     gates: new Map(),
     covers: new Map(),
+    pools: new Map(),
     watering: new Map(),
     panes: new Map(),
     doors: new Map(),
@@ -754,6 +842,61 @@ function buildOutdoors(
     roller.position.set(long ? rx - 0.3 : rx, 0.24, long ? rz : rz - 0.3);
     group.add(roller);
     handles.covers.set(room.id, { panel: cover, height: length, slats, drop: 0, target: 0 });
+
+    // The return jets, at the end away from the roller, pushing the water down the
+    // pool's length; and what moves off them, hidden until the pump runs. Just over
+    // the water and under the cover's slats, so a closing cover hides it.
+    const jets = [0.3, 0.7].map((f) =>
+      long
+        ? { x: room.x + room.w - 0.05, z: room.z + room.d * f, dx: -1, dz: 0 }
+        : { x: room.x + room.w * f, z: room.z + room.d - 0.05, dx: 0, dz: -1 },
+    );
+    const flow: PoolFlow = {
+      pump: false,
+      heating: false,
+      jets,
+      ripples: [],
+      streaks: [],
+      plumes: [],
+      steam: [],
+    };
+    const plume = fade(WARM_WATER, 0.2);
+    jets.forEach((jet, j) => {
+      // Flat things lie in their own xy plane, turned to face up; this turn first
+      // points their x the way the jet pushes.
+      const heading = Math.atan2(-jet.dz, jet.dx);
+      const flat = (mesh: Mesh, y: number): Mesh => {
+        mesh.rotation.set(-Math.PI / 2, 0, heading);
+        mesh.position.set(jet.x, y, jet.z);
+        mesh.visible = false;
+        group.add(mesh);
+        return mesh;
+      };
+      const nozzle = new Mesh(new CylinderGeometry(0.06, 0.06, 0.02, 12), materials.metal);
+      group.add(at(nozzle, jet.x, 0.012, jet.z));
+      for (let i = 0; i < 3; i++) {
+        const ring = flat(new Mesh(new RingGeometry(0.8, 1, 32), fade(FOAM, 0)), 0.02 + i * 0.001);
+        ring.position.x += jet.dx * 0.3;
+        ring.position.z += jet.dz * 0.3;
+        flow.ripples.push({ mesh: ring, jet: j, phase: i / 3 });
+      }
+      for (let i = 0; i < 6; i++) {
+        const streak = flat(new Mesh(new PlaneGeometry(0.45, 0.08), fade(FOAM, 0)), 0.024);
+        flow.streaks.push({ mesh: streak, jet: j, phase: i / 6, lateral: ((i * 5) % 6) / 5 - 0.5 });
+      }
+      [1.2, 2.2, 3.2].forEach((r, k) => {
+        flow.plumes.push(
+          flat(new Mesh(new CircleGeometry(r, 24, -0.55, 1.1), plume), 0.014 + k * 0.001),
+        );
+      });
+      for (let i = 0; i < 4; i++) {
+        const puff = new Mesh(new SphereGeometry(0.16, 8, 6), fade(0xffffff, 0));
+        puff.visible = false;
+        group.add(puff);
+        flow.steam.push({ mesh: puff, jet: j, phase: i / 4, drift: (i % 2 ? 1 : -1) * 0.2 });
+      }
+    });
+    handles.pools.set(room.id, flow);
   }
 
   // Outdoor lights stand where the plan's fixtures say — lanterns on the terrace
@@ -1432,6 +1575,13 @@ export function applyState(
     const position = state.rooms[roomId]?.cover ?? null;
     cover.target = shutterDrop(position);
     if (immediate) setDrop(cover, cover.target);
+  }
+  for (const [roomId, flow] of handles.pools) {
+    const room = state.rooms[roomId];
+    flow.pump = room?.pump === true;
+    // Heating shows only on water that moves: the heat pump is interlocked on the
+    // pump, and a warm plume on still water would say otherwise.
+    flow.heating = flow.pump && room?.poolHeating === true;
   }
 
   for (const [group, jets] of handles.watering) {

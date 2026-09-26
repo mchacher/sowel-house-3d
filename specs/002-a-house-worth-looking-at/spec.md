@@ -102,3 +102,36 @@ builder holds the rooms.
 - A door with no contact bound stays shut rather than guessing.
 - A contact on a window would take a door's place in the pairing; the showroom has
   none, and the pairing says so in `derive.ts`.
+
+## Amendment — 2026-09-26: the design pass
+
+The owner, reviewing the demo: shutters like planks, doors like metal plates, four
+identical bedrooms, a dark line between the roof and the storey, a sofa standing in
+the stove, heat pumps nobody recognised. What changed:
+
+- **FR3, the roof sits on the walls.** The slopes' underside meets the top of the
+  walls on the wall line and rises `rise` to the ridge; the gables fill exactly that,
+  as wide as the walls are thick; a ridge cap closes the notch. The old slopes and
+  gables started 5 cm up, the gables steeper than the roof.
+- **FR8 — Joinery.** A roller shutter is slats leaving a housing between two rails
+  (an instanced mesh whose `count` is the slats showing); the pool cover is the same
+  shutter lying on the water. Windows get an anthracite frame, a mullion from 0.9 m
+  wide, and a stone sill outside. The front door is ocean blue with a glass slit, a
+  pull bar, a step and a canopy; the terrace door is glazed (`Opening.glazed`); the
+  garage door is sectional; doorways between rooms get an oak door standing open into
+  the room rather than the hall or stair; every doorway gets a casing.
+- **FR9 — Furniture by piece.** `Room.furniture` lists items against a wall (`wall`,
+  `at`, `off`) and `Room.accent` colours the textiles; a room without keeps what its
+  kind gives it. The plan's tests hold every piece inside its room clear of the walls,
+  out of every door's swing, blocking no window past a third of its height, off the
+  stove's corner (`stoveSpot`), and no two bedrooms alike. Floors follow the kind:
+  parquet, tiles, concrete. The non-goal "furniture" is lifted this far; textures
+  stay out.
+- **FR10 — The pool's water.** The pool zone's `pool_pump` and `pool_heat_pump`
+  become `RoomState.pump` and `poolHeating` — the heat pump's run state, which the
+  simulator interlocks on the pump. While the pump runs, ripples and foam streaks come
+  off two return jets at the end away from the roller and run down the pool; while
+  the heat pump heats, the same flow turns orange, with a warm plume and steam. A
+  closed cover hides it all. The pool's machines are not drawn — boxes on its edge
+  were ugly, and the water says what they do. The house's heat pump is, against the
+  west wall.

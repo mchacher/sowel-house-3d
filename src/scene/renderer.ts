@@ -30,6 +30,7 @@ import {
   focusLevel,
   syncPeople,
   LIFT_OPEN_SCALE,
+  animateWater,
   setDrop,
   type Counts,
   type DoorHandle,
@@ -81,6 +82,8 @@ export class HouseRenderer {
   private lang: Lang = "fr";
   private state: SceneState | null = null;
   private frame = 0;
+  /** Seconds since start, for what cycles on its own: the pools' water. */
+  private time = 0;
   private last = 0;
   /**
    * How close the view from outside stands, 1 being the full view's framing. The
@@ -385,6 +388,8 @@ export class HouseRenderer {
         }
       }
     }
+    this.time += dt;
+    animateWater(this.handles, this.time);
     for (const entry of this.state?.people ?? []) {
       const figure = this.handles.people.get(entry.id);
       if (!figure) continue;

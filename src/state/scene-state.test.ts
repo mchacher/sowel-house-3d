@@ -272,3 +272,34 @@ describe("doors", () => {
     expect(after.rooms.garage.doors).toEqual([true]);
   });
 });
+
+describe("the pool's water", () => {
+  const running = (names: string[]) =>
+    base.equipments.map((e) =>
+      names.includes(e.name)
+        ? {
+            ...e,
+            dataBindings: e.dataBindings.map((b) =>
+              b.alias === "state" ? { ...b, value: true } : b,
+            ),
+          }
+        : e,
+    );
+
+  it("reads the filtration pump and the heat pump off the pool's zone", () => {
+    // Captured at rest: neither running.
+    const state = buildSceneState(base);
+    expect(state.rooms.piscine.pump).toBe(false);
+    expect(state.rooms.piscine.poolHeating).toBe(false);
+    // Nowhere else has either.
+    expect(state.rooms.sejour.pump).toBeNull();
+    expect(state.rooms.sejour.poolHeating).toBeNull();
+
+    const on = buildSceneState({
+      ...base,
+      equipments: running(["Pompe Piscine", "PAC Piscine"]),
+    });
+    expect(on.rooms.piscine.pump).toBe(true);
+    expect(on.rooms.piscine.poolHeating).toBe(true);
+  });
+});

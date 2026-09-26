@@ -14,6 +14,8 @@ function state(overrides: Partial<SceneState> = {}): SceneState {
         doors: [],
         heating: false,
         cover: null,
+        pump: null,
+        poolHeating: null,
         lamps: [
           { on: true, brightness: 1 },
           { on: false, brightness: 0 },

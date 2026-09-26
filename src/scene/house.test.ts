@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { BoxGeometry, Mesh, PointLight, type Material } from "three";
+import { BoxGeometry, Mesh, MeshBasicMaterial, PointLight, type Material } from "three";
 import {
   applyState,
   buildHouse,
   focusLevel,
   LIFT_OPEN_SCALE,
+  animateWater,
   setDrop,
+  WARM_WATER,
   SWING_OPEN_RAD,
   syncPeople,
   type Focus,
@@ -36,6 +38,8 @@ function state(overrides: Partial<SceneState> = {}): SceneState {
       doors: [],
       heating: false,
       cover: null,
+      pump: null,
+      poolHeating: null,
       lamps: [],
       motion: false,
       temperatureC: null,
@@ -580,6 +584,50 @@ describe("the grounds", () => {
     expect(pool.w).toBeGreaterThan(pool.d);
     expect(cover.slats).toBeGreaterThan(40);
     expect(cover.panel.position.x).toBeCloseTo(pool.x);
+  });
+
+  it("stirs the water off the jets while the pump runs, and warms it while the heat pump heats", () => {
+    const handles = build("outside");
+    const flow = handles.pools.get("piscine")!;
+    expect(flow.jets).toHaveLength(2);
+    const s = state();
+    applyState(handles, s, materials, true);
+    animateWater(handles, 1);
+    expect(flow.ripples.some((r) => r.mesh.visible)).toBe(false);
+
+    s.rooms.piscine.pump = true;
+    applyState(handles, s, materials, true);
+    animateWater(handles, 1);
+    expect(flow.ripples.every((r) => r.mesh.visible)).toBe(true);
+    expect(flow.streaks.every((r) => r.mesh.visible)).toBe(true);
+    expect(flow.plumes.some((p) => p.visible)).toBe(false);
+    // Streaks run down the pool, away from the jets at its east end.
+    const pool = plan.rooms.find((r) => r.id === "piscine")!;
+    for (const streak of flow.streaks) {
+      expect(streak.mesh.position.x).toBeLessThan(pool.x + pool.w);
+      expect(streak.mesh.position.x).toBeGreaterThan(pool.x);
+    }
+
+    s.rooms.piscine.poolHeating = true;
+    applyState(handles, s, materials, true);
+    animateWater(handles, 1);
+    expect(flow.plumes.every((p) => p.visible)).toBe(true);
+    expect(flow.steam.every((p) => p.mesh.visible)).toBe(true);
+    const ring = flow.ripples[0].mesh.material as MeshBasicMaterial;
+    expect(ring.color.getHex()).toBe(WARM_WATER);
+
+    // No flow, no warm water, whatever the heat pump says.
+    s.rooms.piscine.pump = false;
+    applyState(handles, s, materials, true);
+    animateWater(handles, 1);
+    expect(flow.plumes.some((p) => p.visible)).toBe(false);
+
+    // Under a closed cover, nothing shows.
+    s.rooms.piscine.pump = true;
+    s.rooms.piscine.cover = 0;
+    applyState(handles, s, materials, true);
+    animateWater(handles, 1);
+    expect(flow.ripples.some((r) => r.mesh.visible)).toBe(false);
   });
 
   it("stands the garden's lamps where the plan says, lit whichever storey is read", () => {

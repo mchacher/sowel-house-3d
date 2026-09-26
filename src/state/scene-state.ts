@@ -34,6 +34,14 @@ export interface RoomState {
   heating: boolean;
   /** The pool cover, 0 closed … 100 open, on the pool room. Null: none. */
   cover: number | null;
+  /** The pool's filtration pump is running. Null: the room has none. */
+  pump: boolean | null;
+  /**
+   * The pool's heat pump is heating. Its own run state, not its switch: a pool heat
+   * pump is interlocked on the pump and stops at its setpoint, and a flow drawn warm
+   * while it idles would be a lie. Null: the room has none.
+   */
+  poolHeating: boolean | null;
   /** What a sensor in the room reports, or false when it has none. */
   motion: boolean;
   temperatureC: number | null;
@@ -189,6 +197,14 @@ function assemble(input: BuildInput, derived: Derived): SceneState {
           ? null
           : (numberOf(bindings.cover.dataBindings.find((b) => b.alias === "position")?.value) ??
             100),
+      pump:
+        bindings.pump === null
+          ? null
+          : booleanOf(bindings.pump.dataBindings.find((b) => b.alias === "state")?.value),
+      poolHeating:
+        bindings.poolHeater === null
+          ? null
+          : booleanOf(bindings.poolHeater.dataBindings.find((b) => b.alias === "state")?.value),
       // The zone's own aggregation is the better answer where it exists: it folds
       // every sensor in the room, including ones the derivation did not pick.
       motion: zone?.motion ?? sensorMotion,
