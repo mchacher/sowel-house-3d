@@ -30,6 +30,7 @@ import {
   focusLevel,
   syncPeople,
   LIFT_OPEN_SCALE,
+  setDrop,
   type Counts,
   type DoorHandle,
   type Focus,
@@ -354,15 +355,17 @@ export class HouseRenderer {
   private ease(dt: number): void {
     if (!this.handles) return;
     const k = 1 - Math.exp(-EASE_PER_SECOND * dt);
-    for (const shutters of this.handles.shutters.values()) {
-      for (const shutter of shutters) {
-        shutter.panel.scale.y += (shutter.target - shutter.panel.scale.y) * k;
-      }
+    // A pool cover is a shutter lying down, and follows the position Sowel reports
+    // as it rolls, so the easing only smooths between readings.
+    for (const shutter of [
+      ...[...this.handles.shutters.values()].flat(),
+      ...this.handles.covers.values(),
+    ]) {
+      setDrop(shutter, shutter.drop + (shutter.target - shutter.drop) * k);
     }
     const moving: DoorHandle[] = [
       ...[...this.handles.doors.values()].flat(),
       ...this.handles.gates.values(),
-      ...this.handles.covers.values(),
     ];
     for (const item of moving) {
       const o = item.object;
@@ -372,11 +375,6 @@ export class HouseRenderer {
           break;
         case "lift":
           o.scale.y = travel(o.scale.y, item.target, 1 - LIFT_OPEN_SCALE, item.travelS, dt, k);
-          break;
-        case "cover":
-          // Follows the position Sowel reports as the cover rolls, so the easing
-          // only smooths between readings; the travel time is the simulator's.
-          o.scale[item.axis ?? "x"] += (item.target - o.scale[item.axis ?? "x"]) * k;
           break;
         case "slide": {
           const axis = item.axis ?? "x";

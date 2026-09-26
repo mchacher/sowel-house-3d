@@ -5,6 +5,7 @@ import {
   buildHouse,
   focusLevel,
   LIFT_OPEN_SCALE,
+  setDrop,
   SWING_OPEN_RAD,
   syncPeople,
   type Focus,
@@ -114,14 +115,25 @@ describe("building the house", () => {
     expect(handles.shutters.get("cuisine")).toHaveLength(2);
   });
 
-  it("anchors a shutter panel at its lintel", () => {
+  it("hangs a shutter's slats from its lintel, none showing while it is up", () => {
     const handles = build(0);
     const panels = handles.shutters.get("sejour") ?? [];
-    for (const { panel } of panels) {
-      // Anchored at the top: rolled up, the panel's origin sits at the window head.
-      expect(panel.position.y).toBeGreaterThan(1.5);
-      expect(panel.scale.y).toBeLessThan(0.01);
+    for (const shutter of panels) {
+      // Anchored at the top: rolled up, the origin sits at the window head.
+      expect(shutter.panel.position.y).toBeGreaterThan(1.5);
+      expect(shutter.panel.count).toBe(0);
+      // Slats, not a plank: a real roller shutter's worth for the window's height.
+      expect(shutter.slats).toBeGreaterThan(15);
     }
+  });
+
+  it("lets a shutter down slat by slat, from the top", () => {
+    const handles = build(0);
+    const shutter = handles.shutters.get("sejour")![0];
+    setDrop(shutter, 0.5);
+    expect(shutter.panel.count).toBe(Math.round(shutter.slats / 2));
+    setDrop(shutter, 1);
+    expect(shutter.panel.count).toBe(shutter.slats);
   });
 
   it("shows the outdoors whichever storey is chosen", () => {
@@ -391,8 +403,8 @@ describe("applying the state", () => {
     expect(panels[0].target).toBeCloseTo(1);
     expect(panels[1].target).toBeLessThan(0.01);
     expect(panels[2].target).toBeCloseTo(0.5);
-    // Untouched: the panel is still where it was.
-    expect(panels[0].panel.scale.y).toBeLessThan(0.01);
+    // Untouched: the shutter is still where it was.
+    expect(panels[0].drop).toBe(0);
   });
 
   it("snaps when asked, so a freshly opened scene is already right", () => {
@@ -401,19 +413,16 @@ describe("applying the state", () => {
     closing.rooms.sejour.shutters = [0, 100, 50];
     applyState(handles, closing, materials, true);
     const panels = handles.shutters.get("sejour") ?? [];
-    expect(panels[0].panel.scale.y).toBeCloseTo(1);
-    expect(panels[2].panel.scale.y).toBeCloseTo(0.5);
+    expect(panels[0].drop).toBeCloseTo(1);
+    expect(panels[0].panel.count).toBe(panels[0].slats);
+    expect(panels[2].drop).toBeCloseTo(0.5);
   });
 
-  it("never targets or scales a panel to exactly zero", () => {
-    // A zero scale makes the matrix singular and Three.js complains every frame.
+  it("shows no slat for a shutter Sowel reports open", () => {
     const handles = build(0);
     applyState(handles, state(), materials, true);
     for (const panels of handles.shutters.values()) {
-      for (const shutter of panels) {
-        expect(shutter.target).toBeGreaterThan(0);
-        expect(shutter.panel.scale.y).toBeGreaterThan(0);
-      }
+      for (const shutter of panels) expect(shutter.panel.count).toBe(0);
     }
   });
 
@@ -560,14 +569,17 @@ describe("the grounds", () => {
     const s = state();
     s.rooms.piscine.cover = 100;
     applyState(handles, s, materials, true);
-    expect(cover.object.scale.x).toBeLessThan(0.01);
+    expect(cover.panel.count).toBe(0);
     s.rooms.piscine.cover = 25;
     applyState(handles, s, materials, true);
-    expect(cover.object.scale.x).toBeCloseTo(0.75);
-    // It unrolls along the pool's length, from a roller at the west end.
+    expect(cover.drop).toBeCloseTo(0.75);
+    expect(cover.panel.count).toBe(Math.round(cover.slats * 0.75));
+    // Slats, not a sheet, unrolling along the pool's length from a roller at the
+    // west end.
     const pool = plan.rooms.find((r) => r.id === "piscine")!;
     expect(pool.w).toBeGreaterThan(pool.d);
-    expect(cover.object.position.x).toBeCloseTo(pool.x);
+    expect(cover.slats).toBeGreaterThan(40);
+    expect(cover.panel.position.x).toBeCloseTo(pool.x);
   });
 
   it("stands the garden's lamps where the plan says, lit whichever storey is read", () => {
@@ -640,7 +652,9 @@ describe("what a room is furnished with", () => {
         .get(level)!
         .group.children.filter((c) => c instanceof Mesh && c.material === material);
     expect(blocks(1, handles.levels.get(1)!.materials.wood).length).toBeGreaterThan(4);
-    expect(blocks(0, handles.levels.get(0)!.materials.car)).toHaveLength(1);
+    // One car: its body and its roof in paint, its cabin in tinted glass.
+    expect(blocks(0, handles.levels.get(0)!.materials.car)).toHaveLength(2);
+    expect(blocks(0, handles.levels.get(0)!.materials.tint)).toHaveLength(1);
   });
 
   it("throws a pool of light under a lamp that is on, and a halo round a sensor that sees", () => {

@@ -45,6 +45,47 @@ export interface Fixture {
   face?: Side;
 }
 
+/**
+ * The colour a room's textiles take — bedding, rug, a chair's seat. From a short
+ * list rather than any colour at all, so the house stays one drawing.
+ */
+export type Accent = "slate" | "sage" | "amber" | "rose" | "terracotta";
+
+export type ItemKind =
+  | "double-bed"
+  | "single-bed"
+  | "bunk-bed"
+  | "bedside"
+  | "wardrobe"
+  | "desk"
+  | "dresser"
+  | "armchair"
+  | "shelf"
+  | "toy-box"
+  | "pouf"
+  | "rug"
+  | "round-rug";
+
+/**
+ * A piece of furniture a room is given by name, where it stands.
+ *
+ * Placed against a wall because furniture is: a bed's head, a desk's back, a
+ * wardrobe's. The kind decides what it is made of; the wall turns it to face the
+ * room.
+ */
+export interface Item {
+  kind: ItemKind;
+  /** The wall its back is against. */
+  wall: Side;
+  /** Along that wall, from its west or north end, to the item's middle, metres. */
+  at: number;
+  /** Out from the wall, metres. Clear of the wall's half-thickness when absent. */
+  off?: number;
+  /** Across and deep, metres, for what comes in sizes: a wardrobe, a rug, a shelf. */
+  w?: number;
+  d?: number;
+}
+
 /** What a room is for, which is what it is furnished as. */
 export type RoomKind =
   | "bedroom"
@@ -74,6 +115,13 @@ export interface Room {
    * with no lamp is not drawn.
    */
   fixtures?: Fixture[];
+  /**
+   * Its furniture, piece by piece, in place of what its kind would give it. Four
+   * bedrooms furnished by kind are four identical bedrooms.
+   */
+  furniture?: Item[];
+  /** The colour of its textiles; `slate` when absent. */
+  accent?: Accent;
   /**
    * 0 ground, 1 upstairs, `null` outdoors.
    *
@@ -117,6 +165,8 @@ export interface Opening {
    */
   id?: string;
   kind: OpeningKind;
+  /** A door that is mostly glass: the French window onto a terrace. */
+  glazed?: boolean;
   /** Centre along the wall, in metres from the wall's `from`. */
   at: number;
   w: number;

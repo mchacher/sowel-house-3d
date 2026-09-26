@@ -130,6 +130,7 @@ const house: HouseSpec = {
     {
       id: "sejour",
       kind: "living",
+      accent: "terracotta",
       name: "Séjour",
       nameEn: "Living room",
       level: 0,
@@ -199,6 +200,15 @@ const house: HouseSpec = {
       w: 4,
       d: 4,
       spot: [8.5, 2],
+      accent: "rose",
+      furniture: [
+        { kind: "single-bed", wall: "E", at: 2.6 },
+        { kind: "bedside", wall: "E", at: 1.55 },
+        { kind: "desk", wall: "N", at: 2.0 },
+        { kind: "wardrobe", wall: "W", at: 1.0, w: 1.2 },
+        { kind: "pouf", wall: "S", at: 0.8, off: 0.25 },
+        { kind: "rug", wall: "N", at: 1.4, off: 1.4, w: 1.8, d: 1.2 },
+      ],
       fixtures: [
         {
           kind: "spots",
@@ -222,6 +232,16 @@ const house: HouseSpec = {
       w: 4,
       d: 4.5,
       spot: [2, 7.2],
+      accent: "slate",
+      furniture: [
+        { kind: "rug", wall: "W", at: 2.4, off: 1.3, w: 2.4, d: 1.6 },
+        { kind: "double-bed", wall: "W", at: 2.4 },
+        { kind: "bedside", wall: "W", at: 1.05 },
+        { kind: "bedside", wall: "W", at: 3.75 },
+        { kind: "wardrobe", wall: "E", at: 2.2, w: 1.6 },
+        { kind: "dresser", wall: "S", at: 3.3 },
+        { kind: "armchair", wall: "N", at: 3.35 },
+      ],
     },
     {
       id: "chambre-enfant-1",
@@ -234,6 +254,15 @@ const house: HouseSpec = {
       w: 3.5,
       d: 4.5,
       spot: [5.75, 7.2],
+      accent: "sage",
+      furniture: [
+        { kind: "round-rug", wall: "N", at: 1.9, off: 1.5 },
+        { kind: "single-bed", wall: "N", at: 0.6 },
+        { kind: "bedside", wall: "N", at: 1.4 },
+        { kind: "desk", wall: "S", at: 1.75 },
+        { kind: "toy-box", wall: "E", at: 1.9 },
+        { kind: "shelf", wall: "E", at: 3.5 },
+      ],
     },
     {
       id: "chambre-enfant-2",
@@ -246,6 +275,14 @@ const house: HouseSpec = {
       w: 3,
       d: 4.5,
       spot: [9, 7.2],
+      accent: "amber",
+      furniture: [
+        { kind: "round-rug", wall: "N", at: 1.4, off: 2.0, w: 1.1 },
+        { kind: "bunk-bed", wall: "S", at: 2.4 },
+        { kind: "desk", wall: "W", at: 1.2 },
+        { kind: "shelf", wall: "E", at: 1.0 },
+        { kind: "pouf", wall: "W", at: 3.9, off: 0.3 },
+      ],
       fixtures: [
         {
           kind: "spots",
@@ -356,7 +393,8 @@ const house: HouseSpec = {
     { room: "cuisine", side: "E", at: 1.5, w: 1.6, sill: 0, head: 2.25 },
     { room: "chambre-parents", side: "S", at: 2, w: 1.6, sill: 0.9, head: 2.1 },
     { room: "chambre-enfant-1", side: "S", at: 1.75, w: 1.2, sill: 0.9, head: 2.1 },
-    { room: "chambre-enfant-2", side: "S", at: 1.5, w: 1.0, sill: 0.9, head: 2.1 },
+    // West of centre, which leaves the bunk bed the east end of the wall.
+    { room: "chambre-enfant-2", side: "S", at: 1.2, w: 1.0, sill: 0.9, head: 2.1 },
     { room: "chambre-enfant-3", side: "N", at: 2.0, w: 1.2, sill: 0.9, head: 2.1 },
     { room: "salle-de-bain", side: "N", at: 1.75, w: 0.8, sill: 1.3, head: 2.0 },
   ],
@@ -364,7 +402,16 @@ const house: HouseSpec = {
   doors: [
     // The three the house reports on: the front door, the terrace door, the garage.
     { room: "entree", side: "N", at: 1.5, w: 1.0, id: "door:entree-1", to: "away" },
-    { room: "sejour", side: "S", at: 9.0, w: 1.0, head: 2.2, id: "door:sejour-1", to: "terrasse" },
+    {
+      room: "sejour",
+      side: "S",
+      at: 9.0,
+      w: 1.0,
+      head: 2.2,
+      id: "door:sejour-1",
+      to: "terrasse",
+      glazed: true,
+    },
     {
       room: "garage",
       side: "E",

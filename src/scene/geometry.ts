@@ -12,7 +12,19 @@
  * is in this file.
  */
 
-import type { Bed, Level, Plan, Rect, Roof, Room, StairRun, Tree, Wall } from "../plan/types.ts";
+import type {
+  Accent,
+  Bed,
+  Item,
+  Level,
+  Plan,
+  Rect,
+  Roof,
+  Room,
+  StairRun,
+  Tree,
+  Wall,
+} from "../plan/types.ts";
 
 /** A solid rectangle of wall: along the wall from `from` to `to`, from `y0` to `y1`. */
 export interface WallPiece {
@@ -432,9 +444,310 @@ export interface Piece {
   w: number;
   h: number;
   d: number;
-  material: "wood" | "fabric" | "white" | "dark" | "metal" | "car" | "glass" | "water";
-  /** A box unless it says otherwise; a cylinder stands on its base, `w` across. */
+  material:
+    "wood" | "fabric" | "white" | "dark" | "metal" | "car" | "tint" | "glass" | "water" | "accent";
+  /**
+   * A box unless it says otherwise. A cylinder stands on its base, `w` across; a
+   * wheel lies on its side, its axle along x, `w` wide and `h` across.
+   */
+  shape?: "cylinder" | "wheel";
+  /** For an `accent` piece: which of the textiles. */
+  accent?: Accent;
+}
+
+/**
+ * A piece of an item, before it is placed: `cx` across the item from its middle,
+ * `cz` out from the wall its back is against, both to the piece's middle.
+ */
+interface Local {
+  cx: number;
+  y: number;
+  cz: number;
+  w: number;
+  h: number;
+  d: number;
+  material: Piece["material"];
   shape?: "cylinder";
+}
+
+/** What a room's floor is laid with, by what the room is for; bare slab otherwise. */
+export function floorFor(room: Room): "floorWood" | "floorTile" | "floorConcrete" | null {
+  switch (room.kind) {
+    case "bedroom":
+    case "living":
+    case "office":
+    case "hall":
+      return "floorWood";
+    case "kitchen":
+    case "bathroom":
+    case "wc":
+      return "floorTile";
+    case "garage":
+      return "floorConcrete";
+    default:
+      return null;
+  }
+}
+
+/** How thick a floor covering is; a rug lies on it. */
+export const FLOORING = 0.01;
+
+const BED_LENGTH = 2.05;
+
+/** A bed, head to the wall: headboard, frame, mattress, a duvet over its foot, pillows. */
+function bed(width: number, pillows: number, y = 0, headboard = true): Local[] {
+  const L = BED_LENGTH;
+  const out: Local[] = [
+    { cx: 0, y, cz: 0.08 + (L - 0.08) / 2, w: width, h: 0.28, d: L - 0.08, material: "wood" },
+    {
+      cx: 0,
+      y: y + 0.28,
+      cz: 0.1 + (L - 0.14) / 2,
+      w: width - 0.08,
+      h: 0.18,
+      d: L - 0.14,
+      material: "white",
+    },
+    {
+      cx: 0,
+      y: y + 0.44,
+      cz: 0.62 + (L - 0.6) / 2,
+      w: width - 0.02,
+      h: 0.08,
+      d: L - 0.6,
+      material: "accent",
+    },
+  ];
+  const pw = (width - 0.2) / pillows;
+  for (let i = 0; i < pillows; i++) {
+    out.push({
+      cx: -width / 2 + 0.1 + pw * (i + 0.5),
+      y: y + 0.46,
+      cz: 0.32,
+      w: pw - 0.06,
+      h: 0.1,
+      d: 0.34,
+      material: "white",
+    });
+  }
+  if (headboard)
+    out.push({ cx: 0, y: 0, cz: 0.04, w: width + 0.06, h: y + 0.95, d: 0.08, material: "wood" });
+  return out;
+}
+
+/** A desk against the wall and its chair pulled up to it, turned to the room. */
+function desk(): Local[] {
+  return [
+    { cx: 0, y: 0.72, cz: 0.3, w: 1.2, h: 0.04, d: 0.6, material: "wood" },
+    { cx: 0.38, y: 0, cz: 0.3, w: 0.4, h: 0.72, d: 0.56, material: "white" },
+    { cx: -0.56, y: 0, cz: 0.05, w: 0.04, h: 0.72, d: 0.04, material: "metal" },
+    { cx: -0.56, y: 0, cz: 0.55, w: 0.04, h: 0.72, d: 0.04, material: "metal" },
+    { cx: -0.15, y: 0.76, cz: 0.14, w: 0.5, h: 0.32, d: 0.03, material: "dark" },
+    { cx: -0.15, y: 0, cz: 0.85, w: 0.5, h: 0.04, d: 0.5, material: "dark", shape: "cylinder" },
+    { cx: -0.15, y: 0.04, cz: 0.85, w: 0.06, h: 0.4, d: 0.06, material: "dark", shape: "cylinder" },
+    { cx: -0.15, y: 0.44, cz: 0.85, w: 0.46, h: 0.07, d: 0.46, material: "accent" },
+    { cx: -0.15, y: 0.51, cz: 1.07, w: 0.46, h: 0.42, d: 0.06, material: "accent" },
+  ];
+}
+
+/** A bookcase: its sides and shelves, and books on three of them. */
+function shelf(width: number): Local[] {
+  const out: Local[] = [
+    { cx: -width / 2 + 0.015, y: 0, cz: 0.15, w: 0.03, h: 1.8, d: 0.3, material: "wood" },
+    { cx: width / 2 - 0.015, y: 0, cz: 0.15, w: 0.03, h: 1.8, d: 0.3, material: "wood" },
+  ];
+  for (const y of [0, 0.45, 0.9, 1.35, 1.77]) {
+    out.push({ cx: 0, y, cz: 0.15, w: width - 0.06, h: 0.03, d: 0.3, material: "wood" });
+  }
+  const books: [number, number, Piece["material"]][] = [
+    [0.3, 0.32, "accent"],
+    [0.22, 0.26, "dark"],
+    [0.18, 0.3, "white"],
+  ];
+  [0.03, 0.48, 0.93].forEach((y, row) => {
+    let left = -width / 2 + 0.05 + row * 0.04;
+    for (const [bw, bh, material] of books) {
+      if (left + bw > width / 2 - 0.05) break;
+      out.push({ cx: left + bw / 2, y, cz: 0.14, w: bw, h: bh, d: 0.22, material });
+      left += bw + 0.02;
+    }
+  });
+  return out;
+}
+
+/** What an item is made of, facing out from the wall its back is against. */
+function itemPieces(item: Item): Local[] {
+  switch (item.kind) {
+    case "double-bed":
+      return bed(1.6, 2);
+    case "single-bed":
+      return bed(0.9, 1);
+    case "bunk-bed": {
+      // Two beds, the posts that hold the top one up, and a ladder on the room side.
+      const out = [...bed(0.9, 1, 0, false), ...bed(0.9, 1, 1.15, false)];
+      for (const cx of [-0.47, 0.47]) {
+        for (const cz of [0.03, BED_LENGTH - 0.03]) {
+          out.push({ cx, y: 0, cz, w: 0.06, h: 1.85, d: 0.06, material: "wood" });
+        }
+      }
+      out.push({ cx: 0, y: 1.6, cz: 1.0, w: 0.04, h: 0.16, d: 1.3, material: "wood" });
+      for (const cz of [1.45, 1.85]) {
+        out.push({ cx: 0.52, y: 0, cz, w: 0.04, h: 1.5, d: 0.04, material: "metal" });
+      }
+      for (const y of [0.4, 0.75, 1.1]) {
+        out.push({ cx: 0.52, y, cz: 1.65, w: 0.04, h: 0.04, d: 0.4, material: "metal" });
+      }
+      return out;
+    }
+    case "bedside":
+      return [
+        { cx: 0, y: 0, cz: 0.21, w: 0.45, h: 0.5, d: 0.4, material: "wood" },
+        {
+          cx: 0.05,
+          y: 0.5,
+          cz: 0.2,
+          w: 0.2,
+          h: 0.24,
+          d: 0.2,
+          material: "white",
+          shape: "cylinder",
+        },
+      ];
+    case "wardrobe": {
+      const w = item.w ?? 1.4;
+      return [
+        { cx: 0, y: 0, cz: 0.3, w, h: 2.1, d: 0.6, material: "wood" },
+        { cx: 0, y: 0.08, cz: 0.605, w: 0.015, h: 1.95, d: 0.01, material: "dark" },
+        { cx: -0.07, y: 0.9, cz: 0.615, w: 0.03, h: 0.28, d: 0.03, material: "metal" },
+        { cx: 0.07, y: 0.9, cz: 0.615, w: 0.03, h: 0.28, d: 0.03, material: "metal" },
+      ];
+    }
+    case "desk":
+      return desk();
+    case "dresser":
+      return [
+        { cx: 0, y: 0, cz: 0.225, w: 1.0, h: 0.8, d: 0.45, material: "white" },
+        { cx: 0, y: 0.8, cz: 0.235, w: 1.04, h: 0.04, d: 0.47, material: "wood" },
+        { cx: 0, y: 0.27, cz: 0.455, w: 0.9, h: 0.015, d: 0.01, material: "dark" },
+        { cx: 0, y: 0.54, cz: 0.455, w: 0.9, h: 0.015, d: 0.01, material: "dark" },
+      ];
+    case "armchair":
+      return [
+        { cx: 0, y: 0, cz: 0.45, w: 0.8, h: 0.42, d: 0.8, material: "accent" },
+        { cx: 0, y: 0.42, cz: 0.14, w: 0.8, h: 0.45, d: 0.18, material: "accent" },
+        { cx: -0.34, y: 0.42, cz: 0.5, w: 0.14, h: 0.2, d: 0.7, material: "accent" },
+        { cx: 0.34, y: 0.42, cz: 0.5, w: 0.14, h: 0.2, d: 0.7, material: "accent" },
+      ];
+    case "shelf":
+      return shelf(item.w ?? 0.8);
+    case "toy-box":
+      return [
+        { cx: 0, y: 0, cz: 0.23, w: 0.8, h: 0.42, d: 0.45, material: "accent" },
+        { cx: 0, y: 0.42, cz: 0.24, w: 0.84, h: 0.05, d: 0.48, material: "wood" },
+      ];
+    case "pouf": {
+      const across = item.w ?? 0.6;
+      return [
+        {
+          cx: 0,
+          y: 0,
+          cz: across / 2,
+          w: across,
+          h: 0.38,
+          d: across,
+          material: "accent",
+          shape: "cylinder",
+        },
+      ];
+    }
+    case "rug": {
+      const w = item.w ?? 2.0;
+      const d = item.d ?? 1.4;
+      return [
+        { cx: 0, y: FLOORING, cz: d / 2, w, h: 0.012, d, material: "accent" },
+        {
+          cx: 0,
+          y: FLOORING,
+          cz: d / 2,
+          w: w - 0.24,
+          h: 0.016,
+          d: d - 0.24,
+          material: "white",
+        },
+      ];
+    }
+    case "round-rug": {
+      const w = item.w ?? 1.4;
+      return [
+        {
+          cx: 0,
+          y: FLOORING,
+          cz: w / 2,
+          w,
+          h: 0.012,
+          d: w,
+          material: "accent",
+          shape: "cylinder",
+        },
+        {
+          cx: 0,
+          y: FLOORING,
+          cz: w / 2,
+          w: w - 0.3,
+          h: 0.016,
+          d: w - 0.3,
+          material: "white",
+          shape: "cylinder",
+        },
+      ];
+    }
+  }
+}
+
+/**
+ * An item, stood against its wall and turned to face the room. A turn, never a
+ * mirror: the desk's pedestal is on the same hand of it whichever wall it is on.
+ */
+export function placeItem(room: Room, item: Item): Piece[] {
+  const off = item.off ?? 0.1;
+  const accent = room.accent ?? "slate";
+  return itemPieces(item).map((p) => {
+    let cx: number;
+    let cz: number;
+    let w = p.w;
+    let d = p.d;
+    switch (item.wall) {
+      case "N":
+        cx = item.at + p.cx;
+        cz = off + p.cz;
+        break;
+      case "S":
+        cx = item.at - p.cx;
+        cz = room.d - off - p.cz;
+        break;
+      case "W":
+        cx = off + p.cz;
+        cz = item.at - p.cx;
+        [w, d] = [d, w];
+        break;
+      case "E":
+        cx = room.w - off - p.cz;
+        cz = item.at + p.cx;
+        [w, d] = [d, w];
+        break;
+    }
+    return {
+      x: room.x + cx - w / 2,
+      y: p.y,
+      z: room.z + cz - d / 2,
+      w,
+      h: p.h,
+      d,
+      material: p.material,
+      ...(p.shape ? { shape: p.shape } : {}),
+      ...(p.material === "accent" ? { accent } : {}),
+    };
+  });
 }
 
 /**
@@ -447,6 +760,7 @@ export interface Piece {
  * that carry one: the north wall in most rooms, so furniture keeps to the south.
  */
 export function furnitureFor(room: Room): Piece[] {
+  if (room.furniture) return room.furniture.flatMap((item) => placeItem(room, item));
   const { x, z, w, d } = room;
   const pieces: Piece[] = [];
   const add = (
@@ -521,9 +835,13 @@ export function furnitureFor(room: Room): Piece[] {
       break;
     }
     case "living": {
-      // An L of sofa round a low table, west half; the dining table east.
-      add(0.6, d - 1.5, 2.6, 0.75, 0.9, "fabric");
-      add(0.6, d - 3.2, 0.9, 0.75, 1.7, "fabric");
+      // An L of sofa round a low table on a rug, west half; the dining table east.
+      add(1.3, d - 3.5, 2.3, 0.012, 2.0, "accent", FLOORING);
+      add(1.42, d - 3.38, 2.06, 0.016, 1.76, "white", FLOORING);
+      add(0.6, d - 1.5, 2.6, 0.42, 0.9, "accent");
+      add(0.6, d - 0.8, 2.6, 0.4, 0.2, "accent", 0.42);
+      add(0.6, d - 3.2, 0.9, 0.42, 1.7, "accent");
+      add(0.6, d - 3.2, 0.2, 0.4, 1.7, "accent", 0.42);
       add(1.9, d - 3.0, 1.1, 0.4, 0.8, "wood");
       const tx = w * 0.62;
       add(tx, d / 2 - 0.5, 1.8, 0.75, 1.0, "wood");
@@ -552,16 +870,31 @@ export function furnitureFor(room: Room): Piece[] {
       break;
     case "garage": {
       // The car, nose to the house; shelves on the north wall.
+      // A body, a glazed cabin with its roof, bumpers, headlights, four wheels.
       const cx = w / 2 - 0.9;
-      add(cx, 0.8, 1.8, 0.55, 4.2, "car", 0.3);
-      add(cx + 0.2, 1.8, 1.4, 0.55, 2.0, "dark", 0.85);
+      add(cx, 0.8, 1.8, 0.5, 4.2, "car", 0.22);
+      add(cx + 0.1, 1.85, 1.6, 0.46, 2.2, "tint", 0.72);
+      add(cx + 0.14, 1.95, 1.52, 0.06, 1.9, "car", 1.18);
+      add(cx + 0.05, 0.72, 1.7, 0.16, 0.08, "dark", 0.24);
+      add(cx + 0.05, 5.0, 1.7, 0.16, 0.08, "dark", 0.24);
+      add(cx + 0.18, 0.78, 0.36, 0.09, 0.03, "white", 0.52);
+      add(cx + 1.26, 0.78, 0.36, 0.09, 0.03, "white", 0.52);
       for (const [wx, wz] of [
-        [cx - 0.05, 1.4],
-        [cx + 1.55, 1.4],
-        [cx - 0.05, 4.0],
-        [cx + 1.55, 4.0],
+        [cx - 0.04, 1.3],
+        [cx + 1.6, 1.3],
+        [cx - 0.04, 3.95],
+        [cx + 1.6, 3.95],
       ]) {
-        add(wx, wz, 0.3, 0.6, 0.6, "dark");
+        pieces.push({
+          x: x + wx,
+          y: 0,
+          z: z + wz,
+          w: 0.24,
+          h: 0.62,
+          d: 0.62,
+          material: "dark",
+          shape: "wheel",
+        });
       }
       add(0.1, 0.2, w - 0.2, 1.8, 0.4, "metal");
       // The laundry corner on the west wall: the washing machine, its round door
@@ -574,7 +907,8 @@ export function furnitureFor(room: Room): Piece[] {
     default:
       break;
   }
-  return pieces;
+  const accent = room.accent ?? "slate";
+  return pieces.map((p) => (p.material === "accent" ? { ...p, accent } : p));
 }
 
 /**

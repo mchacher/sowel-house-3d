@@ -7,6 +7,16 @@
  */
 
 import { Color, DoubleSide, MeshStandardMaterial, MeshBasicMaterial, type Material } from "three";
+import type { Accent } from "../plan/types.ts";
+
+/** The textiles' colours: muted, so a bedroom is told apart without shouting. */
+export const ACCENTS: Record<Accent, number> = {
+  slate: 0x56718c,
+  sage: 0x7fa37a,
+  amber: 0xe0a93e,
+  rose: 0xc98299,
+  terracotta: 0xc0724f,
+};
 
 export const PALETTE = {
   ocean: 0x1a4f6e,
@@ -22,7 +32,16 @@ export const PALETTE = {
   glass: 0xbfd8e6,
   roof: 0x4f6675,
   panel: 0x1d3557,
-  door: 0x7f95a3,
+  // Interior doors in light oak: against pale walls, a grey leaf read as a metal
+  // plate. The front door takes Sowel's ocean, the joinery anthracite.
+  door: 0xc9a77c,
+  frontDoor: 0x1a4f6e,
+  frame: 0x464e54,
+  garageDoor: 0x5d676e,
+  tint: 0x2b3944,
+  floorWood: 0xcfae84,
+  floorTile: 0xe2e6e8,
+  floorConcrete: 0xa9afb3,
   step: 0xd3dde3,
   drive: 0xb9bfc4,
   path: 0xd6dbde,
@@ -54,6 +73,15 @@ export interface Materials {
   roof: Material;
   panel: Material;
   door: Material;
+  frontDoor: Material;
+  /** Window frames, door casings outside, shutter housings: the anthracite joinery. */
+  frame: Material;
+  garageDoor: Material;
+  /** A car's windows: glass you do not see through. */
+  tint: Material;
+  floorWood: Material;
+  floorTile: Material;
+  floorConcrete: Material;
   step: Material;
   drive: Material;
   path: Material;
@@ -94,6 +122,8 @@ export interface Materials {
   poolGlow: Material;
   /** Flowers, three at a time so a bed is not one colour. */
   flowers: Material[];
+  /** Bedding, rugs and seats, one per accent. A storey's own, ghosted with it. */
+  textiles: Record<Accent, Material>;
 }
 
 export function makeMaterials(): Materials {
@@ -116,7 +146,14 @@ export function makeMaterials(): Materials {
     roof: standard(PALETTE.roof, { roughness: 0.85 }),
     // Glass over cells: the one shiny thing on the house.
     panel: standard(PALETTE.panel, { roughness: 0.25, metalness: 0.35 }),
-    door: standard(PALETTE.door, { roughness: 0.7 }),
+    door: standard(PALETTE.door, { roughness: 0.75 }),
+    frontDoor: standard(PALETTE.frontDoor, { roughness: 0.5 }),
+    frame: standard(PALETTE.frame, { roughness: 0.5, metalness: 0.2 }),
+    garageDoor: standard(PALETTE.garageDoor, { roughness: 0.55, metalness: 0.2 }),
+    tint: standard(PALETTE.tint, { roughness: 0.15, metalness: 0.4 }),
+    floorWood: standard(PALETTE.floorWood, { roughness: 0.85 }),
+    floorTile: standard(PALETTE.floorTile, { roughness: 0.6 }),
+    floorConcrete: standard(PALETTE.floorConcrete, { roughness: 1 }),
     step: standard(PALETTE.step, { roughness: 0.9 }),
     drive: standard(PALETTE.drive, { roughness: 1 }),
     path: standard(PALETTE.path, { roughness: 1 }),
@@ -184,6 +221,9 @@ export function makeMaterials(): Materials {
       depthWrite: false,
     }),
     flowers: [0xe0567a, 0xf2c035, 0xf7f0ea].map((c) => standard(c, { roughness: 0.9 })),
+    textiles: Object.fromEntries(
+      Object.entries(ACCENTS).map(([name, color]) => [name, standard(color, { roughness: 1 })]),
+    ) as Record<Accent, Material>,
     // Shared and never ghosted, like the shades: a lit window is a signal.
     glassLit: Object.assign(new MeshStandardMaterial({ color: new Color(0xffe2a8) }), {
       emissive: new Color(0xffc75a),
@@ -216,6 +256,13 @@ const GHOSTABLE = [
   "roof",
   "panel",
   "door",
+  "frontDoor",
+  "frame",
+  "garageDoor",
+  "tint",
+  "floorWood",
+  "floorTile",
+  "floorConcrete",
   "step",
   "drive",
   "path",
@@ -251,6 +298,13 @@ const SOLID_OPACITY: Record<Ghostable, number> = {
   roof: 1,
   panel: 1,
   door: 1,
+  frontDoor: 1,
+  frame: 1,
+  garageDoor: 1,
+  tint: 1,
+  floorWood: 1,
+  floorTile: 1,
+  floorConcrete: 1,
   step: 1,
   drive: 1,
   path: 1,
@@ -287,6 +341,13 @@ const GHOST_OPACITY: Record<Ghostable, number> = {
   roof: 0.07,
   panel: 0.12,
   door: 0.09,
+  frontDoor: 0.09,
+  frame: 0.09,
+  garageDoor: 0.09,
+  tint: 0.08,
+  floorWood: 0.05,
+  floorTile: 0.05,
+  floorConcrete: 0.05,
   step: 0.09,
   drive: 0.1,
   path: 0.1,
@@ -313,6 +374,9 @@ const GHOST_OPACITY: Record<Ghostable, number> = {
 export function copyMaterials(source: Materials): Materials {
   const copy = { ...source };
   for (const key of GHOSTABLE) copy[key] = source[key].clone();
+  copy.textiles = Object.fromEntries(
+    Object.entries(source.textiles).map(([name, material]) => [name, material.clone()]),
+  ) as Record<Accent, Material>;
   return copy;
 }
 
@@ -327,6 +391,15 @@ export function setGhost(materials: Materials, ghost: boolean): void {
   for (const key of GHOSTABLE) {
     const material = materials[key] as Material & { opacity: number; depthWrite: boolean };
     const opacity = ghost ? GHOST_OPACITY[key] : SOLID_OPACITY[key];
+    material.transparent = opacity < 1;
+    material.opacity = opacity;
+    material.depthWrite = !ghost;
+    material.needsUpdate = true;
+  }
+  // Textiles fade as the fabric does.
+  for (const textile of Object.values(materials.textiles)) {
+    const material = textile as Material & { opacity: number; depthWrite: boolean };
+    const opacity = ghost ? GHOST_OPACITY.fabric : SOLID_OPACITY.fabric;
     material.transparent = opacity < 1;
     material.opacity = opacity;
     material.depthWrite = !ghost;

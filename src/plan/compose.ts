@@ -33,6 +33,7 @@ export interface DoorSpec extends Omit<WindowSpec, "sill" | "head"> {
   id?: string;
   /** The room on the other side, or `away`. Absent when it opens onto circulation. */
   to?: string;
+  glazed?: boolean;
 }
 
 export interface LevelSpec extends Rect {
@@ -218,6 +219,7 @@ export function composePlan(spec: HouseSpec): Plan {
       where,
       {
         ...(d.id ? { id: d.id } : {}),
+        ...(d.glazed ? { glazed: true } : {}),
         kind,
         at: 0,
         w: d.w,

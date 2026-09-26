@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { validatePlan } from "./validate.ts";
 import type { Plan } from "./types.ts";
+import { furnitureFor, type Piece } from "../scene/geometry.ts";
 // The app fetches the plan at runtime, because it is data a deployment swaps. The
 // test imports it so the app tier needs no node types for a file read.
 import showroom from "../../public/plans/showroom.json";
@@ -114,6 +115,81 @@ describe("the showroom plan", () => {
         }
       }
     }
+  });
+
+  describe("its furniture", () => {
+    const furnished = plan.rooms.filter((room) => room.furniture);
+    const flat = (piece: Piece) => piece.h < 0.05;
+    const overlaps = (piece: Piece, x0: number, x1: number, z0: number, z1: number) =>
+      piece.x < x1 - 1e-9 &&
+      piece.x + piece.w > x0 + 1e-9 &&
+      piece.z < z1 - 1e-9 &&
+      piece.z + piece.d > z0 + 1e-9;
+    /** A wall's opening as a rectangle on the floor, `reach` either side of the wall. */
+    const zone = (axis: "x" | "z", wallAt: number, at: number, w: number, reach: number) =>
+      axis === "x"
+        ? ([at - w / 2, at + w / 2, wallAt - reach, wallAt + reach] as const)
+        : ([wallAt - reach, wallAt + reach, at - w / 2, at + w / 2] as const);
+
+    it("furnishes every bedroom, and no two alike", () => {
+      const bedrooms = plan.rooms.filter((room) => room.kind === "bedroom");
+      expect(bedrooms.every((room) => room.furniture)).toBe(true);
+      const accents = new Set(bedrooms.map((room) => room.accent));
+      expect(accents.size).toBe(bedrooms.length);
+      const layouts = new Set(
+        bedrooms.map((room) => (room.furniture ?? []).map((i) => `${i.kind}@${i.wall}`).join()),
+      );
+      expect(layouts.size).toBe(bedrooms.length);
+    });
+
+    it("keeps every piece inside its room, clear of the walls", () => {
+      const half = plan.thickness / 2;
+      for (const room of furnished) {
+        for (const piece of furnitureFor(room)) {
+          const inside =
+            piece.x >= room.x + half - 1e-9 &&
+            piece.x + piece.w <= room.x + room.w - half + 1e-9 &&
+            piece.z >= room.z + half - 1e-9 &&
+            piece.z + piece.d <= room.z + room.d - half + 1e-9;
+          expect(inside, `${room.id} ${piece.material} at ${piece.x},${piece.z}`).toBe(true);
+        }
+      }
+    });
+
+    it("leaves every door room to open", () => {
+      // A rug is walked on; anything else in a door's swing is in the way.
+      for (const room of furnished) {
+        const walls = plan.walls.filter((wall) => wall.level === room.level);
+        for (const piece of furnitureFor(room).filter((p) => !flat(p))) {
+          for (const wall of walls) {
+            for (const door of wall.openings.filter((o) => o.kind !== "window")) {
+              const [x0, x1, z0, z1] = zone(wall.axis, wall.at, door.at, door.w, door.w);
+              expect(overlaps(piece, x0, x1, z0, z1), `${room.id} ${piece.material}`).toBe(false);
+            }
+          }
+        }
+      }
+    });
+
+    it("blocks no window: nothing in front of one rises past a third of it", () => {
+      // A desk under a window is where a desk goes, its screen a hand above the
+      // sill; a wardrobe or a bunk bed there is a window nobody sees.
+      for (const room of furnished) {
+        const walls = plan.walls.filter((wall) => wall.level === room.level);
+        for (const piece of furnitureFor(room)) {
+          for (const wall of walls) {
+            for (const window of wall.openings.filter((o) => o.kind === "window")) {
+              const [x0, x1, z0, z1] = zone(wall.axis, wall.at, window.at, window.w, 0.5);
+              const inFront = overlaps(piece, x0, x1, z0, z1);
+              if (inFront)
+                expect(piece.y + piece.h, `${room.id} ${piece.material}`).toBeLessThanOrEqual(
+                  (window.sill ?? 0) + ((window.head ?? 0) - (window.sill ?? 0)) / 3,
+                );
+            }
+          }
+        }
+      }
+    });
   });
 
   it("places no more lights in a room than the mapping names for it", () => {
