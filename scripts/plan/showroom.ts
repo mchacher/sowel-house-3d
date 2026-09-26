@@ -283,13 +283,15 @@ const house: HouseSpec = {
           ],
           face: "S",
         },
-        // "Circulation - Escalier Piscine": bollards down from the terrace to the pool.
+        // "Circulation - Escalier Piscine": bollards along the pool's west side, the way
+        // down from the terrace. Not along its north edge: from the camera, the middle
+        // one stood square in front of the water and read as a lamp in the pool.
         {
           kind: "bollard",
           points: [
-            [1.2, 12.95],
-            [5.5, 12.95],
-            [9.8, 12.95],
+            [0.5, 13.4],
+            [0.5, 15.5],
+            [0.5, 17.6],
           ],
         },
         // "Oliviers": an uplight under each olive tree.

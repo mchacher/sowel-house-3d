@@ -249,12 +249,14 @@ function buildLamp(
         group.add(water);
         glow.push(water);
       }
-      // At the fitting, just above the water: the sheen starts from the wall the
-      // light is set in. Hung over the middle, it put a white hotspot mid-pool —
-      // the floating globe again, by other means.
+      // Below the surface, at the fitting. The water is glossy: any light above it
+      // is mirrored as a white hotspot, and from the camera that hotspot is a ball
+      // in the pool — twice, first hung over the middle, then at the edge. Under the
+      // surface it lights nothing the camera sees mirrored; the turquoise glow of the
+      // water is the whole effect, as it is for a real pool at night.
       return {
-        light: light(cx + fx * 0.3, 0.15, cz + fz * 0.3, 6, 0x7fd0ff),
-        power: 1.6,
+        light: light(cx + fx * 0.3, -0.3, cz + fz * 0.3, 5, 0x7fd0ff),
+        power: 1,
         shades,
         glow,
       };
