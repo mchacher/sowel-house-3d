@@ -22,8 +22,8 @@
         "type": "boolean",
         "category": "generic",
         "value": true,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -36,7 +36,7 @@
         "key": "zone",
         "type": "enum",
         "category": "generic",
-        "value": "chambre-parents",
+        "value": "sejour",
         "enumValues": [
           "entree",
           "sejour",
@@ -55,8 +55,8 @@
           "terrasse",
           "away"
         ],
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -107,8 +107,8 @@
         "type": "boolean",
         "category": "generic",
         "value": true,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -121,7 +121,7 @@
         "key": "zone",
         "type": "enum",
         "category": "generic",
-        "value": "chambre-parents",
+        "value": "sejour",
         "enumValues": [
           "entree",
           "sejour",
@@ -140,8 +140,8 @@
           "terrasse",
           "away"
         ],
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -192,8 +192,8 @@
         "type": "number",
         "category": "light_brightness",
         "value": 0,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -207,8 +207,8 @@
         "type": "boolean",
         "category": "light_state",
         "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -263,8 +263,8 @@
         "type": "number",
         "category": "light_brightness",
         "value": 0,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -278,8 +278,8 @@
         "type": "boolean",
         "category": "light_state",
         "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -341,8 +341,8 @@
         "category": "energy",
         "value": 0,
         "unit": "Wh",
-        "lastUpdated": "2026-09-12 05:15:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:19:47Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -357,8 +357,8 @@
         "category": "power",
         "value": 0,
         "unit": "W",
-        "lastUpdated": "2026-09-12 05:15:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:19:47Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false,
         "freshnessBudgetMs": 600000
       },
@@ -373,8 +373,8 @@
         "type": "boolean",
         "category": "light_state",
         "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -388,8 +388,8 @@
         "type": "boolean",
         "category": "light_state",
         "value": true,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -424,28 +424,28 @@
         "value": 0,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:16:39.472Z"
+        "lastUpdated": "2026-09-26T09:19:53.423Z"
       },
       {
         "alias": "energy_day",
         "value": 0,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:16:39.472Z"
+        "lastUpdated": "2026-09-26T09:19:53.423Z"
       },
       {
         "alias": "energy_month",
         "value": 0,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:16:39.472Z"
+        "lastUpdated": "2026-09-26T09:19:53.423Z"
       },
       {
         "alias": "energy_year",
         "value": 0,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:16:39.472Z"
+        "lastUpdated": "2026-09-26T09:19:53.423Z"
       }
     ]
   },
@@ -489,8 +489,8 @@
         "category": "battery",
         "value": 75,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -537,8 +537,8 @@
         "category": "battery",
         "value": 75,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -568,8 +568,8 @@
         "type": "boolean",
         "category": "light_state",
         "value": true,
-        "lastUpdated": "2026-09-12 05:13:48Z",
-        "lastChanged": "2026-09-12 05:13:48Z",
+        "lastUpdated": "2026-09-26 09:18:50Z",
+        "lastChanged": "2026-09-26 09:18:50Z",
         "stale": false
       }
     ],
@@ -612,8 +612,8 @@
         "category": "energy",
         "value": 0,
         "unit": "Wh",
-        "lastUpdated": "2026-09-12 05:15:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:19:47Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -628,8 +628,8 @@
         "category": "power",
         "value": 0,
         "unit": "W",
-        "lastUpdated": "2026-09-12 05:15:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:19:47Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false,
         "freshnessBudgetMs": 600000
       }
@@ -642,28 +642,28 @@
         "value": 0,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:16:39.472Z"
+        "lastUpdated": "2026-09-26T09:19:53.423Z"
       },
       {
         "alias": "energy_day",
         "value": 0,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:16:39.472Z"
+        "lastUpdated": "2026-09-26T09:19:53.423Z"
       },
       {
         "alias": "energy_month",
         "value": 0,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:16:39.472Z"
+        "lastUpdated": "2026-09-26T09:19:53.423Z"
       },
       {
         "alias": "energy_year",
         "value": 0,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:16:39.472Z"
+        "lastUpdated": "2026-09-26T09:19:53.423Z"
       }
     ]
   },
@@ -689,10 +689,10 @@
         "key": "power",
         "type": "number",
         "category": "power",
-        "value": 72,
+        "value": 0,
         "unit": "W",
-        "lastUpdated": "2026-09-12 05:15:39Z",
-        "lastChanged": "2026-09-12 05:15:39Z",
+        "lastUpdated": "2026-09-26 09:19:47Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false,
         "freshnessBudgetMs": 600000
       }
@@ -702,38 +702,38 @@
     "computedData": [
       {
         "alias": "energy_hour",
-        "value": 39.894999999999996,
+        "value": 0,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:16:39.472Z"
+        "lastUpdated": "2026-09-26T09:19:53.423Z"
       },
       {
         "alias": "energy_day",
-        "value": 58.99930555555555,
+        "value": 0,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:16:39.472Z"
+        "lastUpdated": "2026-09-26T09:19:53.423Z"
       },
       {
         "alias": "energy_month",
-        "value": 144.935,
+        "value": 179.17624999999998,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:16:39.472Z"
+        "lastUpdated": "2026-09-26T09:19:53.423Z"
       },
       {
         "alias": "energy_year",
-        "value": 144.935,
+        "value": 179.17624999999998,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:16:39.472Z"
+        "lastUpdated": "2026-09-26T09:19:53.423Z"
       },
       {
         "alias": "energy",
-        "value": 2.54,
+        "value": 0,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:15:43.000Z"
+        "lastUpdated": "2026-09-26T09:19:47.000Z"
       }
     ]
   },
@@ -761,8 +761,8 @@
         "category": "power",
         "value": 0,
         "unit": "W",
-        "lastUpdated": "2026-09-12 05:15:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:19:47Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false,
         "freshnessBudgetMs": 600000
       }
@@ -772,38 +772,38 @@
     "computedData": [
       {
         "alias": "energy_hour",
-        "value": 228.12499999999997,
+        "value": 0,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:16:39.472Z"
+        "lastUpdated": "2026-09-26T09:19:53.423Z"
       },
       {
         "alias": "energy_day",
-        "value": 395.41666666666663,
+        "value": 0,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:16:39.472Z"
+        "lastUpdated": "2026-09-26T09:19:53.423Z"
       },
       {
         "alias": "energy_month",
-        "value": 958.3333333333333,
+        "value": 1257.0833333333333,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:16:39.472Z"
+        "lastUpdated": "2026-09-26T09:19:53.423Z"
       },
       {
         "alias": "energy_year",
-        "value": 958.3333333333333,
+        "value": 1257.0833333333333,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:16:39.472Z"
+        "lastUpdated": "2026-09-26T09:19:53.423Z"
       },
       {
         "alias": "energy",
         "value": 0,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:15:44.000Z"
+        "lastUpdated": "2026-09-26T09:19:47.000Z"
       }
     ]
   },
@@ -830,8 +830,8 @@
         "type": "boolean",
         "category": "generic",
         "value": true,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -844,7 +844,7 @@
         "key": "zone",
         "type": "enum",
         "category": "generic",
-        "value": "chambre-enfant-1",
+        "value": "sejour",
         "enumValues": [
           "entree",
           "sejour",
@@ -863,8 +863,8 @@
           "terrasse",
           "away"
         ],
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -915,8 +915,8 @@
         "type": "boolean",
         "category": "generic",
         "value": true,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -929,7 +929,7 @@
         "key": "zone",
         "type": "enum",
         "category": "generic",
-        "value": "chambre-enfant-2",
+        "value": "sejour",
         "enumValues": [
           "entree",
           "sejour",
@@ -948,8 +948,8 @@
           "terrasse",
           "away"
         ],
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -1000,8 +1000,8 @@
         "type": "boolean",
         "category": "generic",
         "value": true,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -1014,7 +1014,7 @@
         "key": "zone",
         "type": "enum",
         "category": "generic",
-        "value": "chambre-enfant-3",
+        "value": "sejour",
         "enumValues": [
           "entree",
           "sejour",
@@ -1033,8 +1033,8 @@
           "terrasse",
           "away"
         ],
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -1084,10 +1084,10 @@
         "key": "energy",
         "type": "number",
         "category": "energy",
-        "value": 0,
+        "value": 0.05,
         "unit": "Wh",
-        "lastUpdated": "2026-09-12 05:15:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:19:28Z",
+        "lastChanged": "2026-09-26 09:19:28Z",
         "stale": false
       },
       {
@@ -1100,10 +1100,10 @@
         "key": "power",
         "type": "number",
         "category": "power",
-        "value": 0,
+        "value": 180,
         "unit": "W",
-        "lastUpdated": "2026-09-12 05:15:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:19:47Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false,
         "freshnessBudgetMs": 600000
       },
@@ -1117,10 +1117,10 @@
         "key": "state",
         "type": "enum",
         "category": "appliance_state",
-        "value": "off",
+        "value": "on",
         "enumValues": ["on", "off"],
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -1132,28 +1132,28 @@
         "value": 0,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:16:39.472Z"
+        "lastUpdated": "2026-09-26T09:19:53.423Z"
       },
       {
         "alias": "energy_day",
         "value": 0,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:16:39.472Z"
+        "lastUpdated": "2026-09-26T09:19:53.423Z"
       },
       {
         "alias": "energy_month",
         "value": 0,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:16:39.472Z"
+        "lastUpdated": "2026-09-26T09:19:53.423Z"
       },
       {
         "alias": "energy_year",
         "value": 0,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:16:39.472Z"
+        "lastUpdated": "2026-09-26T09:19:53.423Z"
       }
     ]
   },
@@ -1181,8 +1181,8 @@
         "category": "energy",
         "value": 0,
         "unit": "Wh",
-        "lastUpdated": "2026-09-12 05:15:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:19:47Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -1197,8 +1197,8 @@
         "category": "power",
         "value": 0,
         "unit": "W",
-        "lastUpdated": "2026-09-12 05:15:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:19:47Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false,
         "freshnessBudgetMs": 600000
       },
@@ -1214,8 +1214,8 @@
         "category": "appliance_state",
         "value": "off",
         "enumValues": ["on", "off"],
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -1227,28 +1227,28 @@
         "value": 0,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:16:39.472Z"
+        "lastUpdated": "2026-09-26T09:19:53.423Z"
       },
       {
         "alias": "energy_day",
         "value": 0,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:16:39.472Z"
+        "lastUpdated": "2026-09-26T09:19:53.423Z"
       },
       {
         "alias": "energy_month",
         "value": 0,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:16:39.472Z"
+        "lastUpdated": "2026-09-26T09:19:53.423Z"
       },
       {
         "alias": "energy_year",
         "value": 0,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:16:39.472Z"
+        "lastUpdated": "2026-09-26T09:19:53.423Z"
       }
     ]
   },
@@ -1275,8 +1275,8 @@
         "type": "boolean",
         "category": "light_state",
         "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -1318,8 +1318,8 @@
         "type": "boolean",
         "category": "light_state",
         "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -1361,8 +1361,8 @@
         "type": "boolean",
         "category": "light_state",
         "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -1404,8 +1404,8 @@
         "type": "boolean",
         "category": "light_state",
         "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -1447,8 +1447,8 @@
         "type": "boolean",
         "category": "light_state",
         "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -1490,8 +1490,8 @@
         "type": "boolean",
         "category": "light_state",
         "value": false,
-        "lastUpdated": "2026-09-12 05:16:21Z",
-        "lastChanged": "2026-09-12 05:16:21Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -1533,8 +1533,8 @@
         "type": "boolean",
         "category": "light_state",
         "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -1577,8 +1577,8 @@
         "category": "operation_mode",
         "value": "heat",
         "enumValues": ["auto", "heat"],
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -1591,10 +1591,10 @@
         "key": "outsideTemperature",
         "type": "number",
         "category": "temperature_outdoor",
-        "value": 13.2,
+        "value": 14.1,
         "unit": "\u00b0C",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -1609,8 +1609,8 @@
         "category": "setpoint",
         "value": 20,
         "unit": "\u00b0C",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -1624,8 +1624,8 @@
         "type": "boolean",
         "category": "light_state",
         "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -1638,10 +1638,10 @@
         "key": "temperature",
         "type": "number",
         "category": "temperature",
-        "value": 19.7,
+        "value": 19.6,
         "unit": "\u00b0C",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -1727,10 +1727,10 @@
         "key": "outdoor_temperature",
         "type": "number",
         "category": "temperature_outdoor",
-        "value": 13.2,
+        "value": 14.1,
         "unit": "\u00b0C",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -1745,8 +1745,8 @@
         "category": "pool_temperature_setpoint",
         "value": 27,
         "unit": "\u00b0C",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -1760,8 +1760,8 @@
         "type": "boolean",
         "category": "light_state",
         "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -1774,10 +1774,10 @@
         "key": "water_temperature",
         "type": "number",
         "category": "pool_water_temperature",
-        "value": 20.42,
+        "value": 18.18,
         "unit": "\u00b0C",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -1801,10 +1801,10 @@
     "computedData": [
       {
         "alias": "effective_water_temperature",
-        "value": 20.42,
+        "value": 18.18,
         "unit": "\u00b0C",
         "category": "pool_water_temperature",
-        "lastUpdated": "2026-09-12T05:16:39.472Z"
+        "lastUpdated": "2026-09-26T09:19:53.423Z"
       }
     ]
   },
@@ -1832,8 +1832,8 @@
         "category": "battery",
         "value": 97,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -1847,8 +1847,8 @@
         "type": "boolean",
         "category": "motion",
         "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -1890,8 +1890,8 @@
         "category": "battery",
         "value": 76,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -1906,8 +1906,8 @@
         "category": "luminosity",
         "value": 0,
         "unit": "lx",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -1920,9 +1920,9 @@
         "key": "occupancy",
         "type": "boolean",
         "category": "motion",
-        "value": true,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "value": false,
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -1964,8 +1964,8 @@
         "category": "battery",
         "value": 84,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -1978,10 +1978,10 @@
         "key": "illuminance",
         "type": "number",
         "category": "luminosity",
-        "value": 0,
+        "value": 1393,
         "unit": "lx",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -1994,9 +1994,9 @@
         "key": "occupancy",
         "type": "boolean",
         "category": "motion",
-        "value": true,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "value": false,
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -2038,8 +2038,8 @@
         "category": "battery",
         "value": 76,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -2053,8 +2053,8 @@
         "type": "boolean",
         "category": "motion",
         "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -2096,8 +2096,8 @@
         "category": "battery",
         "value": 77,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -2111,8 +2111,8 @@
         "type": "boolean",
         "category": "motion",
         "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -2154,8 +2154,8 @@
         "category": "battery",
         "value": 78,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -2169,8 +2169,8 @@
         "type": "boolean",
         "category": "motion",
         "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -2212,8 +2212,8 @@
         "category": "battery",
         "value": 93,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -2227,8 +2227,8 @@
         "type": "boolean",
         "category": "motion",
         "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -2270,8 +2270,8 @@
         "category": "battery",
         "value": 80,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -2285,8 +2285,8 @@
         "type": "boolean",
         "category": "motion",
         "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -2328,8 +2328,8 @@
         "category": "battery",
         "value": 92,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -2343,8 +2343,8 @@
         "type": "boolean",
         "category": "motion",
         "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -2386,8 +2386,8 @@
         "category": "battery",
         "value": 91,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -2400,9 +2400,9 @@
         "key": "occupancy",
         "type": "boolean",
         "category": "motion",
-        "value": true,
-        "lastUpdated": "2026-09-12 05:16:07Z",
-        "lastChanged": "2026-09-12 05:16:07Z",
+        "value": false,
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -2444,8 +2444,8 @@
         "category": "battery",
         "value": 80,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -2458,10 +2458,10 @@
         "key": "illuminance",
         "type": "number",
         "category": "luminosity",
-        "value": 0,
+        "value": 2868,
         "unit": "lx",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -2474,9 +2474,9 @@
         "key": "occupancy",
         "type": "boolean",
         "category": "motion",
-        "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "value": true,
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -2518,8 +2518,8 @@
         "category": "battery",
         "value": 93,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -2532,10 +2532,10 @@
         "key": "illuminance",
         "type": "number",
         "category": "luminosity",
-        "value": 0,
+        "value": 2655,
         "unit": "lx",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -2549,8 +2549,8 @@
         "type": "boolean",
         "category": "motion",
         "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -2592,8 +2592,8 @@
         "category": "battery",
         "value": 82,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -2606,9 +2606,9 @@
         "key": "occupancy",
         "type": "boolean",
         "category": "motion",
-        "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "value": true,
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -2650,8 +2650,8 @@
         "category": "battery",
         "value": 96,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -2664,9 +2664,9 @@
         "key": "occupancy",
         "type": "boolean",
         "category": "motion",
-        "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "value": true,
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -2708,8 +2708,8 @@
         "category": "setpoint",
         "value": 20.5,
         "unit": "\u00b0C",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -2723,8 +2723,8 @@
         "type": "boolean",
         "category": "light_state",
         "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -2737,10 +2737,10 @@
         "key": "temperature",
         "type": "number",
         "category": "temperature",
-        "value": 20.8,
+        "value": 21.6,
         "unit": "\u00b0C",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -2815,8 +2815,8 @@
         "type": "boolean",
         "category": "light_state",
         "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -2840,7 +2840,7 @@
         "value": 0,
         "unit": "s",
         "category": "runtime_daily",
-        "lastUpdated": "2026-09-12T05:16:39.473Z"
+        "lastUpdated": "2026-09-26T09:19:53.424Z"
       }
     ]
   },
@@ -2867,8 +2867,8 @@
         "type": "enum",
         "category": "gate_state",
         "value": "closed",
-        "lastUpdated": "2026-09-12T05:16:39.473Z",
-        "lastChanged": "2026-09-12T05:16:39.473Z",
+        "lastUpdated": "2026-09-26T09:19:53.424Z",
+        "lastChanged": "2026-09-26T09:19:53.424Z",
         "stale": false
       },
       {
@@ -2883,8 +2883,8 @@
         "category": "battery",
         "value": 98,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -2898,8 +2898,8 @@
         "type": "boolean",
         "category": "gate_state",
         "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -2913,8 +2913,8 @@
         "type": "boolean",
         "category": "contact_door",
         "value": true,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -2977,8 +2977,8 @@
         "category": "shutter_position",
         "value": 100,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -3033,9 +3033,25 @@
         "key": "gate_state",
         "type": "enum",
         "category": "gate_state",
-        "value": "unknown",
-        "lastUpdated": "2026-09-12T05:16:39.473Z",
-        "lastChanged": "2026-09-12T05:16:39.473Z",
+        "value": "closed",
+        "lastUpdated": "2026-09-26T09:19:53.424Z",
+        "lastChanged": "2026-09-26T09:19:53.424Z",
+        "stale": false
+      },
+      {
+        "id": "dfd49a89-48c1-4b89-acde-81003c3389de",
+        "equipmentId": "0c124c3b-7097-441b-ae83-77de55bac85c",
+        "deviceDataId": "07026d94-248e-4cfe-f1d9-244acce8815e",
+        "alias": "battery",
+        "deviceId": "97318375-6467-4c45-143b-a030cacf3cf6",
+        "deviceName": "sim-contact-garage",
+        "key": "battery",
+        "type": "number",
+        "category": "battery",
+        "value": 100,
+        "unit": "%",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -3049,8 +3065,23 @@
         "type": "boolean",
         "category": "gate_state",
         "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:19:41Z",
+        "lastChanged": "2026-09-26 09:19:41Z",
+        "stale": false
+      },
+      {
+        "id": "3f777610-0f53-4b06-4151-5236422c3fba",
+        "equipmentId": "0c124c3b-7097-441b-ae83-77de55bac85c",
+        "deviceDataId": "d2be76e9-eb20-4c7b-0e4c-00f2968f327c",
+        "alias": "contact",
+        "deviceId": "97318375-6467-4c45-143b-a030cacf3cf6",
+        "deviceName": "sim-contact-garage",
+        "key": "contact",
+        "type": "boolean",
+        "category": "contact_door",
+        "value": true,
+        "lastUpdated": "2026-09-26 09:19:39Z",
+        "lastChanged": "2026-09-26 09:19:39Z",
         "stale": false
       }
     ],
@@ -3065,58 +3096,10 @@
         "key": "R1",
         "type": "boolean",
         "category": "gate_trigger"
-      }
-    ],
-    "status": "online"
-  },
-  {
-    "id": "ef586cc6-9fbc-42c6-64c6-8e00a957df14",
-    "name": "Porte Garage Contact",
-    "zoneId": "b7c07316-fee0-4f65-9105-352c6106beae",
-    "type": "sensor",
-    "enabled": true,
-    "requireConfirmation": false,
-    "invertDirection": false,
-    "meteringParentId": null,
-    "createdAt": null,
-    "updatedAt": null,
-    "dataBindings": [
-      {
-        "id": "bc7903c5-73e4-46b9-0347-46bc5ae72512",
-        "equipmentId": "ef586cc6-9fbc-42c6-64c6-8e00a957df14",
-        "deviceDataId": "07026d94-248e-4cfe-f1d9-244acce8815e",
-        "alias": "battery",
-        "deviceId": "97318375-6467-4c45-143b-a030cacf3cf6",
-        "deviceName": "sim-contact-garage",
-        "key": "battery",
-        "type": "number",
-        "category": "battery",
-        "value": 100,
-        "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
-        "stale": false
       },
       {
-        "id": "11e48be4-3a77-4636-59fc-80320982bf96",
-        "equipmentId": "ef586cc6-9fbc-42c6-64c6-8e00a957df14",
-        "deviceDataId": "d2be76e9-eb20-4c7b-0e4c-00f2968f327c",
-        "alias": "contact",
-        "deviceId": "97318375-6467-4c45-143b-a030cacf3cf6",
-        "deviceName": "sim-contact-garage",
-        "key": "contact",
-        "type": "boolean",
-        "category": "contact_door",
-        "value": true,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
-        "stale": false
-      }
-    ],
-    "orderBindings": [
-      {
-        "id": "ae8a6197-87b6-471f-3ae4-bc08c175c31a",
-        "equipmentId": "ef586cc6-9fbc-42c6-64c6-8e00a957df14",
+        "id": "041e8fc3-aa68-4e6f-0dff-23ecb23928be",
+        "equipmentId": "0c124c3b-7097-441b-ae83-77de55bac85c",
         "deviceOrderId": "0abd272e-9f61-4100-de68-e3ce9ff045e2",
         "alias": "sim.close",
         "deviceId": "97318375-6467-4c45-143b-a030cacf3cf6",
@@ -3125,8 +3108,8 @@
         "type": "boolean"
       },
       {
-        "id": "a5796be5-2b50-42df-de02-fb1a5f14f41c",
-        "equipmentId": "ef586cc6-9fbc-42c6-64c6-8e00a957df14",
+        "id": "0dcd81e9-a61d-4a0f-2d5c-d006a51bc248",
+        "equipmentId": "0c124c3b-7097-441b-ae83-77de55bac85c",
         "deviceOrderId": "df60f97a-0022-4f46-8bc1-6b7c0237b140",
         "alias": "sim.open",
         "deviceId": "97318375-6467-4c45-143b-a030cacf3cf6",
@@ -3161,8 +3144,8 @@
         "category": "battery",
         "value": 91,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -3176,8 +3159,8 @@
         "type": "boolean",
         "category": "contact_door",
         "value": true,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -3229,8 +3212,8 @@
         "category": "battery",
         "value": 74,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -3244,8 +3227,8 @@
         "type": "boolean",
         "category": "contact_door",
         "value": true,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -3297,8 +3280,8 @@
         "category": "battery",
         "value": 75,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -3312,8 +3295,8 @@
         "type": "boolean",
         "category": "motion",
         "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -3353,10 +3336,10 @@
         "key": "j1_condition",
         "type": "enum",
         "category": "weather_condition",
-        "value": "partly_cloudy",
+        "value": "foggy",
         "enumValues": ["sunny", "partly_cloudy", "cloudy", "foggy", "rainy", "snowy", "stormy"],
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -3370,10 +3353,10 @@
         "key": "j1_rain_prob",
         "type": "number",
         "category": "rain",
-        "value": 10,
+        "value": 26,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -3387,10 +3370,10 @@
         "key": "j1_temp_max",
         "type": "number",
         "category": "temperature_outdoor",
-        "value": 22.7,
+        "value": 19.1,
         "unit": "\u00b0C",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -3404,10 +3387,10 @@
         "key": "j1_temp_min",
         "type": "number",
         "category": "temperature_outdoor",
-        "value": 13.5,
+        "value": 10.4,
         "unit": "\u00b0C",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -3421,10 +3404,10 @@
         "key": "j1_wind_gusts",
         "type": "number",
         "category": "wind",
-        "value": 27,
+        "value": 49,
         "unit": "km/h",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -3437,10 +3420,10 @@
         "key": "j2_condition",
         "type": "enum",
         "category": "weather_condition",
-        "value": "sunny",
+        "value": "partly_cloudy",
         "enumValues": ["sunny", "partly_cloudy", "cloudy", "foggy", "rainy", "snowy", "stormy"],
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -3454,10 +3437,10 @@
         "key": "j2_rain_prob",
         "type": "number",
         "category": "rain",
-        "value": 0,
+        "value": 17,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -3471,10 +3454,10 @@
         "key": "j2_temp_max",
         "type": "number",
         "category": "temperature_outdoor",
-        "value": 24.8,
+        "value": 21.2,
         "unit": "\u00b0C",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -3488,10 +3471,10 @@
         "key": "j2_temp_min",
         "type": "number",
         "category": "temperature_outdoor",
-        "value": 13.3,
+        "value": 10.7,
         "unit": "\u00b0C",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -3505,10 +3488,10 @@
         "key": "j2_wind_gusts",
         "type": "number",
         "category": "wind",
-        "value": 42,
+        "value": 49,
         "unit": "km/h",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -3523,8 +3506,8 @@
         "category": "weather_condition",
         "value": "foggy",
         "enumValues": ["sunny", "partly_cloudy", "cloudy", "foggy", "rainy", "snowy", "stormy"],
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -3538,10 +3521,10 @@
         "key": "j3_rain_prob",
         "type": "number",
         "category": "rain",
-        "value": 26,
+        "value": 16,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -3555,10 +3538,10 @@
         "key": "j3_temp_max",
         "type": "number",
         "category": "temperature_outdoor",
-        "value": 20.2,
+        "value": 18.1,
         "unit": "\u00b0C",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -3572,10 +3555,10 @@
         "key": "j3_temp_min",
         "type": "number",
         "category": "temperature_outdoor",
-        "value": 12.5,
+        "value": 10.1,
         "unit": "\u00b0C",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -3589,10 +3572,10 @@
         "key": "j3_wind_gusts",
         "type": "number",
         "category": "wind",
-        "value": 53,
+        "value": 14,
         "unit": "km/h",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -3605,10 +3588,10 @@
         "key": "j4_condition",
         "type": "enum",
         "category": "weather_condition",
-        "value": "sunny",
+        "value": "rainy",
         "enumValues": ["sunny", "partly_cloudy", "cloudy", "foggy", "rainy", "snowy", "stormy"],
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -3622,10 +3605,10 @@
         "key": "j4_rain_prob",
         "type": "number",
         "category": "rain",
-        "value": 2,
+        "value": 95,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -3639,10 +3622,10 @@
         "key": "j4_temp_max",
         "type": "number",
         "category": "temperature_outdoor",
-        "value": 24.2,
+        "value": 18.6,
         "unit": "\u00b0C",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -3656,10 +3639,10 @@
         "key": "j4_temp_min",
         "type": "number",
         "category": "temperature_outdoor",
-        "value": 13.8,
+        "value": 10.7,
         "unit": "\u00b0C",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -3673,10 +3656,10 @@
         "key": "j4_wind_gusts",
         "type": "number",
         "category": "wind",
-        "value": 39,
+        "value": 33,
         "unit": "km/h",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -3689,10 +3672,10 @@
         "key": "j5_condition",
         "type": "enum",
         "category": "weather_condition",
-        "value": "sunny",
+        "value": "rainy",
         "enumValues": ["sunny", "partly_cloudy", "cloudy", "foggy", "rainy", "snowy", "stormy"],
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -3706,10 +3689,10 @@
         "key": "j5_rain_prob",
         "type": "number",
         "category": "rain",
-        "value": 2,
+        "value": 82,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -3723,10 +3706,10 @@
         "key": "j5_temp_max",
         "type": "number",
         "category": "temperature_outdoor",
-        "value": 23.4,
+        "value": 18.4,
         "unit": "\u00b0C",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -3740,10 +3723,10 @@
         "key": "j5_temp_min",
         "type": "number",
         "category": "temperature_outdoor",
-        "value": 14.2,
+        "value": 11.9,
         "unit": "\u00b0C",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -3757,10 +3740,10 @@
         "key": "j5_wind_gusts",
         "type": "number",
         "category": "wind",
-        "value": 46,
+        "value": 14,
         "unit": "km/h",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -3790,8 +3773,8 @@
         "type": "boolean",
         "category": "light_state",
         "value": true,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -3833,8 +3816,8 @@
         "type": "boolean",
         "category": "light_state",
         "value": true,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -3875,10 +3858,10 @@
         "key": "energy",
         "type": "number",
         "category": "energy",
-        "value": 0.16,
+        "value": 0.01,
         "unit": "Wh",
-        "lastUpdated": "2026-09-12 05:15:46Z",
-        "lastChanged": "2026-09-12 05:13:46Z",
+        "lastUpdated": "2026-09-26 09:19:40Z",
+        "lastChanged": "2026-09-26 09:19:40Z",
         "stale": false
       },
       {
@@ -3891,10 +3874,10 @@
         "key": "energy_forward",
         "type": "number",
         "category": "energy",
-        "value": 4752.7,
+        "value": 7850.8,
         "unit": "Wh",
-        "lastUpdated": "2026-09-12 05:16:38Z",
-        "lastChanged": "2026-09-12 05:16:38Z",
+        "lastUpdated": "2026-09-26 09:19:53Z",
+        "lastChanged": "2026-09-26 09:19:53Z",
         "stale": false
       },
       {
@@ -3907,10 +3890,10 @@
         "key": "energy_reverse",
         "type": "number",
         "category": "energy",
-        "value": 0,
+        "value": 0.1,
         "unit": "Wh",
-        "lastUpdated": "2026-09-12 05:15:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:19:47Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -3923,12 +3906,12 @@
         "key": "power",
         "type": "number",
         "category": "power",
-        "value": 566,
+        "value": 16,
         "unit": "W",
-        "lastUpdated": "2026-09-12 05:16:21Z",
-        "lastChanged": "2026-09-12 05:16:21Z",
+        "lastUpdated": "2026-09-26 09:19:24Z",
+        "lastChanged": "2026-09-26 09:19:24Z",
         "stale": false,
-        "freshnessBudgetMs": 120000
+        "freshnessBudgetMs": 600000
       }
     ],
     "orderBindings": [],
@@ -3939,28 +3922,28 @@
         "value": 0,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:16:39.473Z"
+        "lastUpdated": "2026-09-26T09:19:53.424Z"
       },
       {
         "alias": "energy_day",
         "value": 0,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:16:39.473Z"
+        "lastUpdated": "2026-09-26T09:19:53.424Z"
       },
       {
         "alias": "energy_month",
         "value": 0,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:16:39.473Z"
+        "lastUpdated": "2026-09-26T09:19:53.424Z"
       },
       {
         "alias": "energy_year",
         "value": 0,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:16:39.473Z"
+        "lastUpdated": "2026-09-26T09:19:53.424Z"
       }
     ]
   },
@@ -3986,10 +3969,10 @@
         "key": "energy",
         "type": "number",
         "category": "energy",
-        "value": 0,
+        "value": 0.17,
         "unit": "Wh",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:19:28Z",
+        "lastChanged": "2026-09-26 09:19:28Z",
         "stale": false
       },
       {
@@ -4002,10 +3985,10 @@
         "key": "energy_forward",
         "type": "number",
         "category": "energy",
-        "value": 0,
+        "value": 780.3,
         "unit": "Wh",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:19:53Z",
+        "lastChanged": "2026-09-26 09:19:53Z",
         "stale": false
       },
       {
@@ -4018,49 +4001,44 @@
         "key": "power",
         "type": "number",
         "category": "power",
-        "value": 0,
+        "value": 619,
         "unit": "W",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
-        "stale": true,
+        "lastUpdated": "2026-09-26 09:19:47Z",
+        "lastChanged": "2026-09-26 09:19:47Z",
+        "stale": false,
         "freshnessBudgetMs": 600000
       }
     ],
     "orderBindings": [],
-    "status": "offline",
-    "statusReason": {
-      "offlineDevices": ["sim-pv"],
-      "staleBindings": ["power"],
-      "offlineSince": "2026-09-12 05:13:44Z"
-    },
+    "status": "online",
     "computedData": [
       {
         "alias": "energy_hour",
         "value": 0,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:16:39.473Z"
+        "lastUpdated": "2026-09-26T09:19:53.424Z"
       },
       {
         "alias": "energy_day",
         "value": 0,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:16:39.473Z"
+        "lastUpdated": "2026-09-26T09:19:53.424Z"
       },
       {
         "alias": "energy_month",
         "value": 0,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:16:39.473Z"
+        "lastUpdated": "2026-09-26T09:19:53.424Z"
       },
       {
         "alias": "energy_year",
         "value": 0,
         "unit": "Wh",
         "category": "energy",
-        "lastUpdated": "2026-09-12T05:16:39.473Z"
+        "lastUpdated": "2026-09-26T09:19:53.424Z"
       }
     ]
   },
@@ -4087,8 +4065,8 @@
         "type": "number",
         "category": "generic",
         "value": 0,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -4129,8 +4107,8 @@
         "type": "boolean",
         "category": "light_state",
         "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -4172,8 +4150,8 @@
         "type": "number",
         "category": "light_brightness",
         "value": 0,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -4187,8 +4165,8 @@
         "type": "boolean",
         "category": "light_state",
         "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -4243,8 +4221,8 @@
         "type": "boolean",
         "category": "light_state",
         "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -4286,8 +4264,8 @@
         "type": "boolean",
         "category": "light_state",
         "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -4329,8 +4307,8 @@
         "type": "boolean",
         "category": "light_state",
         "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -4371,10 +4349,10 @@
         "key": "co2",
         "type": "number",
         "category": "co2",
-        "value": 420,
+        "value": 1114,
         "unit": "ppm",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:19:41Z",
+        "lastChanged": "2026-09-26 09:19:41Z",
         "stale": false
       },
       {
@@ -4389,8 +4367,8 @@
         "category": "battery",
         "value": 91,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -4403,10 +4381,10 @@
         "key": "humidity",
         "type": "number",
         "category": "humidity_outdoor",
-        "value": 100,
+        "value": 92,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -4419,10 +4397,10 @@
         "key": "temperature",
         "type": "number",
         "category": "temperature_outdoor",
-        "value": 13.2,
+        "value": 14.1,
         "unit": "\u00b0C",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -4435,10 +4413,10 @@
         "key": "humidity",
         "type": "number",
         "category": "humidity",
-        "value": 60,
+        "value": 58,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -4451,10 +4429,10 @@
         "key": "noise",
         "type": "number",
         "category": "noise",
-        "value": 31,
+        "value": 69,
         "unit": "dB",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -4467,10 +4445,10 @@
         "key": "pressure",
         "type": "number",
         "category": "pressure",
-        "value": 993.4,
+        "value": 1008.9,
         "unit": "hPa",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -4483,10 +4461,10 @@
         "key": "rain",
         "type": "number",
         "category": "rain",
-        "value": 3.22,
+        "value": 0.13,
         "unit": "mm",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -4499,10 +4477,10 @@
         "key": "temperature",
         "type": "number",
         "category": "temperature",
-        "value": 20.8,
+        "value": 21.6,
         "unit": "\u00b0C",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -4517,8 +4495,8 @@
         "category": "battery",
         "value": 96,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -4531,10 +4509,10 @@
         "key": "wind_strength",
         "type": "number",
         "category": "wind",
-        "value": 3,
+        "value": 17,
         "unit": "km/h",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:19:39Z",
+        "lastChanged": "2026-09-26 09:19:39Z",
         "stale": false
       }
     ],
@@ -4555,45 +4533,45 @@
     "computedData": [
       {
         "alias": "temperature_min_today",
-        "value": 20.8,
+        "value": 21.6,
         "unit": "\u00b0C",
         "category": "temperature",
-        "lastUpdated": "2026-09-12T05:13:44.045Z"
+        "lastUpdated": "2026-09-26T09:18:46.868Z"
       },
       {
         "alias": "temperature_max_today",
-        "value": 20.8,
+        "value": 21.6,
         "unit": "\u00b0C",
         "category": "temperature",
-        "lastUpdated": "2026-09-12T05:13:44.045Z"
+        "lastUpdated": "2026-09-26T09:18:46.868Z"
       },
       {
         "alias": "ext_temperature_min_today",
-        "value": 13.2,
+        "value": 14.1,
         "unit": "\u00b0C",
         "category": "temperature_outdoor",
-        "lastUpdated": "2026-09-12T05:13:44.073Z"
+        "lastUpdated": "2026-09-26T09:18:46.895Z"
       },
       {
         "alias": "ext_temperature_max_today",
-        "value": 13.2,
+        "value": 14.1,
         "unit": "\u00b0C",
         "category": "temperature_outdoor",
-        "lastUpdated": "2026-09-12T05:13:44.073Z"
+        "lastUpdated": "2026-09-26T09:18:46.895Z"
       },
       {
         "alias": "rain_1h",
         "value": null,
         "unit": "mm",
         "category": "rain",
-        "lastUpdated": "2026-09-12T05:13:49.092Z"
+        "lastUpdated": "2026-09-26T09:18:51.916Z"
       },
       {
         "alias": "rain_24h",
         "value": null,
         "unit": "mm",
         "category": "rain",
-        "lastUpdated": "2026-09-12T05:13:49.092Z"
+        "lastUpdated": "2026-09-26T09:18:51.916Z"
       }
     ]
   },
@@ -4637,8 +4615,8 @@
         "category": "battery",
         "value": 94,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -4685,8 +4663,8 @@
         "category": "battery",
         "value": 95,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -4733,8 +4711,8 @@
         "category": "battery",
         "value": 88,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -4781,8 +4759,8 @@
         "category": "battery",
         "value": 81,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -4829,8 +4807,8 @@
         "category": "battery",
         "value": 77,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -4877,8 +4855,8 @@
         "category": "battery",
         "value": 79,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -4907,10 +4885,10 @@
         "key": "humidity",
         "type": "number",
         "category": "humidity",
-        "value": 60,
+        "value": 58,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -4923,10 +4901,10 @@
         "key": "temperature",
         "type": "number",
         "category": "temperature",
-        "value": 19.7,
+        "value": 19.3,
         "unit": "\u00b0C",
-        "lastUpdated": "2026-09-12 05:14:50Z",
-        "lastChanged": "2026-09-12 05:14:50Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -5035,8 +5013,8 @@
         "category": "battery",
         "value": 89,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       },
       {
@@ -5050,8 +5028,8 @@
         "type": "boolean",
         "category": "light_state",
         "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -5093,8 +5071,8 @@
         "type": "boolean",
         "category": "light_state",
         "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -5137,8 +5115,8 @@
         "category": "shutter_position",
         "value": 100,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -5195,8 +5173,8 @@
         "category": "shutter_position",
         "value": 100,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -5253,8 +5231,8 @@
         "category": "shutter_position",
         "value": 100,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -5311,8 +5289,8 @@
         "category": "shutter_position",
         "value": 100,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -5369,8 +5347,8 @@
         "category": "shutter_position",
         "value": 100,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -5427,8 +5405,8 @@
         "category": "shutter_position",
         "value": 100,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -5485,8 +5463,8 @@
         "category": "shutter_position",
         "value": 100,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -5542,8 +5520,8 @@
         "type": "enum",
         "category": "cover_state",
         "value": "OPEN",
-        "lastUpdated": "2026-09-12T05:16:39.474Z",
-        "lastChanged": "2026-09-12T05:16:39.474Z",
+        "lastUpdated": "2026-09-26T09:19:53.425Z",
+        "lastChanged": "2026-09-26T09:19:53.425Z",
         "stale": false
       },
       {
@@ -5558,8 +5536,8 @@
         "category": "shutter_position",
         "value": 100,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -5616,8 +5594,8 @@
         "category": "shutter_position",
         "value": 100,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -5674,8 +5652,8 @@
         "category": "shutter_position",
         "value": 100,
         "unit": "%",
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],
@@ -5731,8 +5709,8 @@
         "type": "boolean",
         "category": "light_state",
         "value": false,
-        "lastUpdated": "2026-09-12 05:13:44Z",
-        "lastChanged": "2026-09-12 05:13:44Z",
+        "lastUpdated": "2026-09-26 09:18:46Z",
+        "lastChanged": "2026-09-26 09:18:46Z",
         "stale": false
       }
     ],

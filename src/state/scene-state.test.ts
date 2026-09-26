@@ -259,7 +259,7 @@ describe("doors", () => {
     expect(state.rooms.entree.doors).toEqual([false]);
     expect(state.rooms.garage.doors).toEqual([false]);
     const opened = base.equipments.map((e) =>
-      e.name === "Porte Garage Contact"
+      e.name === "Porte Garage"
         ? {
             ...e,
             dataBindings: e.dataBindings.map((b) =>
