@@ -88,8 +88,12 @@ export function useHouse(planUrl: string, mappingUrl: string): House {
 
       try {
         const [planJson, mappingJson] = await Promise.all([
-          fetch(planUrl).then((r) => r.json() as Promise<Plan>),
-          fetch(mappingUrl).then((r) => r.json() as Promise<Mapping>),
+          // Always revalidated. A browser holding yesterday's plan under today's code
+          // drew a bollard in the middle of the pool: the new code, finding no
+          // fixture in the old plan, fell back to the room's spot — which, for a
+          // pool, is in the water.
+          fetch(planUrl, { cache: "no-cache" }).then((r) => r.json() as Promise<Plan>),
+          fetch(mappingUrl, { cache: "no-cache" }).then((r) => r.json() as Promise<Mapping>),
         ]);
         const problems = validatePlan(planJson);
         if (problems.length > 0) {

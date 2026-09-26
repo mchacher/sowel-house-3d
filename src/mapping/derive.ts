@@ -192,6 +192,15 @@ export function derive(
         .map(({ e }) => e);
 
     const lamps = ordered(inZone.filter((e) => LAMP_TYPES.has(e.type)));
+    // Outdoors, a lamp with no fixture has nowhere sensible to stand and is not
+    // drawn; saying so is the difference between a missing light and a mystery.
+    if (room.level === null) {
+      for (const lamp of lamps.slice(room.fixtures?.length ?? 0)) {
+        problems.push(
+          `${room.id} : « ${lamp.name} » n'a pas d'emplacement dans le plan, non dessinée`,
+        );
+      }
+    }
     const sensors = inZone.filter((e) => hasCategory(e, "motion"));
     const available = ordered(inZone.filter((e) => SHUTTER_TYPES.has(e.type)));
     const windows = windowsOfRoom(plan, room.id);

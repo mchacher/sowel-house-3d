@@ -222,3 +222,18 @@ describe("placement: what the names say, not the order Sowel lists them in", () 
     expect(derive(plan, broken, zones, equipments).problems.join()).toContain("Lampe Fantôme");
   });
 });
+
+describe("an outdoor light the plan does not place", () => {
+  it("is reported rather than drawn somewhere arbitrary", () => {
+    const bare: Plan = {
+      ...plan,
+      rooms: plan.rooms.map((r) => (r.id === "piscine" ? { ...r, fixtures: undefined } : r)),
+    };
+    const problems = derive(bare, mapping, zones, equipments).problems;
+    expect(problems.some((p) => p.includes("Spot Piscine") && p.includes("emplacement"))).toBe(
+      true,
+    );
+    // And the real plan places every one.
+    expect(derive(plan, mapping, zones, equipments).problems).toEqual([]);
+  });
+});

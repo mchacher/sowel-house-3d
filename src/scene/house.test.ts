@@ -596,6 +596,17 @@ describe("the grounds", () => {
     ).toBe(true);
   });
 
+  it("never stands an unplaced outdoor light in the room's spot — for a pool, the water", () => {
+    // Yesterday's plan had no fixtures; with today's code it used to put a bollard
+    // in the middle of the pool.
+    const bare: Plan = {
+      ...plan,
+      rooms: plan.rooms.map((r) => (r.id === "piscine" ? { ...r, fixtures: undefined } : r)),
+    };
+    const handles = buildHouse({ plan: bare, materials, level: 0, lampCounts: { piscine: 1 } });
+    expect(handles.lamps.get("piscine")).toBeUndefined();
+  });
+
   it("puts the olive trees' uplights under the olive trees", () => {
     const handles = buildHouse({ plan, materials, level: 0, lampCounts: { jardin: 4 } });
     const olives = (plan.trees ?? []).filter((t) => t.kind === "olive");

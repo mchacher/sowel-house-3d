@@ -652,16 +652,17 @@ function buildOutdoors(
   }
 
   // Outdoor lights stand where the plan's fixtures say — lanterns on the terrace
-  // wall, uplights under the trees, bollards to the pool — one per lamp Sowel
-  // reports, in the order the mapping places them. A lamp the plan did not place
-  // gets a bollard at the room's spot rather than nothing. They stay lit whichever
-  // storey is read: the garden is never the storey out of focus.
+  // wall, uplights under the trees, bollards along the pool — one per lamp Sowel
+  // reports, in the order the mapping places them. A lamp the plan did not place is
+  // **not drawn**, and the derivation says so on screen. Outdoors there is no
+  // ceiling to fall back to, and the fallback that used to stand a bollard on the
+  // room's spot put one in the middle of the pool. They stay lit whichever storey
+  // is read: the garden is never the storey out of focus.
   for (const room of rooms) {
-    const count = lampCounts[room.id] ?? 0;
+    const count = Math.min(lampCounts[room.id] ?? 0, room.fixtures?.length ?? 0);
     const lamps: LampHandle[] = [];
     for (let i = 0; i < count; i++) {
-      const fixture = room.fixtures?.[i] ?? { kind: "bollard", points: [room.spot] };
-      lamps.push(buildLamp(fixture, plan.height, materials, group, room));
+      lamps.push(buildLamp(room.fixtures![i], plan.height, materials, group, room));
     }
     if (lamps.length > 0) handles.lamps.set(room.id, lamps);
   }
