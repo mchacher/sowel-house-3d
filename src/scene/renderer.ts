@@ -29,6 +29,7 @@ import {
   buildHouse,
   focusLevel,
   syncPeople,
+  LIFT_OPEN_SCALE,
   type Counts,
   type DoorHandle,
   type Focus,
@@ -43,6 +44,25 @@ const EASE_PER_SECOND = 3.5;
 export const MINI_CLOSENESS = 0.68;
 
 type View = { position: [number, number, number]; target: [number, number, number] };
+
+/**
+ * One step of a motorised travel: at the constant speed that crosses `span` in
+ * `travelS`, never past the goal. Without a travel time, the first-order easing
+ * everything else uses.
+ */
+function travel(
+  from: number,
+  goal: number,
+  span: number,
+  travelS: number | undefined,
+  dt: number,
+  k: number,
+): number {
+  if (!travelS) return from + (goal - from) * k;
+  const step = (span / travelS) * dt;
+  const gap = goal - from;
+  return Math.abs(gap) <= step ? goal : from + Math.sign(gap) * step;
+}
 export class HouseRenderer {
   private readonly canvas: HTMLCanvasElement;
   private readonly plan: Plan;
@@ -351,15 +371,18 @@ export class HouseRenderer {
           o.rotation.y += (item.target - o.rotation.y) * k;
           break;
         case "lift":
-          o.scale.y += (item.target - o.scale.y) * k;
+          o.scale.y = travel(o.scale.y, item.target, 1 - LIFT_OPEN_SCALE, item.travelS, dt, k);
           break;
         case "cover":
-          o.scale.z += (item.target - o.scale.z) * k;
+          // Follows the position Sowel reports as the cover rolls, so the easing
+          // only smooths between readings; the travel time is the simulator's.
+          o.scale[item.axis ?? "x"] += (item.target - o.scale[item.axis ?? "x"]) * k;
           break;
         case "slide": {
           const axis = item.axis ?? "x";
           const goal = (item.home ?? 0) + item.target;
-          o.position[axis] += (goal - o.position[axis]) * k;
+          const span = Math.abs((o.userData.travel as number | undefined) ?? 1);
+          o.position[axis] = travel(o.position[axis], goal, span, item.travelS, dt, k);
           break;
         }
       }

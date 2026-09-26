@@ -124,9 +124,9 @@ export function App() {
       const house = renderer.current;
       if (!house) return;
       house.setMini(next);
-      // Small, the house from outside; big, the storey the camera is on, with the
-      // HUD's buttons saying which.
-      const focus: Focus = next ? "outside" : house.currentLevel;
+      // The storey the visitor chose stays chosen either way: small or big, the
+      // same buttons, now in both.
+      const focus: Focus = house.currentLevel;
       setLevel(focus);
       house.setLevel(focus);
       house.frameLevel();

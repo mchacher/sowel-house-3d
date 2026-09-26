@@ -516,6 +516,14 @@ describe("the people", () => {
 });
 
 describe("the grounds", () => {
+  it("gives the garage door and the gate a motor's travel time, not an easing's", () => {
+    const handles = build("outside");
+    expect(handles.gates.get("gate:portail-1")?.travelS).toBeGreaterThanOrEqual(12);
+    expect(handles.doors.get("garage")?.[0].travelS).toBeGreaterThanOrEqual(10);
+    // A person's door swings as a person swings it.
+    expect(handles.doors.get("entree")?.[0].travelS).toBeUndefined();
+  });
+
   it("slides the gate its own length when the Portail says open", () => {
     const handles = build("outside");
     const gate = handles.gates.get("gate:portail-1")!;
@@ -552,10 +560,14 @@ describe("the grounds", () => {
     const s = state();
     s.rooms.piscine.cover = 100;
     applyState(handles, s, materials, true);
-    expect(cover.object.scale.z).toBeLessThan(0.01);
+    expect(cover.object.scale.x).toBeLessThan(0.01);
     s.rooms.piscine.cover = 25;
     applyState(handles, s, materials, true);
-    expect(cover.object.scale.z).toBeCloseTo(0.75);
+    expect(cover.object.scale.x).toBeCloseTo(0.75);
+    // It unrolls along the pool's length, from a roller at the east end.
+    const pool = plan.rooms.find((r) => r.id === "piscine")!;
+    expect(pool.w).toBeGreaterThan(pool.d);
+    expect(cover.object.position.x).toBeCloseTo(pool.x + pool.w);
   });
 
   it("stands the garden's lamps where the plan says, lit whichever storey is read", () => {

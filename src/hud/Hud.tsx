@@ -39,12 +39,46 @@ export function Hud(props: Props): React.ReactElement {
 
   // Small and borrowed: the window it floats in has its own controls. What stays is
   // what must never be silent — no session, no WebGL, no Sowel.
+  // Small and borrowed: the window it floats in has its own controls. What stays is
+  // what must never be silent — no session, no WebGL, no Sowel — and the choice of
+  // storey, which the vignette cannot do without: from outside, the roof hides
+  // every room, and a visitor who switches on a lamp upstairs has to be able to go
+  // and see it.
   if (mini) {
+    const chip = (active: boolean) =>
+      `rounded px-2 py-1 text-[11px] font-semibold transition-colors ${
+        active ? "bg-[#1A4F6E] text-white" : "text-slate-600 hover:bg-slate-200/70"
+      }`;
     return (
-      <div className="pointer-events-none absolute inset-x-0 top-0 p-2">
-        {trouble && (
-          <div className="rounded-md bg-amber-100/90 px-2 py-1 text-[11px] font-medium text-amber-900 shadow-sm">
-            {statusLine(phase, socket, state, lang)}
+      <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-2">
+        <div>
+          {trouble && (
+            <div className="rounded-md bg-amber-100/90 px-2 py-1 text-[11px] font-medium text-amber-900 shadow-sm">
+              {statusLine(phase, socket, state, lang)}
+            </div>
+          )}
+        </div>
+        {levels.length > 0 && (
+          <div className="pointer-events-auto flex gap-0.5 self-end rounded-md bg-white/85 p-0.5 shadow-sm backdrop-blur">
+            <button
+              type="button"
+              onClick={() => onLevel("outside")}
+              aria-pressed={level === "outside"}
+              className={chip(level === "outside")}
+            >
+              {t.outside}
+            </button>
+            {levels.map((entry) => (
+              <button
+                key={entry.level}
+                type="button"
+                onClick={() => onLevel(entry.level)}
+                aria-pressed={entry.level === level}
+                className={chip(entry.level === level)}
+              >
+                {named(entry, lang)}
+              </button>
+            ))}
           </div>
         )}
       </div>

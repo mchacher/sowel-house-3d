@@ -317,10 +317,25 @@ export interface DoorHandle {
   kind: "swing" | "lift" | "slide" | "cover";
   object: Object3D;
   target: number;
-  /** For a sliding gate: which coordinate it slides along, and where shut is. */
+  /**
+   * For a sliding gate, which coordinate it slides along; for a pool cover, which
+   * way it unrolls.
+   */
   axis?: "x" | "z";
   home?: number;
+  /**
+   * For what a motor drives across its whole travel — the garage door, the gate —
+   * how long that travel takes. Moved at that constant speed rather than eased:
+   * eased, they covered their travel in about a second, which no motorised door
+   * does, and it showed.
+   */
+  travelS?: number;
 }
+
+/** A sectional garage door, bottom to top. */
+export const GARAGE_DOOR_TRAVEL_S = 12;
+/** A sliding gate, shut to open. */
+export const GATE_TRAVEL_S = 16;
 
 /** What Sowel reports per room that the graph must be built with the right number of. */
 export interface Counts {
@@ -568,6 +583,7 @@ function buildOutdoors(
         target: 0,
         axis: gate.axis,
         home,
+        travelS: GATE_TRAVEL_S,
       });
     }
   }
@@ -641,14 +657,39 @@ function buildOutdoors(
       coping.castShadow = false;
       group.add(at(coping, rx + rw / 2, 0.03, rz + rd / 2));
     }
-    const geometry = new BoxGeometry(room.w - 0.1, 0.04, room.d);
-    geometry.translate(0, 0, room.d / 2);
+    // A roller cover: the roller across the pool's width at its east end, beside the
+    // pool machines, and the cover unrolling along its length. The first version
+    // had the roller along a long side and unrolled across the width, which is not
+    // how any pool cover is built.
+    const long = room.w >= room.d; // the pool runs along x
+    const length = long ? room.w : room.d;
+    const width = long ? room.d : room.w;
+    const geometry = long
+      ? new BoxGeometry(length, 0.04, width - 0.1)
+      : new BoxGeometry(width - 0.1, 0.04, length);
+    // Anchored at the roller, so scaling shortens it towards the roller.
+    if (long) geometry.translate(-length / 2, 0, 0);
+    else geometry.translate(0, 0, -length / 2);
     const cover = new Mesh(geometry, materials.cover);
     cover.castShadow = false;
-    cover.position.set(room.x + room.w / 2, 0.05, room.z);
-    cover.scale.z = 0.0001;
+    const rx = long ? room.x + room.w : room.x + room.w / 2;
+    const rz = long ? room.z + room.d / 2 : room.z + room.d;
+    cover.position.set(rx, 0.05, rz);
+    if (long) cover.scale.x = 0.0001;
+    else cover.scale.z = 0.0001;
     group.add(cover);
-    handles.covers.set(room.id, { kind: "cover", object: cover, target: 0.0001 });
+    const roller = new Mesh(new CylinderGeometry(0.22, 0.22, width + 0.3, 16), materials.metal);
+    roller.castShadow = true;
+    if (long) roller.rotation.x = Math.PI / 2;
+    else roller.rotation.z = Math.PI / 2;
+    roller.position.set(long ? rx + 0.3 : rx, 0.24, long ? rz : rz + 0.3);
+    group.add(roller);
+    handles.covers.set(room.id, {
+      kind: "cover",
+      object: cover,
+      target: 0.0001,
+      axis: long ? "x" : "z",
+    });
   }
 
   // Outdoor lights stand where the plan's fixtures say — lanterns on the terrace
@@ -870,7 +911,7 @@ function doorLeaf(
     panel.castShadow = true;
     panel.position.set(cx, opening.head, cz);
     group.add(panel);
-    return { kind: "lift", object: panel, target: 1 };
+    return { kind: "lift", object: panel, target: 1, travelS: GARAGE_DOOR_TRAVEL_S };
   }
 
   // A pivot at the jamb: the leaf hangs off it by half its width, so rotating the
@@ -1082,7 +1123,7 @@ export function applyState(
   for (const [roomId, cover] of handles.covers) {
     const position = state.rooms[roomId]?.cover ?? null;
     cover.target = Math.max(0.0001, shutterDrop(position));
-    if (immediate) cover.object.scale.z = cover.target;
+    if (immediate) cover.object.scale[cover.axis ?? "x"] = cover.target;
   }
 
   for (const [group, jets] of handles.watering) {
