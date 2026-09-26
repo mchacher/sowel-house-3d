@@ -657,10 +657,11 @@ function buildOutdoors(
       coping.castShadow = false;
       group.add(at(coping, rx + rw / 2, 0.03, rz + rd / 2));
     }
-    // A roller cover: the roller across the pool's width at its east end, beside the
-    // pool machines, and the cover unrolling along its length. The first version
-    // had the roller along a long side and unrolled across the width, which is not
-    // how any pool cover is built.
+    // A roller cover: the roller across the pool's width at its west end, and the
+    // cover unrolling along its length. The first version had the roller along a
+    // long side and unrolled across the width, which is not how any pool cover is
+    // built; the second put the roller at the east end, and the owner wanted it
+    // on the opposite edge.
     const long = room.w >= room.d; // the pool runs along x
     const length = long ? room.w : room.d;
     const width = long ? room.d : room.w;
@@ -668,12 +669,12 @@ function buildOutdoors(
       ? new BoxGeometry(length, 0.04, width - 0.1)
       : new BoxGeometry(width - 0.1, 0.04, length);
     // Anchored at the roller, so scaling shortens it towards the roller.
-    if (long) geometry.translate(-length / 2, 0, 0);
-    else geometry.translate(0, 0, -length / 2);
+    if (long) geometry.translate(length / 2, 0, 0);
+    else geometry.translate(0, 0, length / 2);
     const cover = new Mesh(geometry, materials.cover);
     cover.castShadow = false;
-    const rx = long ? room.x + room.w : room.x + room.w / 2;
-    const rz = long ? room.z + room.d / 2 : room.z + room.d;
+    const rx = long ? room.x : room.x + room.w / 2;
+    const rz = long ? room.z + room.d / 2 : room.z;
     cover.position.set(rx, 0.05, rz);
     if (long) cover.scale.x = 0.0001;
     else cover.scale.z = 0.0001;
@@ -682,7 +683,7 @@ function buildOutdoors(
     roller.castShadow = true;
     if (long) roller.rotation.x = Math.PI / 2;
     else roller.rotation.z = Math.PI / 2;
-    roller.position.set(long ? rx + 0.3 : rx, 0.24, long ? rz : rz + 0.3);
+    roller.position.set(long ? rx - 0.3 : rx, 0.24, long ? rz : rz - 0.3);
     group.add(roller);
     handles.covers.set(room.id, {
       kind: "cover",

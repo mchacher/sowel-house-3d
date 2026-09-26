@@ -564,10 +564,10 @@ describe("the grounds", () => {
     s.rooms.piscine.cover = 25;
     applyState(handles, s, materials, true);
     expect(cover.object.scale.x).toBeCloseTo(0.75);
-    // It unrolls along the pool's length, from a roller at the east end.
+    // It unrolls along the pool's length, from a roller at the west end.
     const pool = plan.rooms.find((r) => r.id === "piscine")!;
     expect(pool.w).toBeGreaterThan(pool.d);
-    expect(cover.object.position.x).toBeCloseTo(pool.x + pool.w);
+    expect(cover.object.position.x).toBeCloseTo(pool.x);
   });
 
   it("stands the garden's lamps where the plan says, lit whichever storey is read", () => {
