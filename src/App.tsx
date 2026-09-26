@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Hud } from "./hud/Hud.tsx";
-import { HouseRenderer } from "./scene/renderer.ts";
+import { HouseRenderer, MINI_CLOSENESS } from "./scene/renderer.ts";
 import type { Focus } from "./scene/house.ts";
 import { detectLang, rememberLang, type Lang } from "./i18n.ts";
 import { selectableLevels } from "./scene/geometry.ts";
@@ -16,6 +16,14 @@ const MAPPING_URL = `${import.meta.env.BASE_URL}plans/showroom.mapping.json`;
  * from outside, no HUD, and the camera flying to whatever a person acts on.
  */
 const MINI = new URLSearchParams(window.location.search).get("mini") === "1";
+
+/**
+ * The vignette opened full screen, asked for by the page it floats in through this
+ * frame's `#full` anchor. An anchor rather than a message: changing it reloads
+ * nothing, and it is already there when the app starts, where a message sent
+ * during loading would be lost before anyone listened.
+ */
+const fullRequested = (): boolean => window.location.hash === "#full";
 
 /**
  * Whether this browser will draw at all, asked once on a throwaway canvas.
@@ -40,6 +48,10 @@ export function App() {
   const canvas = useRef<HTMLCanvasElement>(null);
   const renderer = useRef<HouseRenderer | null>(null);
   const [level, setLevel] = useState<Focus>(MINI ? "outside" : 0);
+  // Small (the vignette) or big (the vignette opened full screen): the HUD, the
+  // framing and whether the camera follows the action all turn on it.
+  const [mini, setMini] = useState(MINI && !fullRequested());
+  const miniRef = useRef(mini);
   const [lang, setLang] = useState<Lang>(detectLang);
   // The renderer is built once the plan is in, which is after the first render:
   // it takes the language of that moment from a ref, and later changes through
@@ -62,7 +74,13 @@ export function App() {
     // scene is a degraded demo; losing the tree is a white page.
     let house: HouseRenderer;
     try {
-      house = new HouseRenderer(canvas.current, plan, level, langRef.current, MINI ? 0.68 : 1);
+      house = new HouseRenderer(
+        canvas.current,
+        plan,
+        level,
+        langRef.current,
+        miniRef.current ? MINI_CLOSENESS : 1,
+      );
     } catch {
       return;
     }
@@ -100,8 +118,29 @@ export function App() {
   // Following the action is the vignette's whole job. In the full view the visitor
   // chooses what to look at, and a camera that flew off by itself would fight them.
   useEffect(() => {
-    if (MINI && action) renderer.current?.show(action.target);
+    if (miniRef.current && action) renderer.current?.show(action.target);
   }, [action]);
+
+  // Opened full screen and back, by the page the vignette floats in.
+  useEffect(() => {
+    if (!MINI) return;
+    const onHash = (): void => {
+      const next = !fullRequested();
+      miniRef.current = next;
+      setMini(next);
+      const house = renderer.current;
+      if (!house) return;
+      house.setMini(next);
+      // Small, the house from outside; big, the storey the camera is on, with the
+      // HUD's buttons saying which.
+      const focus: Focus = next ? "outside" : house.currentLevel;
+      setLevel(focus);
+      house.setLevel(focus);
+      house.frameLevel();
+    };
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
 
   return (
     <main className="relative h-[100dvh] w-full overflow-hidden bg-[#EEF5F8] font-sans dark:bg-slate-950">
@@ -119,7 +158,7 @@ export function App() {
           rememberLang(next);
           setLang(next);
         }}
-        mini={MINI}
+        mini={mini}
       />
     </main>
   );

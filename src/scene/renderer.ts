@@ -47,6 +47,8 @@ import type { FocusTarget } from "../state/focus.ts";
 
 /** How fast a shutter and a figure catch up with what Sowel said, per second. */
 const EASE_PER_SECOND = 3.5;
+/** How close the vignette's overview stands, against the full view's framing. */
+export const MINI_CLOSENESS = 0.68;
 /** How long a flight to something takes. Long enough to follow, short enough not to wait. */
 const FLIGHT_S = 1.2;
 
@@ -91,7 +93,7 @@ export class HouseRenderer {
    * vignette is a few hundred pixels wide, and at the full framing the house was a
    * postage stamp in the middle of the sky.
    */
-  private readonly closeness: number;
+  private closeness: number;
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -190,6 +192,18 @@ export class HouseRenderer {
     // which one is solid, not a change of what exists.
     if (this.handles) focusLevel(this.handles, level);
     this.frameLevel();
+  }
+
+  /**
+   * Switch between the vignette and the vignette opened full screen: the framing
+   * from outside, and whatever was in flight — a camera flying home behind the
+   * visitor's back as they open the big view would be the camera fighting them.
+   */
+  setMini(mini: boolean): void {
+    this.closeness = mini ? MINI_CLOSENESS : 1;
+    this.flight = null;
+    this.touched = false;
+    clearTimeout(this.returnTimer);
   }
 
   get currentLevel(): Focus {
