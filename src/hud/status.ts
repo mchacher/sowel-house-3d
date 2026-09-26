@@ -7,20 +7,31 @@
 
 import type { SceneState } from "../state/scene-state.ts";
 import type { SocketStatus } from "../client/socket.ts";
+import { strings, type Lang } from "../i18n.ts";
 
 export type AppPhase =
-  { kind: "loading" } | { kind: "no-session" } | { kind: "unreachable" } | { kind: "live" };
+  | { kind: "loading" }
+  | { kind: "no-session" }
+  | { kind: "unreachable" }
+  | { kind: "no-webgl" }
+  | { kind: "live" };
 
 export function statusLine(
   phase: AppPhase,
   socket: SocketStatus,
   state: SceneState | null,
+  lang: Lang = "fr",
 ): string {
-  if (phase.kind === "no-session") return "Pas de session — revenez par la page d'accueil.";
-  if (phase.kind === "unreachable") return "Sowel ne répond pas.";
-  if (phase.kind === "loading") return "Chargement de la maison…";
-  if (socket === "reconnecting") return "Reconnexion…";
-  if (socket === "closed") return "Connexion fermée.";
+  const t = strings(lang);
+  // Worth saying before anything else: the data may be arriving perfectly and the
+  // visitor still sees nothing, which is the one failure that reads as "the site is
+  // broken" rather than as "something is wrong".
+  if (phase.kind === "no-webgl") return t.noWebgl;
+  if (phase.kind === "no-session") return t.noSession;
+  if (phase.kind === "unreachable") return t.unreachable;
+  if (phase.kind === "loading") return t.loading;
+  if (socket === "reconnecting") return t.reconnecting;
+  if (socket === "closed") return t.closed;
   // A problem the derivation found beats a summary: a missing room is the thing
   // worth saying, and saying it first is the difference between a fixable demo and
   // a mysterious one.
@@ -32,8 +43,7 @@ export function statusLine(
     0,
   );
   const here = state.people.filter((p) => p.room && p.room !== "away").length;
-  const plural = (n: number) => (n === 1 ? "" : "s");
-  return `${here} personne${plural(here)} à la maison · ${lit} lumière${plural(lit)} allumée${plural(lit)} · ${state.sky.isDaylight ? "jour" : "nuit"}`;
+  return `${t.people(here)} · ${t.lights(lit)} · ${state.sky.isDaylight ? t.day : t.night}`;
 }
 
 /** Whether the line should read as trouble rather than as news. */

@@ -25,6 +25,8 @@ export interface House {
   state: SceneState | null;
   /** How many lamps each room has, so the scene is built with the right count. */
   lampCounts: Record<string, number>;
+  /** Radiators per room, and the rooms with a stove. */
+  counts: { heaters: Record<string, number>; stoves: string[] };
 }
 
 export function useHouse(planUrl: string, mappingUrl: string): House {
@@ -33,6 +35,7 @@ export function useHouse(planUrl: string, mappingUrl: string): House {
   const [plan, setPlan] = useState<Plan | null>(null);
   const [state, setState] = useState<SceneState | null>(null);
   const [lampCounts, setLampCounts] = useState<Record<string, number>>({});
+  const [counts, setCounts] = useState<House["counts"]>({ heaters: {}, stoves: [] });
 
   // The raw truth, kept out of React state: every event replaces one binding and the
   // scene state is recomputed, so re-rendering on each intermediate array would be
@@ -85,8 +88,12 @@ export function useHouse(planUrl: string, mappingUrl: string): House {
 
       try {
         const [planJson, mappingJson] = await Promise.all([
-          fetch(planUrl).then((r) => r.json() as Promise<Plan>),
-          fetch(mappingUrl).then((r) => r.json() as Promise<Mapping>),
+          // Always revalidated. A browser holding yesterday's plan under today's code
+          // drew a bollard in the middle of the pool: the new code, finding no
+          // fixture in the old plan, fell back to the room's spot — which, for a
+          // pool, is in the water.
+          fetch(planUrl, { cache: "no-cache" }).then((r) => r.json() as Promise<Plan>),
+          fetch(mappingUrl, { cache: "no-cache" }).then((r) => r.json() as Promise<Mapping>),
         ]);
         const problems = validatePlan(planJson);
         if (problems.length > 0) {
@@ -106,6 +113,14 @@ export function useHouse(planUrl: string, mappingUrl: string): House {
         setLampCounts(
           Object.fromEntries(Object.entries(derived.rooms).map(([id, r]) => [id, r.lamps.length])),
         );
+        setCounts({
+          heaters: Object.fromEntries(
+            Object.entries(derived.rooms).map(([id, r]) => [id, r.heaters.length]),
+          ),
+          stoves: Object.values(derived.rooms)
+            .filter((r) => r.thermostat !== null)
+            .map((r) => r.roomId),
+        });
         setPlan(planJson);
         recompute();
         setPhase({ kind: "live" });
@@ -126,5 +141,5 @@ export function useHouse(planUrl: string, mappingUrl: string): House {
     };
   }, [planUrl, mappingUrl]);
 
-  return { phase, socket: socketStatus, plan, state, lampCounts };
+  return { phase, socket: socketStatus, plan, state, lampCounts, counts };
 }

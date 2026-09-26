@@ -2,7 +2,7 @@
 
 A stylised 3D view of a home, driven live by a Sowel instance.
 
-The app reads a **plan** (rooms, walls, doors, windows, furniture) and a **mapping** to Sowel IDs, then mirrors the instance over its REST API and WebSocket: lamps glow, shutters slide, occupants move from room to room, the sky follows the sun and the weather. Clicks go back to Sowel as ordinary equipment orders or simulation triggers. The app has no logic of its own: what it shows is what Sowel does.
+The app reads a **plan** (rooms, walls, doors, windows, furniture) and a **mapping** to Sowel (zones, and equipment names placed room by room), then mirrors the instance over its REST API and WebSocket: lamps glow, shutters slide, occupants move from room to room, the sky follows the sun and the weather. Clicks go back to Sowel as ordinary equipment orders or simulation triggers. The app has no logic of its own: what it shows is what Sowel does.
 
 It is generic. The public showroom ([`sowel-showroom`](https://github.com/mchacher/sowel-showroom)) is one deployment; a user's own home is another, later.
 

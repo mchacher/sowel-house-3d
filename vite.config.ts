@@ -10,6 +10,11 @@ export default defineConfig(({ mode }) => {
   const target = env.SOWEL_TARGET || "http://localhost:3000";
 
   return {
+    // Served under /maison/ rather than at the root, so the showroom's proxy can put
+    // this app on the **same origin** as Sowel. That is what lets the landing page's
+    // session work here without anything being pasted into a console — and it is
+    // what phase 5 will deploy, so development and production agree.
+    base: "/maison/",
     plugins: [react(), tailwindcss()],
     server: {
       proxy: {
