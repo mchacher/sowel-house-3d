@@ -51,6 +51,17 @@ export function Hud(props: Props): React.ReactElement {
           {statusLine(phase, socket, state, lang)}
         </div>
 
+        {/* Back to the product. The app is served on Sowel's own origin — it has to
+            be, to share the session — so Sowel's interface is at the root. */}
+        {phase.kind !== "no-session" && (
+          <a
+            href="/"
+            className="pointer-events-auto rounded-lg bg-[#1A4F6E] px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#144159]"
+          >
+            {t.openSowel}
+          </a>
+        )}
+
         <button
           type="button"
           onClick={() => onLang(lang === "fr" ? "en" : "fr")}
