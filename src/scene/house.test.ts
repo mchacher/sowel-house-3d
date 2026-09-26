@@ -575,6 +575,27 @@ describe("the grounds", () => {
     expect(garden[2].glow.length).toBeGreaterThan(0);
   });
 
+  it("lights the pool from within: the water glows, no globe floats in it", () => {
+    const handles = buildHouse({ plan, materials, level: 0, lampCounts: { piscine: 1 } });
+    const pool = plan.rooms.find((r) => r.id === "piscine")!;
+    const lamp = handles.lamps.get("piscine")![0];
+    // The fitting sits on the pool's edge, not in the middle of the water.
+    for (const shade of lamp.shades) {
+      const onEdge =
+        Math.abs(shade.position.z - pool.z) < 0.1 ||
+        Math.abs(shade.position.z - (pool.z + pool.d)) < 0.1 ||
+        Math.abs(shade.position.x - pool.x) < 0.1 ||
+        Math.abs(shade.position.x - (pool.x + pool.w)) < 0.1;
+      expect(onEdge).toBe(true);
+    }
+    const s = state();
+    s.rooms.piscine.lamps = [{ on: true, brightness: 1 }];
+    applyState(handles, s, materials, true);
+    expect(
+      lamp.glow.some((g) => g.visible && g instanceof Mesh && g.material === materials.poolGlow),
+    ).toBe(true);
+  });
+
   it("puts the olive trees' uplights under the olive trees", () => {
     const handles = buildHouse({ plan, materials, level: 0, lampCounts: { jardin: 4 } });
     const olives = (plan.trees ?? []).filter((t) => t.kind === "olive");

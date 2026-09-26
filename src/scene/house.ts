@@ -26,6 +26,7 @@ import {
   Group,
   Mesh,
   Object3D,
+  PlaneGeometry,
   PointLight,
   Shape,
   SphereGeometry,
@@ -125,12 +126,15 @@ const FACING: Record<Side, [number, number]> = { N: [0, -1], S: [0, 1], E: [1, 0
 /**
  * A light fitting as the plan describes it. `ceiling` is the storey's wall height,
  * for what hangs from it; outdoors it is the height of the ground-floor walls.
+ * `room` is the room it belongs to, for a light whose effect is the room itself —
+ * the pool, lit from within.
  */
 function buildLamp(
   fixture: Fixture,
   ceiling: number,
   materials: Materials,
   group: Group,
+  room?: Room,
 ): LampHandle {
   const shades: Mesh[] = [];
   const glow: Object3D[] = [];
@@ -229,10 +233,31 @@ function buildLamp(
       return { light: light(cx, 0.8, cz, 5), power: 2, shades, glow };
     }
     case "underwater": {
+      // Set in the pool's wall below the surface, where nobody sees the fitting — a
+      // globe floating mid-pool was the first attempt, and it looked it. What shows
+      // is the water: the whole basin glowing turquoise while the light is on.
       for (const [x, z] of points) {
-        shade(new Mesh(new SphereGeometry(0.12, 10, 8), materials.shadeOff), x, -0.15, z);
+        const lens = new Mesh(new CylinderGeometry(0.1, 0.1, 0.03, 14), materials.shadeOff);
+        lens.rotation.set(along ? Math.PI / 2 : 0, 0, along ? 0 : Math.PI / 2);
+        shade(lens, x + fx * 0.02, -0.01, z + fz * 0.02);
       }
-      return { light: light(cx, -0.1, cz, 7, 0x7fd0ff), power: 3, shades, glow };
+      if (room) {
+        const water = new Mesh(new PlaneGeometry(room.w, room.d), materials.poolGlow);
+        water.rotation.x = -Math.PI / 2;
+        water.position.set(room.x + room.w / 2, 0.012, room.z + room.d / 2);
+        water.visible = false;
+        group.add(water);
+        glow.push(water);
+      }
+      // At the fitting, just above the water: the sheen starts from the wall the
+      // light is set in. Hung over the middle, it put a white hotspot mid-pool —
+      // the floating globe again, by other means.
+      return {
+        light: light(cx + fx * 0.3, 0.15, cz + fz * 0.3, 6, 0x7fd0ff),
+        power: 1.6,
+        shades,
+        glow,
+      };
     }
   }
 }
@@ -634,7 +659,7 @@ function buildOutdoors(
     const lamps: LampHandle[] = [];
     for (let i = 0; i < count; i++) {
       const fixture = room.fixtures?.[i] ?? { kind: "bollard", points: [room.spot] };
-      lamps.push(buildLamp(fixture, plan.height, materials, group));
+      lamps.push(buildLamp(fixture, plan.height, materials, group, room));
     }
     if (lamps.length > 0) handles.lamps.set(room.id, lamps);
   }

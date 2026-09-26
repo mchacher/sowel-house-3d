@@ -90,6 +90,8 @@ export interface Materials {
   jet: Material;
   /** The beam of an uplight, seen in the air above it. */
   beam: Material;
+  /** The pool's water, lit from within. */
+  poolGlow: Material;
   /** Flowers, three at a time so a bed is not one colour. */
   flowers: Material[];
 }
@@ -175,6 +177,11 @@ export function makeMaterials(): Materials {
       opacity: 0.18,
       depthWrite: false,
       side: DoubleSide,
+    }),
+    poolGlow: Object.assign(new MeshBasicMaterial({ color: new Color(0x5fe0f0) }), {
+      transparent: true,
+      opacity: 0.55,
+      depthWrite: false,
     }),
     flowers: [0xe0567a, 0xf2c035, 0xf7f0ea].map((c) => standard(c, { roughness: 0.9 })),
     // Shared and never ghosted, like the shades: a lit window is a signal.

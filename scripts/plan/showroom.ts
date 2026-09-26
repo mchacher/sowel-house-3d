@@ -336,8 +336,8 @@ const house: HouseSpec = {
       w: 8,
       d: 4,
       spot: [5.5, 15.5],
-      // "Spot Piscine", under water.
-      fixtures: [{ kind: "underwater", points: [[5.5, 15.5]] }],
+      // "Spot Piscine": set in the wall on the terrace side, shining across the water.
+      fixtures: [{ kind: "underwater", points: [[5.5, 13.5]], face: "S" }],
     },
   ],
 

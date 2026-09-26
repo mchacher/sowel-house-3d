@@ -278,7 +278,8 @@
       "fixtures": [
         {
           "kind": "underwater",
-          "points": [[5.5, 15.5]]
+          "points": [[5.5, 13.5]],
+          "face": "S"
         }
       ]
     }
