@@ -23,14 +23,7 @@ import {
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type { Plan } from "../plan/types.ts";
 import type { SceneState } from "../state/scene-state.ts";
-import {
-  cameraFor,
-  closeView,
-  levelElevation,
-  roofRise,
-  stackHeight,
-  sunDirection,
-} from "./geometry.ts";
+import { cameraFor, levelElevation, roofRise, stackHeight, sunDirection } from "./geometry.ts";
 import {
   applyState,
   buildHouse,
@@ -43,27 +36,13 @@ import {
 } from "./house.ts";
 import { makeMaterials, PALETTE, type Materials } from "./materials.ts";
 import type { Lang } from "../i18n.ts";
-import type { FocusTarget } from "../state/focus.ts";
 
 /** How fast a shutter and a figure catch up with what Sowel said, per second. */
 const EASE_PER_SECOND = 3.5;
 /** How close the vignette's overview stands, against the full view's framing. */
 export const MINI_CLOSENESS = 0.68;
-/** How long a flight to something takes. Long enough to follow, short enough not to wait. */
-const FLIGHT_S = 1.2;
 
 type View = { position: [number, number, number]; target: [number, number, number] };
-
-interface Flight {
-  fromPosition: Vector3;
-  fromTarget: Vector3;
-  toPosition: Vector3;
-  toTarget: Vector3;
-  t: number;
-}
-
-const easeInOut = (t: number): number => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
-
 export class HouseRenderer {
   private readonly canvas: HTMLCanvasElement;
   private readonly plan: Plan;
@@ -82,12 +61,6 @@ export class HouseRenderer {
   private state: SceneState | null = null;
   private frame = 0;
   private last = 0;
-  private flight: Flight | null = null;
-  /** Where the view goes back to after showing something. */
-  private home: Focus;
-  private returnTimer = 0;
-  /** The visitor took hold of the camera since the last flight: leave it with them. */
-  private touched = false;
   /**
    * How close the view from outside stands, 1 being the full view's framing. The
    * vignette is a few hundred pixels wide, and at the full framing the house was a
@@ -106,7 +79,6 @@ export class HouseRenderer {
     this.plan = plan;
     this.closeness = closeness;
     this.level = level;
-    this.home = level;
     this.lang = lang;
     this.materials = makeMaterials();
 
@@ -143,14 +115,6 @@ export class HouseRenderer {
     this.controls.maxPolarAngle = Math.PI * 0.48;
     this.controls.zoomSpeed = 0.8;
     this.controls.rotateSpeed = 0.6;
-    // A hand on the camera beats any flight: stop mid-air, and do not fly home
-    // behind the visitor's back.
-    this.controls.addEventListener("start", () => {
-      this.flight = null;
-      this.touched = true;
-      clearTimeout(this.returnTimer);
-    });
-
     // Three lights and no more: a sun that casts, a sky that fills, and a floor
     // bounce. Anything further is post-processing a phone cannot afford.
     this.sun = new DirectionalLight(0xfff2dc, 1.6);
@@ -194,16 +158,9 @@ export class HouseRenderer {
     this.frameLevel();
   }
 
-  /**
-   * Switch between the vignette and the vignette opened full screen: the framing
-   * from outside, and whatever was in flight — a camera flying home behind the
-   * visitor's back as they open the big view would be the camera fighting them.
-   */
+  /** Switch between the vignette and the vignette opened full screen: the framing from outside. */
   setMini(mini: boolean): void {
     this.closeness = mini ? MINI_CLOSENESS : 1;
-    this.flight = null;
-    this.touched = false;
-    clearTimeout(this.returnTimer);
   }
 
   get currentLevel(): Focus {
@@ -243,45 +200,8 @@ export class HouseRenderer {
     this.frameLevel();
   }
 
-  /**
-   * Fly to something somebody just acted on, read the storey it is on, and come
-   * back to the overview after `holdMs` — unless the visitor has taken the camera
-   * in the meantime, in which case it stays theirs.
-   */
-  show(target: FocusTarget, holdMs = 7000): void {
-    if (!this.handles) return;
-    this.touched = false;
-    if (target.level !== this.level) {
-      this.level = target.level;
-      focusLevel(this.handles, target.level);
-    }
-    this.flyTo(closeView(target.point, target.span, this.aspect()));
-    clearTimeout(this.returnTimer);
-    this.returnTimer = window.setTimeout(() => this.returnHome(), holdMs);
-  }
-
-  private returnHome(): void {
-    if (this.touched || !this.handles) return;
-    if (this.level !== this.home) {
-      this.level = this.home;
-      focusLevel(this.handles, this.home);
-    }
-    this.flyTo(this.viewFor(this.home));
-  }
-
-  private flyTo(view: View): void {
-    this.flight = {
-      fromPosition: this.camera.position.clone(),
-      fromTarget: this.controls.target.clone(),
-      toPosition: new Vector3(...view.position),
-      toTarget: new Vector3(...view.target),
-      t: 0,
-    };
-  }
-
   /** Put the camera back where a level is framed. Also what the HUD's reset calls. */
   frameLevel(): void {
-    this.flight = null;
     const view = this.viewFor(this.level);
     this.camera.position.set(...view.position);
     this.target.set(...view.target);
@@ -391,7 +311,6 @@ export class HouseRenderer {
       const dt = Math.min(0.1, (now - this.last) / 1000);
       this.last = now;
       this.ease(dt);
-      this.stepFlight(dt);
       this.controls.update();
       this.renderer.render(this.scene, this.camera);
       this.frame = requestAnimationFrame(tick);
@@ -399,18 +318,7 @@ export class HouseRenderer {
     this.frame = requestAnimationFrame(tick);
   }
 
-  private stepFlight(dt: number): void {
-    const flight = this.flight;
-    if (!flight) return;
-    flight.t = Math.min(1, flight.t + dt / FLIGHT_S);
-    const e = easeInOut(flight.t);
-    this.camera.position.lerpVectors(flight.fromPosition, flight.toPosition, e);
-    this.controls.target.lerpVectors(flight.fromTarget, flight.toTarget, e);
-    if (flight.t >= 1) this.flight = null;
-  }
-
   stop(): void {
-    clearTimeout(this.returnTimer);
     cancelAnimationFrame(this.frame);
     this.controls.dispose();
     this.renderer.dispose();

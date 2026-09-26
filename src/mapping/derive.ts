@@ -157,10 +157,43 @@ export function derive(
       continue;
     }
 
-    const inZone = byZone.get(zone.id) ?? [];
-    const lamps = inZone.filter((e) => LAMP_TYPES.has(e.type));
+    // The room's own equipments, plus any the mapping places here from a parent zone
+    // — the stove Sowel files under "RDC" stands in the living room.
+    const placed = mapping.placement?.[room.id] ?? [];
+    const ancestors = new Set<string>();
+    for (
+      let z = zones.find((c) => c.id === zone.parentId);
+      z;
+      z = zones.find((c) => c.id === z?.parentId)
+    ) {
+      if (ancestors.has(z.id)) break; // a cycle in the tree is not worth hanging over
+      ancestors.add(z.id);
+    }
+    const claimed = equipments.filter(
+      (e) => e.enabled && ancestors.has(e.zoneId) && placed.includes(e.name),
+    );
+    const inZone = [...(byZone.get(zone.id) ?? []), ...claimed];
+    for (const name of placed) {
+      if (!inZone.some((e) => e.name === name)) {
+        problems.push(
+          `${room.id} : « ${name} » est placé ici mais Sowel ne l'a pas dans cette zone`,
+        );
+      }
+    }
+    // Named ones first, in the order named; the rest after, in Sowel's order.
+    const rank = (e: Equipment): number => {
+      const i = placed.indexOf(e.name);
+      return i < 0 ? placed.length : i;
+    };
+    const ordered = (list: Equipment[]): Equipment[] =>
+      list
+        .map((e, i) => ({ e, i }))
+        .sort((a, b) => rank(a.e) - rank(b.e) || a.i - b.i)
+        .map(({ e }) => e);
+
+    const lamps = ordered(inZone.filter((e) => LAMP_TYPES.has(e.type)));
     const sensors = inZone.filter((e) => hasCategory(e, "motion"));
-    const available = inZone.filter((e) => SHUTTER_TYPES.has(e.type));
+    const available = ordered(inZone.filter((e) => SHUTTER_TYPES.has(e.type)));
     const windows = windowsOfRoom(plan, room.id);
 
     // Paired in order: the plan declares its windows in one order and the zone

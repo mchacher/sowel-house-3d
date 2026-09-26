@@ -23,5 +23,19 @@
   "watering": {
     "plantations": "Vanne Plantations",
     "pelouse": "Vanne Pelouse"
+  },
+  "placement": {
+    "sejour": [
+      "Appliques x 2",
+      "Applique x 1",
+      "Spots",
+      "Volet Sud Ouest",
+      "Volet Sud",
+      "Volet Ouest",
+      "Poele"
+    ],
+    "cuisine": ["Spots", "Volet", "Porte Fenêtre"],
+    "jardin": ["Lumiere Terrasse", "Circulation - Escalier Piscine", "Oliviers", "Végétations"],
+    "piscine": ["Spot Piscine"]
   }
 }

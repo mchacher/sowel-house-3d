@@ -31,7 +31,7 @@ import {
   SphereGeometry,
   type Material,
 } from "three";
-import type { Opening, Plan, Room, Wall } from "../plan/types.ts";
+import type { Fixture, Machine, Opening, Plan, Room, Side, Wall } from "../plan/types.ts";
 import type { SceneState } from "../state/scene-state.ts";
 import {
   flowerSpots,
@@ -106,6 +106,173 @@ function roomSign(text: string): Sprite | null {
 }
 
 /**
+ * One light equipment in the scene. `shades` change colour with it, `glow` — the
+ * pools of light on the floor, an uplight's beam — appears with it, and the light
+ * itself lights the room around. One PointLight per equipment however many bulbs
+ * it has: lights cost every material in the scene, and the pools and beams are
+ * what carries the signal anyway.
+ */
+export interface LampHandle {
+  light: PointLight;
+  /** Full intensity, for this kind of fitting. */
+  power: number;
+  shades: Mesh[];
+  glow: Object3D[];
+}
+
+const FACING: Record<Side, [number, number]> = { N: [0, -1], S: [0, 1], E: [1, 0], W: [-1, 0] };
+
+/**
+ * A light fitting as the plan describes it. `ceiling` is the storey's wall height,
+ * for what hangs from it; outdoors it is the height of the ground-floor walls.
+ */
+function buildLamp(
+  fixture: Fixture,
+  ceiling: number,
+  materials: Materials,
+  group: Group,
+): LampHandle {
+  const shades: Mesh[] = [];
+  const glow: Object3D[] = [];
+  const [fx, fz] = fixture.face ? FACING[fixture.face] : [0, 0];
+  const along = fixture.face === "N" || fixture.face === "S"; // the wall runs along x
+  const points = fixture.points;
+  const cx = points.reduce((n, p) => n + p[0], 0) / points.length;
+  const cz = points.reduce((n, p) => n + p[1], 0) / points.length;
+
+  const shade = (mesh: Mesh, x: number, y: number, z: number): void => {
+    mesh.position.set(x, y, z);
+    mesh.castShadow = false;
+    group.add(mesh);
+    shades.push(mesh);
+  };
+  const pool = (x: number, z: number, radius: number, y = 0.012): void => {
+    const disc = new Mesh(new CircleGeometry(radius, 24), materials.lightPool);
+    disc.rotation.x = -Math.PI / 2;
+    disc.position.set(x, y, z);
+    disc.visible = false;
+    group.add(disc);
+    glow.push(disc);
+  };
+  const light = (
+    x: number,
+    y: number,
+    z: number,
+    distance: number,
+    colour = 0xffd9a0,
+  ): PointLight => {
+    // Shadows are off: seventeen shadow-casting lights is what costs a phone its
+    // frame rate.
+    const l = new PointLight(colour, 0, distance);
+    l.castShadow = false;
+    l.position.set(x, y, z);
+    group.add(l);
+    return l;
+  };
+
+  switch (fixture.kind) {
+    case "ceiling": {
+      const [x, z] = points[0];
+      shade(new Mesh(new SphereGeometry(0.13, 12, 10), materials.shadeOff), x, ceiling - 0.35, z);
+      pool(x, z, 1.15);
+      return { light: light(x, ceiling - 0.45, z, 6.5), power: 2.2, shades, glow };
+    }
+    case "spots": {
+      for (const [x, z] of points) {
+        shade(
+          new Mesh(new CylinderGeometry(0.08, 0.08, 0.04, 14), materials.shadeOff),
+          x,
+          ceiling - 0.04,
+          z,
+        );
+        pool(x, z, 0.55);
+      }
+      return { light: light(cx, ceiling - 0.4, cz, 6.5), power: 2.4, shades, glow };
+    }
+    case "sconce": {
+      for (const [x, z] of points) {
+        const body = along ? new BoxGeometry(0.24, 0.3, 0.1) : new BoxGeometry(0.1, 0.3, 0.24);
+        shade(new Mesh(body, materials.shadeOff), x + fx * 0.07, 1.85, z + fz * 0.07);
+        pool(x + fx * 0.7, z + fz * 0.7, 0.65);
+      }
+      return { light: light(cx + fx * 0.45, 1.8, cz + fz * 0.45, 5), power: 1.6, shades, glow };
+    }
+    case "wall": {
+      for (const [x, z] of points) {
+        const body = along ? new BoxGeometry(0.2, 0.3, 0.16) : new BoxGeometry(0.16, 0.3, 0.2);
+        shade(new Mesh(body, materials.shadeOff), x + fx * 0.14, 2.3, z + fz * 0.14);
+        pool(x + fx * 1.4, z + fz * 1.4, 1.3, 0.03);
+      }
+      return { light: light(cx + fx * 0.9, 2.1, cz + fz * 0.9, 7), power: 3, shades, glow };
+    }
+    case "uplight": {
+      for (const [x, z] of points) {
+        shade(new Mesh(new CylinderGeometry(0.1, 0.12, 0.08, 12), materials.shadeOff), x, 0.04, z);
+        // The beam, narrow at the ground and opening upwards into the crown.
+        const beam = new Mesh(new ConeGeometry(0.9, 2.6, 18, 1, true), materials.beam);
+        beam.rotation.x = Math.PI;
+        beam.position.set(x, 1.34, z);
+        beam.visible = false;
+        group.add(beam);
+        glow.push(beam);
+      }
+      const [x, z] = points[0];
+      return { light: light(x, 1.2, z, 6), power: 2.5, shades, glow };
+    }
+    case "bollard": {
+      for (const [x, z] of points) {
+        const post = new Mesh(new CylinderGeometry(0.05, 0.06, 0.7, 8), materials.bollard);
+        group.add(at(post, x, 0.35, z));
+        shade(new Mesh(new SphereGeometry(0.1, 10, 8), materials.shadeOff), x, 0.78, z);
+        pool(x, z, 0.9, 0.03);
+      }
+      return { light: light(cx, 0.8, cz, 5), power: 2, shades, glow };
+    }
+    case "underwater": {
+      for (const [x, z] of points) {
+        shade(new Mesh(new SphereGeometry(0.12, 10, 8), materials.shadeOff), x, -0.15, z);
+      }
+      return { light: light(cx, -0.1, cz, 7, 0x7fd0ff), power: 3, shades, glow };
+    }
+  }
+}
+
+/** The machines outside: a box, and a fan or a filter to say what it is. */
+function buildMachine(machine: Machine, materials: Materials, group: Group): void {
+  const [fx, fz] = FACING[machine.face];
+  const along = machine.face === "N" || machine.face === "S";
+  const size =
+    machine.kind === "pool-pump"
+      ? [0.45, 0.35, 0.35]
+      : machine.kind === "heat-pump"
+        ? [0.95, 0.7, 0.36]
+        : [0.85, 0.75, 0.5];
+  const [w, h, d] = along ? size : [size[2], size[1], size[0]];
+  const body = box(w, h, d, materials.metal);
+  group.add(at(body, machine.x, h / 2, machine.z));
+  if (machine.kind === "pool-pump") {
+    const filter = new Mesh(new CylinderGeometry(0.18, 0.18, 0.62, 14), materials.white);
+    filter.castShadow = true;
+    group.add(
+      at(
+        filter,
+        machine.x - fx * 0.05 + (along ? 0.4 : 0),
+        0.31,
+        machine.z - fz * 0.05 + (along ? 0 : 0.4),
+      ),
+    );
+    return;
+  }
+  // The fan, on the face it blows out of.
+  const fan = new Mesh(new CylinderGeometry(0.24, 0.24, 0.03, 20), materials.dark);
+  fan.rotation.set(along ? Math.PI / 2 : 0, 0, along ? 0 : Math.PI / 2);
+  const depth = along ? d : w;
+  group.add(
+    at(fan, machine.x + fx * (depth / 2 + 0.01), h / 2, machine.z + fz * (depth / 2 + 0.01)),
+  );
+}
+
+/**
  * What the visitor is reading: one storey, or the house from outside.
  *
  * From outside every storey is solid and the roof is on — the postcard. Inside a
@@ -147,7 +314,8 @@ export interface HouseHandles {
   levels: Map<number, LevelHandles>;
   /** The ground, the terrace and the pool, which belong to no storey. */
   outdoor: LevelHandles;
-  lamps: Map<string, { light: PointLight; shade: Mesh; pool: Mesh | null }[]>;
+  /** Per room, in the order its lamps pair with its fixtures. */
+  lamps: Map<string, LampHandle[]>;
   /**
    * Per room, in plan window order; the panel is anchored at the lintel.
    *
@@ -248,7 +416,7 @@ export function buildHouse(options: BuildHouseOptions): HouseHandles {
     rooms: new Map(),
   };
 
-  buildOutdoors(plan, outdoor, handles);
+  buildOutdoors(plan, outdoor, handles, lampCounts);
 
   // Every storey, at its own height. Showing one at a time was a way of not solving
   // the occlusion: a house is four floors and a visitor asking what is upstairs
@@ -283,7 +451,12 @@ export function buildHouse(options: BuildHouseOptions): HouseHandles {
 }
 
 /** The ground and the patches on it. Heights are staggered on purpose — see below. */
-function buildOutdoors(plan: Plan, entry: LevelHandles, handles: HouseHandles): void {
+function buildOutdoors(
+  plan: Plan,
+  entry: LevelHandles,
+  handles: HouseHandles,
+  lampCounts: Record<string, number>,
+): void {
   const { group, materials } = entry;
   const rooms = outdoorRooms(plan);
 
@@ -451,30 +624,22 @@ function buildOutdoors(plan: Plan, entry: LevelHandles, handles: HouseHandles): 
     handles.covers.set(room.id, { kind: "cover", object: cover, target: 0.0001 });
   }
 
-  // Outdoor lamps stand where the plan says: bollards, and the pool's spot under
-  // the water. Their lights stay on whichever storey is read — the garden is
-  // never the storey out of focus.
+  // Outdoor lights stand where the plan's fixtures say — lanterns on the terrace
+  // wall, uplights under the trees, bollards to the pool — one per lamp Sowel
+  // reports, in the order the mapping places them. A lamp the plan did not place
+  // gets a bollard at the room's spot rather than nothing. They stay lit whichever
+  // storey is read: the garden is never the storey out of focus.
   for (const room of rooms) {
-    const lamps: { light: PointLight; shade: Mesh; pool: Mesh | null }[] = [];
-    for (const [lx, lz] of room.lamps ?? []) {
-      const underwater = room.kind === "pool";
-      const shade = new Mesh(
-        new SphereGeometry(underwater ? 0.12 : 0.1, 10, 8),
-        materials.shadeOff,
-      );
-      if (!underwater) {
-        const post = new Mesh(new CylinderGeometry(0.05, 0.06, 0.7, 8), materials.bollard);
-        group.add(at(post, lx, 0.35, lz));
-      }
-      group.add(at(shade, lx, underwater ? -0.15 : 0.78, lz));
-      const light = new PointLight(underwater ? 0x7fd0ff : 0xffd9a0, 0, underwater ? 7 : 5);
-      light.castShadow = false;
-      light.position.set(lx, underwater ? -0.1 : 0.8, lz);
-      group.add(light);
-      lamps.push({ light, shade, pool: null });
+    const count = lampCounts[room.id] ?? 0;
+    const lamps: LampHandle[] = [];
+    for (let i = 0; i < count; i++) {
+      const fixture = room.fixtures?.[i] ?? { kind: "bollard", points: [room.spot] };
+      lamps.push(buildLamp(fixture, plan.height, materials, group));
     }
     if (lamps.length > 0) handles.lamps.set(room.id, lamps);
   }
+
+  for (const machine of plan.machines ?? []) buildMachine(machine, materials, group);
 }
 
 function buildLevel(
@@ -518,24 +683,19 @@ function buildLevel(
   for (const room of rooms) {
     handles.rooms.set(room.id, room);
 
-    const lamps: { light: PointLight; shade: Mesh; pool: Mesh | null }[] = [];
-    for (const [x, y, z] of lampSpots(room, lampCounts[room.id] ?? 0, plan.height)) {
-      const shade = new Mesh(new SphereGeometry(0.13, 12, 10), materials.shadeOff);
-      group.add(at(shade, x, y, z));
-      // Shadows are off by default: seventeen shadow-casting lights is what costs a
-      // phone its frame rate. The renderer turns them on for the level in view.
-      const light = new PointLight(0xffd9a0, 0, 6.5);
-      light.castShadow = false;
-      light.position.set(x, y - 0.1, z);
-      group.add(light);
-      // The pool of light on the floor: a point light in a stylised room is subtle
-      // by day, and a lamp being on is the first thing a visitor wants to see.
-      const pool = new Mesh(new CircleGeometry(1.15, 24), materials.lightPool);
-      pool.rotation.x = -Math.PI / 2;
-      pool.position.set(x, 0.012, z);
-      pool.visible = false;
-      group.add(pool);
-      lamps.push({ light, shade, pool });
+    // A lamp the plan placed gets its fixture — appliques on a wall, a row of
+    // spots; one it did not gets a ceiling light, spread along the room. The pools
+    // of light on the floor are what shows a lamp is on: a point light in a
+    // stylised room is subtle by day, and that is the first thing a visitor looks for.
+    const count = lampCounts[room.id] ?? 0;
+    const defaults = lampSpots(room, count, plan.height);
+    const lamps: LampHandle[] = [];
+    for (let i = 0; i < count; i++) {
+      const fixture = room.fixtures?.[i] ?? {
+        kind: "ceiling" as const,
+        points: [[defaults[i][0], defaults[i][2]] as [number, number]],
+      };
+      lamps.push(buildLamp(fixture, plan.height, materials, group));
     }
     handles.lamps.set(room.id, lamps);
 
@@ -552,7 +712,14 @@ function buildLevel(
     handles.halos.set(room.id, halo);
 
     for (const piece of furnitureFor(room)) {
-      const block = box(piece.w, piece.h, piece.d, materials[piece.material]);
+      const block =
+        piece.shape === "cylinder"
+          ? new Mesh(
+              new CylinderGeometry(piece.w / 2, piece.w / 2, piece.h, 18),
+              materials[piece.material],
+            )
+          : box(piece.w, piece.h, piece.d, materials[piece.material]);
+      block.castShadow = true;
       if (piece.material === "glass" || piece.material === "water") block.castShadow = false;
       group.add(at(block, piece.x + piece.w / 2, piece.y + piece.h / 2, piece.z + piece.d / 2));
     }
@@ -858,9 +1025,9 @@ export function applyState(
     lamps.forEach((lamp, i) => {
       const lit = room?.lamps[i];
       const on = lit?.on ?? false;
-      lamp.light.intensity = on ? 2.2 * Math.max(0.15, lit?.brightness ?? 1) : 0;
-      lamp.shade.material = on ? materials.shadeOn : materials.shadeOff;
-      if (lamp.pool) lamp.pool.visible = on;
+      lamp.light.intensity = on ? lamp.power * Math.max(0.15, lit?.brightness ?? 1) : 0;
+      for (const shade of lamp.shades) shade.material = on ? materials.shadeOn : materials.shadeOff;
+      for (const glow of lamp.glow) glow.visible = on;
     });
   }
 

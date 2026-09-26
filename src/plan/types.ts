@@ -13,6 +13,38 @@
  * doorway.
  */
 
+/** A wall's side of a room, or which way a wall-mounted thing faces. */
+export type Side = "N" | "S" | "E" | "W";
+
+/**
+ * What a light is, which is what it looks like and where its light falls.
+ *
+ * - `ceiling` — one fitting under the ceiling: a plafonnier. What a room gets when
+ *   the plan says nothing.
+ * - `spots` — recessed spots, one pool of light under each.
+ * - `sconce` — an applique on a wall, facing into the room.
+ * - `wall` — a lantern on an outside wall, lighting the ground in front of it.
+ * - `uplight` — a spot in the ground aimed up at a tree or a bed, with its beam.
+ * - `bollard` — a short post along a path.
+ * - `underwater` — the pool's light.
+ */
+export type LightKind =
+  "ceiling" | "spots" | "sconce" | "wall" | "uplight" | "bollard" | "underwater";
+
+/**
+ * One light equipment, placed. A room's fixtures pair in order with its lamps, and
+ * the mapping's `placement` says which lamp comes first — so the terrace light is
+ * on the terrace because the mapping names it, not because Sowel happened to list
+ * it first.
+ */
+export interface Fixture {
+  kind: LightKind;
+  /** Where its bulbs are, x and z. A sconce or a wall light sits on the wall line. */
+  points: [number, number][];
+  /** For a sconce or a wall light: the way it faces — into the room, or outwards. */
+  face?: Side;
+}
+
 /** What a room is for, which is what it is furnished as. */
 export type RoomKind =
   | "bedroom"
@@ -37,11 +69,11 @@ export interface Room {
   /** Furnished by kind; a room without one is left bare. */
   kind?: RoomKind;
   /**
-   * Where this room's lamps stand, for a room whose lamps are not under a ceiling
-   * — the garden's bollards, the pool's underwater spot. Paired in order with the
-   * lamps Sowel reports; indoor rooms hang theirs from `lampSpots` instead.
+   * Its light fittings, in the order the mapping's `placement` lists the room's
+   * lamps. A lamp with no fixture gets a ceiling light (`lampSpots`); a fixture
+   * with no lamp is not drawn.
    */
-  lamps?: [number, number][];
+  fixtures?: Fixture[];
   /**
    * 0 ground, 1 upstairs, `null` outdoors.
    *
@@ -213,6 +245,19 @@ export interface Tree {
   size: number;
 }
 
+/**
+ * A machine outside that Sowel knows as an equipment and that has no room of its
+ * own to be furnished in: the heat pump's outdoor unit, the pool's pump and heat
+ * pump. Decoration, placed where it stands.
+ */
+export interface Machine {
+  kind: "heat-pump" | "pool-heat-pump" | "pool-pump";
+  x: number;
+  z: number;
+  /** The side its fan or its face looks out of. */
+  face: Side;
+}
+
 /** A patch of ground that is not a room: a driveway, a path. Decoration only. */
 export interface Patch extends Rect {
   kind: "drive" | "path";
@@ -234,4 +279,5 @@ export interface Plan {
   fence?: Fence;
   beds?: Bed[];
   trees?: Tree[];
+  machines?: Machine[];
 }

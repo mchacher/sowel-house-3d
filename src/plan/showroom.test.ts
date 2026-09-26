@@ -4,8 +4,11 @@ import type { Plan } from "./types.ts";
 // The app fetches the plan at runtime, because it is data a deployment swaps. The
 // test imports it so the app tier needs no node types for a file read.
 import showroom from "../../public/plans/showroom.json";
+import showroomMapping from "../../public/plans/showroom.mapping.json";
+import type { Mapping } from "../mapping/types.ts";
 
 const plan = showroom as unknown as Plan;
+const mapping = showroomMapping as Mapping;
 
 describe("the showroom plan", () => {
   it("validates", () => {
@@ -94,6 +97,31 @@ describe("the showroom plan", () => {
   it("names every room and level in both languages", () => {
     for (const room of plan.rooms) expect(room.nameEn, room.id).toBeTruthy();
     for (const level of plan.levels) expect(level.nameEn, level.name).toBeTruthy();
+  });
+
+  it("keeps every light fixture inside the room that owns it", () => {
+    // A sconce or a lantern sits on the wall line, which is the room's edge: inside,
+    // inclusive.
+    for (const room of plan.rooms) {
+      for (const fixture of room.fixtures ?? []) {
+        for (const [x, z] of fixture.points) {
+          const inside =
+            x >= room.x - 1e-9 &&
+            x <= room.x + room.w + 1e-9 &&
+            z >= room.z - 1e-9 &&
+            z <= room.z + room.d + 1e-9;
+          expect(inside, `${room.id} ${fixture.kind} at ${x},${z}`).toBe(true);
+        }
+      }
+    }
+  });
+
+  it("places no more lights in a room than the mapping names for it", () => {
+    for (const room of plan.rooms) {
+      const placed = mapping.placement?.[room.id];
+      if (!room.fixtures || !placed) continue;
+      expect(room.fixtures.length, room.id).toBeLessThanOrEqual(placed.length);
+    }
   });
 
   it("reports on the front door, the terrace door and the garage door", () => {

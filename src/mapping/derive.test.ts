@@ -182,3 +182,43 @@ describe("doors that report", () => {
     expect(result.rooms.cuisine.doors).toEqual([]);
   });
 });
+
+describe("placement: what the names say, not the order Sowel lists them in", () => {
+  const result = derive(plan, mapping, zones, equipments);
+  const names = (list: (Equipment | null)[]) => list.map((e) => e?.name ?? null);
+
+  it("puts each living-room shutter on the window its name describes", () => {
+    // Windows in plan order: the south bay at the west end, the south window, the
+    // west window. Paired by Sowel's order, the west shutter was on the south bay.
+    expect(names(result.rooms.sejour.shutters)).toEqual([
+      "Volet Sud Ouest",
+      "Volet Sud",
+      "Volet Ouest",
+    ]);
+  });
+
+  it("puts the kitchen's French-window shutter on its French window", () => {
+    // cuisine-1 is the window over the sink, cuisine-2 the glazed door onto the
+    // side: "Porte Fenêtre" is the second.
+    expect(names(result.rooms.cuisine.shutters)).toEqual(["Volet", "Porte Fenêtre"]);
+  });
+
+  it("orders the garden's lights as the plan's fixtures expect", () => {
+    expect(names(result.rooms.jardin.lamps)).toEqual([
+      "Lumiere Terrasse",
+      "Circulation - Escalier Piscine",
+      "Oliviers",
+      "Végétations",
+    ]);
+  });
+
+  it("claims the stove from the ground-floor zone for the living room", () => {
+    // Sowel files it under "RDC", a level; it stands in the living room.
+    expect(result.rooms.sejour.thermostat?.name).toBe("Poele");
+  });
+
+  it("says so when a placed name is nowhere to be found", () => {
+    const broken: Mapping = { ...mapping, placement: { sejour: ["Lampe Fantôme"] } };
+    expect(derive(plan, broken, zones, equipments).problems.join()).toContain("Lampe Fantôme");
+  });
+});

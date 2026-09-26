@@ -8,9 +8,9 @@
  * of the arithmetic below. Pure, and tested, like the rest of `src/plan`.
  */
 
-import type { Door, Level, Opening, OpeningKind, Plan, Rect, Room, Wall } from "./types.ts";
+import type { Door, Level, Opening, OpeningKind, Plan, Rect, Room, Side, Wall } from "./types.ts";
 
-export type Side = "N" | "S" | "E" | "W";
+export type { Side };
 
 export interface WindowSpec {
   room: string;

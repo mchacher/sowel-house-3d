@@ -12,8 +12,10 @@ const PLAN_URL = `${import.meta.env.BASE_URL}plans/showroom.json`;
 const MAPPING_URL = `${import.meta.env.BASE_URL}plans/showroom.mapping.json`;
 
 /**
- * `?mini=1`: the vignette the showroom floats over the Sowel interface. The house
- * from outside, no HUD, and the camera flying to whatever a person acts on.
+ * `?mini=1`: the vignette the showroom floats over the Sowel interface — the house
+ * from outside, standing closer, and no HUD. The camera stays where it is: it used
+ * to fly to whatever a person acted on, and a view that lurched on every click was
+ * harder to watch than one that simply showed the house reacting.
  */
 const MINI = new URLSearchParams(window.location.search).get("mini") === "1";
 
@@ -48,8 +50,8 @@ export function App() {
   const canvas = useRef<HTMLCanvasElement>(null);
   const renderer = useRef<HouseRenderer | null>(null);
   const [level, setLevel] = useState<Focus>(MINI ? "outside" : 0);
-  // Small (the vignette) or big (the vignette opened full screen): the HUD, the
-  // framing and whether the camera follows the action all turn on it.
+  // Small (the vignette) or big (the vignette opened full screen): the HUD and the
+  // framing turn on it.
   const [mini, setMini] = useState(MINI && !fullRequested());
   const miniRef = useRef(mini);
   const [lang, setLang] = useState<Lang>(detectLang);
@@ -60,10 +62,7 @@ export function App() {
   // Computed once, in the initialiser: nothing here re-probes, and nothing sets it
   // from inside an effect.
   const [webgl] = useState(drawsWebGL);
-  const { phase, socket, plan, state, lampCounts, counts, action } = useHouse(
-    PLAN_URL,
-    MAPPING_URL,
-  );
+  const { phase, socket, plan, state, lampCounts, counts } = useHouse(PLAN_URL, MAPPING_URL);
 
   // The renderer outlives a render, so it is built once the plan is in and torn down
   // with the component — not rebuilt on every state change.
@@ -114,12 +113,6 @@ export function App() {
   useEffect(() => {
     if (state) renderer.current?.update(state);
   }, [state]);
-
-  // Following the action is the vignette's whole job. In the full view the visitor
-  // chooses what to look at, and a camera that flew off by itself would fight them.
-  useEffect(() => {
-    if (miniRef.current && action) renderer.current?.show(action.target);
-  }, [action]);
 
   // Opened full screen and back, by the page the vignette floats in.
   useEffect(() => {

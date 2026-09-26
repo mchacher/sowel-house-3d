@@ -88,6 +88,8 @@ export interface Materials {
   warm: Material;
   /** Water in the air over a bed being sprinkled. */
   jet: Material;
+  /** The beam of an uplight, seen in the air above it. */
+  beam: Material;
   /** Flowers, three at a time so a bed is not one colour. */
   flowers: Material[];
 }
@@ -165,6 +167,12 @@ export function makeMaterials(): Materials {
     jet: Object.assign(new MeshBasicMaterial({ color: new Color(0xa8dcf2) }), {
       transparent: true,
       opacity: 0.45,
+      depthWrite: false,
+      side: DoubleSide,
+    }),
+    beam: Object.assign(new MeshBasicMaterial({ color: new Color(0xffd27a) }), {
+      transparent: true,
+      opacity: 0.18,
       depthWrite: false,
       side: DoubleSide,
     }),

@@ -115,6 +115,17 @@ const house: HouseSpec = {
       w: 4,
       d: 5,
       spot: [8.5, 2.6],
+      fixtures: [
+        {
+          kind: "spots",
+          points: [
+            [7.6, 2],
+            [9, 2],
+            [7.6, 3],
+            [9, 3],
+          ],
+        },
+      ],
     },
     {
       id: "sejour",
@@ -127,6 +138,29 @@ const house: HouseSpec = {
       w: 10.5,
       d: 4.5,
       spot: [5.2, 7.4],
+      fixtures: [
+        // "Appliques x 2": two appliques on the north wall, over the sofa's side.
+        {
+          kind: "sconce",
+          points: [
+            [4.2, 5],
+            [5.8, 5],
+          ],
+          face: "S",
+        },
+        // "Applique x 1": one on the east wall, by the dining table.
+        { kind: "sconce", points: [[10.5, 7.2]], face: "W" },
+        // "Spots": four over the dining table.
+        {
+          kind: "spots",
+          points: [
+            [6.6, 6.5],
+            [8.2, 6.5],
+            [6.6, 8],
+            [8.2, 8],
+          ],
+        },
+      ],
     },
     {
       id: "garage",
@@ -165,6 +199,17 @@ const house: HouseSpec = {
       w: 4,
       d: 4,
       spot: [8.5, 2],
+      fixtures: [
+        {
+          kind: "spots",
+          points: [
+            [7.8, 1.3],
+            [9.2, 1.3],
+            [7.8, 2.7],
+            [9.2, 2.7],
+          ],
+        },
+      ],
     },
     {
       id: "chambre-parents",
@@ -201,6 +246,16 @@ const house: HouseSpec = {
       w: 3,
       d: 4.5,
       spot: [9, 7.2],
+      fixtures: [
+        {
+          kind: "spots",
+          points: [
+            [9, 6.2],
+            [9, 7.3],
+            [9, 8.4],
+          ],
+        },
+      ],
     },
 
     // ── Outdoors ─────────────────────────────────────────────────────────
@@ -216,13 +271,46 @@ const house: HouseSpec = {
       d: 24,
       spot: [-2, 12],
       ground: true,
-      // Four bollards: three along the terrace, one by the olive tree — the four
-      // garden lights Sowel reports, in the order it lists them.
-      lamps: [
-        [1.5, 12.9],
-        [5.25, 12.9],
-        [9, 12.9],
-        [13.2, 11.2],
+      // In the order the mapping places the garden's four lights.
+      fixtures: [
+        // "Lumiere Terrasse": lanterns on the terrace wall, between the bays.
+        {
+          kind: "wall",
+          points: [
+            [0.6, 9.5],
+            [4.5, 9.5],
+            [7.85, 9.5],
+          ],
+          face: "S",
+        },
+        // "Circulation - Escalier Piscine": bollards down from the terrace to the pool.
+        {
+          kind: "bollard",
+          points: [
+            [1.2, 12.95],
+            [5.5, 12.95],
+            [9.8, 12.95],
+          ],
+        },
+        // "Oliviers": an uplight under each olive tree.
+        {
+          kind: "uplight",
+          points: [
+            [12.75, 11.65],
+            [15.25, 13.25],
+          ],
+        },
+        // "Végétations": uplights under the three big trees and in the west bed.
+        {
+          kind: "uplight",
+          points: [
+            [-2.4, 18.1],
+            [18.4, 18.1],
+            [-2.4, 1.6],
+            [-2.6, 11.2],
+            [-1.3, 14.2],
+          ],
+        },
       ],
     },
     {
@@ -248,8 +336,8 @@ const house: HouseSpec = {
       w: 8,
       d: 4,
       spot: [5.5, 15.5],
-      // The pool spot, under water.
-      lamps: [[5.5, 15.5]],
+      // "Spot Piscine", under water.
+      fixtures: [{ kind: "underwater", points: [[5.5, 15.5]] }],
     },
   ],
 
@@ -381,13 +469,22 @@ const house: HouseSpec = {
     { x: -3, z: 17.5, kind: "tree", size: 5 },
     { x: 19, z: 17.5, kind: "tree", size: 5.5 },
     { x: -3, z: 1, kind: "tree", size: 4.5 },
-    { x: 13.2, z: 11, kind: "olive", size: 3.2 },
+    // Two olive trees on the lawn by the terrace — "Oliviers" is plural.
+    { x: 12.3, z: 11.2, kind: "olive", size: 2.6 },
+    { x: 14.8, z: 12.8, kind: "olive", size: 2.4 },
     { x: 2, z: -2.9, kind: "bush", size: 0.9 },
     { x: 8, z: -2.9, kind: "bush", size: 1 },
     { x: 13, z: -2.9, kind: "bush", size: 0.9 },
-    { x: 10.6, z: 14, kind: "bush", size: 1 },
-    { x: 10.6, z: 16.8, kind: "bush", size: 0.9 },
+    { x: 11.2, z: 19.2, kind: "bush", size: 0.9 },
     { x: 19.5, z: 8, kind: "bush", size: 1.1 },
+  ],
+
+  // The machines Sowel knows and no room holds: the heat pump's outdoor unit
+  // against the garage, the pool's heat pump and pump beside the pool.
+  machines: [
+    { kind: "heat-pump", x: 13.2, z: 8.75, face: "S" },
+    { kind: "pool-heat-pump", x: 10.45, z: 14.4, face: "E" },
+    { kind: "pool-pump", x: 10.45, z: 16.3, face: "E" },
   ],
 
   patches: [

@@ -203,7 +203,7 @@ describe("choosing a storey", () => {
     // The lamp stops lighting the room; its shade still shows whether it is on,
     // which is most of the reason for showing the other storeys at all.
     expect(sejour.every((l) => l.light.visible)).toBe(false);
-    expect(sejour.every((l) => l.shade.visible)).toBe(true);
+    expect(sejour.every((l) => l.shades.every((s) => s.visible))).toBe(true);
   });
 
   it("stops a ghosted storey casting shadows onto the one being read", () => {
@@ -375,8 +375,8 @@ describe("applying the state", () => {
     expect(lamps[2].light.intensity).toBeGreaterThan(0);
     // A dim lamp is dimmer than a bright one, and neither is off.
     expect(lamps[2].light.intensity).toBeLessThan(lamps[0].light.intensity);
-    expect(lamps[0].shade.material).toBe(materials.shadeOn);
-    expect(lamps[1].shade.material).toBe(materials.shadeOff);
+    expect(lamps[0].shades.every((s) => s.material === materials.shadeOn)).toBe(true);
+    expect(lamps[1].shades.every((s) => s.material === materials.shadeOff)).toBe(true);
   });
 
   it("sets a shutter's target, and leaves the moving to the renderer", () => {
@@ -559,10 +559,32 @@ describe("the grounds", () => {
   });
 
   it("stands the garden's lamps where the plan says, lit whichever storey is read", () => {
-    const handles = build(1);
-    expect(handles.lamps.get("jardin")).toHaveLength(4);
+    const handles = buildHouse({
+      plan,
+      materials,
+      level: 1,
+      lampCounts: { ...LAMP_COUNTS, jardin: 4, piscine: 1 },
+    });
+    const garden = handles.lamps.get("jardin")!;
+    expect(garden).toHaveLength(4);
     expect(handles.lamps.get("piscine")).toHaveLength(1);
-    expect(handles.lamps.get("jardin")!.every((l) => l.light.visible)).toBe(true);
+    expect(garden.every((l) => l.light.visible)).toBe(true);
+    // The terrace lanterns hang on the terrace wall; the uplights carry a beam.
+    const terrace = garden[0].shades.map((s) => s.position);
+    expect(terrace.every((p) => p.y > 2 && Math.abs(p.z - 9.5) < 0.3)).toBe(true);
+    expect(garden[2].glow.length).toBeGreaterThan(0);
+  });
+
+  it("puts the olive trees' uplights under the olive trees", () => {
+    const handles = buildHouse({ plan, materials, level: 0, lampCounts: { jardin: 4 } });
+    const olives = (plan.trees ?? []).filter((t) => t.kind === "olive");
+    const spots = handles.lamps.get("jardin")![2].shades.map((s) => s.position);
+    expect(olives.length).toBe(2);
+    expect(spots).toHaveLength(olives.length);
+    for (const olive of olives) {
+      const nearest = Math.min(...spots.map((p) => Math.hypot(p.x - olive.x, p.z - olive.z)));
+      expect(nearest).toBeLessThan(1);
+    }
   });
 });
 
@@ -588,8 +610,8 @@ describe("what a room is furnished with", () => {
     s.rooms.sejour.motion = true;
     applyState(handles, s, materials, true);
     const lamps = handles.lamps.get("sejour")!;
-    expect(lamps[0].pool?.visible).toBe(true);
-    expect(lamps[1].pool?.visible).toBe(false);
+    expect(lamps[0].glow.every((g) => g.visible)).toBe(true);
+    expect(lamps[1].glow.some((g) => g.visible)).toBe(false);
     expect(handles.halos.get("sejour")?.visible).toBe(true);
     expect(handles.halos.get("cuisine")?.visible).toBe(false);
   });

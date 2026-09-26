@@ -433,6 +433,8 @@ export interface Piece {
   h: number;
   d: number;
   material: "wood" | "fabric" | "white" | "dark" | "metal" | "car" | "glass" | "water";
+  /** A box unless it says otherwise; a cylinder stands on its base, `w` across. */
+  shape?: "cylinder";
 }
 
 /**
@@ -457,6 +459,24 @@ export function furnitureFor(room: Room): Piece[] {
     py = 0,
   ): void => {
     pieces.push({ x: x + px, y: py, z: z + pz, w: pw, h: ph, d: pd, material });
+  };
+  const round = (
+    px: number,
+    pz: number,
+    across: number,
+    ph: number,
+    material: Piece["material"],
+  ) => {
+    pieces.push({
+      x: x + px,
+      y: 0,
+      z: z + pz,
+      w: across,
+      h: ph,
+      d: across,
+      material,
+      shape: "cylinder",
+    });
   };
   switch (room.kind) {
     case "bedroom": {
@@ -490,9 +510,13 @@ export function furnitureFor(room: Room): Piece[] {
       break;
     }
     case "kitchen": {
-      // A run of counters along the east wall, a fridge at its end, an island.
-      add(w - 0.65, 0.3, 0.6, 0.9, d - 1.0, "white");
-      add(w - 0.65, d - 1.2, 0.6, 1.9, 0.7, "metal");
+      // A run of counters along the east wall with the dishwasher in it, a fridge at
+      // its end, an island. Pieces that touch share an edge, never a face: the run
+      // is three blocks end to end rather than a counter with a dishwasher inside it.
+      add(w - 0.65, 0.3, 0.6, 0.9, 0.8, "white");
+      add(w - 0.65, 1.1, 0.6, 0.86, 0.6, "metal");
+      add(w - 0.65, 1.7, 0.6, 0.9, Math.max(0.4, d - 3.0), "white");
+      add(w - 0.65, d - 1.25, 0.6, 1.9, 0.7, "metal");
       add(w / 2 - 1.0, d / 2 - 0.45, 1.6, 0.9, 0.9, "wood");
       break;
     }
@@ -540,6 +564,11 @@ export function furnitureFor(room: Room): Piece[] {
         add(wx, wz, 0.3, 0.6, 0.6, "dark");
       }
       add(0.1, 0.2, w - 0.2, 1.8, 0.4, "metal");
+      // The laundry corner on the west wall: the washing machine, its round door
+      // facing the room, and the thermodynamic water heater's tall tank.
+      add(0.15, d - 2.2, 0.62, 0.85, 0.62, "white");
+      add(0.77, d - 2.05, 0.03, 0.32, 0.32, "dark", 0.3);
+      round(0.2, d - 1.2, 0.62, 1.8, "white");
       break;
     }
     default:
@@ -603,31 +632,5 @@ export function treeParts(tree: Tree): TreeParts {
       { x: x - r * 0.5, y: trunkHeight + r * 0.6, z: z - r * 0.3, radius: r * 0.7 },
       { x, y: trunkHeight + r * 1.45, z, radius: r * 0.65 },
     ],
-  };
-}
-
-/**
- * Where the camera goes to show one thing: the same three-quarter view as the
- * overview, from the south-east, only closer — so a visitor who has just acted
- * sees the effect without the camera swinging round to an angle they do not
- * recognise. Close enough to read a room, far enough to keep its walls in frame.
- */
-export function closeView(
-  point: [number, number, number],
-  span: number,
-  aspect = 16 / 9,
-): { position: [number, number, number]; target: [number, number, number] } {
-  const base = Math.min(16, Math.max(6.5, span * 1.6));
-  // A narrow viewport sees less across, so it needs more distance for the same room.
-  const distance = base * (aspect < 1 ? 1.35 : 1);
-  const d = [0.62, 0.75, 0.62];
-  const length = Math.hypot(d[0], d[1], d[2]);
-  return {
-    position: [
-      point[0] + (d[0] / length) * distance,
-      point[1] + (d[1] / length) * distance,
-      point[2] + (d[2] / length) * distance,
-    ],
-    target: point,
   };
 }
