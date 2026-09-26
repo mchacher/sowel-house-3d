@@ -27,6 +27,9 @@ interface Props {
   onLang: (lang: Lang) => void;
 }
 
+/** Shown inside another page — the showroom's side-by-side view. */
+const FRAMED = typeof window !== "undefined" && window.self !== window.top;
+
 export function Hud(props: Props): React.ReactElement {
   const { phase, socket, state, levels, level, onLevel, onRecentre, lang, onLang } = props;
   const t = strings(lang);
@@ -52,8 +55,10 @@ export function Hud(props: Props): React.ReactElement {
         </div>
 
         {/* Back to the product. The app is served on Sowel's own origin — it has to
-            be, to share the session — so Sowel's interface is at the root. */}
-        {phase.kind !== "no-session" && (
+            be, to share the session — so Sowel's interface is at the root. Not when
+            framed beside it: Sowel is already on screen, and the link would load
+            it into this pane. */}
+        {phase.kind !== "no-session" && !FRAMED && (
           <a
             href="/"
             className="pointer-events-auto rounded-lg bg-[#1A4F6E] px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#144159]"
