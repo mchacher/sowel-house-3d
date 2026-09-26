@@ -12,6 +12,12 @@ const PLAN_URL = `${import.meta.env.BASE_URL}plans/showroom.json`;
 const MAPPING_URL = `${import.meta.env.BASE_URL}plans/showroom.mapping.json`;
 
 /**
+ * `?mini=1`: the vignette the showroom floats over the Sowel interface. The house
+ * from outside, no HUD, and the camera flying to whatever a person acts on.
+ */
+const MINI = new URLSearchParams(window.location.search).get("mini") === "1";
+
+/**
  * Whether this browser will draw at all, asked once on a throwaway canvas.
  *
  * Asked *before* building the scene rather than discovered by building it: a
@@ -33,7 +39,7 @@ function drawsWebGL(): boolean {
 export function App() {
   const canvas = useRef<HTMLCanvasElement>(null);
   const renderer = useRef<HouseRenderer | null>(null);
-  const [level, setLevel] = useState<Focus>(0);
+  const [level, setLevel] = useState<Focus>(MINI ? "outside" : 0);
   const [lang, setLang] = useState<Lang>(detectLang);
   // The renderer is built once the plan is in, which is after the first render:
   // it takes the language of that moment from a ref, and later changes through
@@ -42,7 +48,10 @@ export function App() {
   // Computed once, in the initialiser: nothing here re-probes, and nothing sets it
   // from inside an effect.
   const [webgl] = useState(drawsWebGL);
-  const { phase, socket, plan, state, lampCounts, counts } = useHouse(PLAN_URL, MAPPING_URL);
+  const { phase, socket, plan, state, lampCounts, counts, action } = useHouse(
+    PLAN_URL,
+    MAPPING_URL,
+  );
 
   // The renderer outlives a render, so it is built once the plan is in and torn down
   // with the component — not rebuilt on every state change.
@@ -53,7 +62,7 @@ export function App() {
     // scene is a degraded demo; losing the tree is a white page.
     let house: HouseRenderer;
     try {
-      house = new HouseRenderer(canvas.current, plan, level, langRef.current);
+      house = new HouseRenderer(canvas.current, plan, level, langRef.current, MINI ? 0.68 : 1);
     } catch {
       return;
     }
@@ -88,6 +97,12 @@ export function App() {
     if (state) renderer.current?.update(state);
   }, [state]);
 
+  // Following the action is the vignette's whole job. In the full view the visitor
+  // chooses what to look at, and a camera that flew off by itself would fight them.
+  useEffect(() => {
+    if (MINI && action) renderer.current?.show(action.target);
+  }, [action]);
+
   return (
     <main className="relative h-[100dvh] w-full overflow-hidden bg-[#EEF5F8] font-sans dark:bg-slate-950">
       <canvas ref={canvas} className="block h-full w-full" hidden={!webgl} />
@@ -104,6 +119,7 @@ export function App() {
           rememberLang(next);
           setLang(next);
         }}
+        mini={MINI}
       />
     </main>
   );

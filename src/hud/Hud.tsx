@@ -25,15 +25,31 @@ interface Props {
   onRecentre: () => void;
   lang: Lang;
   onLang: (lang: Lang) => void;
+  /** The vignette over the Sowel interface: the scene, and trouble if there is any. */
+  mini?: boolean;
 }
 
 /** Shown inside another page — the showroom's side-by-side view. */
 const FRAMED = typeof window !== "undefined" && window.self !== window.top;
 
 export function Hud(props: Props): React.ReactElement {
-  const { phase, socket, state, levels, level, onLevel, onRecentre, lang, onLang } = props;
+  const { phase, socket, state, levels, level, onLevel, onRecentre, lang, onLang, mini } = props;
   const t = strings(lang);
   const trouble = isTrouble(phase, socket, state);
+
+  // Small and borrowed: the window it floats in has its own controls. What stays is
+  // what must never be silent — no session, no WebGL, no Sowel.
+  if (mini) {
+    return (
+      <div className="pointer-events-none absolute inset-x-0 top-0 p-2">
+        {trouble && (
+          <div className="rounded-md bg-amber-100/90 px-2 py-1 text-[11px] font-medium text-amber-900 shadow-sm">
+            {statusLine(phase, socket, state, lang)}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   const rooms = state
     ? Object.values(state.rooms)

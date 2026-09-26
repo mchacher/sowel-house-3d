@@ -17,6 +17,7 @@ import { derive } from "./mapping/derive.ts";
 import { applyEvent, buildSceneState, type SceneState } from "./state/scene-state.ts";
 import type { Aggregation, Equipment, Zone } from "./sowel/types.ts";
 import type { AppPhase } from "./hud/status.ts";
+import { targetOf, type FocusTarget } from "./state/focus.ts";
 
 export interface House {
   phase: AppPhase;
@@ -27,6 +28,11 @@ export interface House {
   lampCounts: Record<string, number>;
   /** Radiators per room, and the rooms with a stove. */
   counts: { heaters: Record<string, number>; stoves: string[] };
+  /**
+   * The last thing a person did, as a place to look at. A new object each time, so
+   * the same lamp pressed twice is two actions.
+   */
+  action: { target: FocusTarget } | null;
 }
 
 export function useHouse(planUrl: string, mappingUrl: string): House {
@@ -36,6 +42,7 @@ export function useHouse(planUrl: string, mappingUrl: string): House {
   const [state, setState] = useState<SceneState | null>(null);
   const [lampCounts, setLampCounts] = useState<Record<string, number>>({});
   const [counts, setCounts] = useState<House["counts"]>({ heaters: {}, stoves: [] });
+  const [action, setAction] = useState<House["action"]>(null);
 
   // The raw truth, kept out of React state: every event replaces one binding and the
   // scene state is recomputed, so re-rendering on each intermediate array would be
@@ -63,6 +70,17 @@ export function useHouse(planUrl: string, mappingUrl: string): House {
     const onEvent = (event: SowelEvent): void => {
       const current = live.current;
       if (!current) return;
+      // A person's order — from the interface, by any visitor — is something to go
+      // and look at. A recipe's, a mode's, a button's are the house running itself,
+      // and following every one would never let the camera rest.
+      if (event.type === "equipment.order.executed" && typeof event.equipmentId === "string") {
+        const source = event.source as { kind?: string } | undefined;
+        if (!source || source.kind === "manual") {
+          const derived = derive(current.plan, current.mapping, current.zones, current.equipments);
+          const target = targetOf(event.equipmentId, derived, current.plan, current.equipments);
+          if (target) setAction({ target });
+        }
+      }
       const result = applyEvent(current.equipments, current.aggregation, event);
       if (!result.changed) return;
       current.equipments = result.equipments;
@@ -137,5 +155,5 @@ export function useHouse(planUrl: string, mappingUrl: string): House {
     };
   }, [planUrl, mappingUrl]);
 
-  return { phase, socket: socketStatus, plan, state, lampCounts, counts };
+  return { phase, socket: socketStatus, plan, state, lampCounts, counts, action };
 }

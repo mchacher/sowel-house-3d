@@ -605,3 +605,29 @@ export function treeParts(tree: Tree): TreeParts {
     ],
   };
 }
+
+/**
+ * Where the camera goes to show one thing: the same three-quarter view as the
+ * overview, from the south-east, only closer — so a visitor who has just acted
+ * sees the effect without the camera swinging round to an angle they do not
+ * recognise. Close enough to read a room, far enough to keep its walls in frame.
+ */
+export function closeView(
+  point: [number, number, number],
+  span: number,
+  aspect = 16 / 9,
+): { position: [number, number, number]; target: [number, number, number] } {
+  const base = Math.min(16, Math.max(6.5, span * 1.6));
+  // A narrow viewport sees less across, so it needs more distance for the same room.
+  const distance = base * (aspect < 1 ? 1.35 : 1);
+  const d = [0.62, 0.75, 0.62];
+  const length = Math.hypot(d[0], d[1], d[2]);
+  return {
+    position: [
+      point[0] + (d[0] / length) * distance,
+      point[1] + (d[1] / length) * distance,
+      point[2] + (d[2] / length) * distance,
+    ],
+    target: point,
+  };
+}
