@@ -204,6 +204,24 @@ describe("the showroom plan", () => {
     });
   });
 
+  it("stands every machine outdoors, the house's heat pump against its west wall", () => {
+    for (const machine of plan.machines ?? []) {
+      const indoors = plan.rooms.some(
+        (r) =>
+          r.level !== null &&
+          machine.x > r.x - plan.thickness / 2 &&
+          machine.x < r.x + r.w + plan.thickness / 2 &&
+          machine.z > r.z - plan.thickness / 2 &&
+          machine.z < r.z + r.d + plan.thickness / 2,
+      );
+      expect(indoors, `${machine.kind} at ${machine.x},${machine.z}`).toBe(false);
+    }
+    const pac = (plan.machines ?? []).find((m) => m.kind === "heat-pump");
+    expect(pac?.face).toBe("W");
+    expect(pac!.x).toBeLessThan(0);
+    expect(pac!.x).toBeGreaterThan(-0.5);
+  });
+
   it("places no more lights in a room than the mapping names for it", () => {
     for (const room of plan.rooms) {
       const placed = mapping.placement?.[room.id];

@@ -529,10 +529,11 @@ const house: HouseSpec = {
   ],
 
   // The machines Sowel knows and no room holds: the heat pump's outdoor unit
-  // against the garage, the pool's heat pump and pump beside the pool.
+  // against the west wall, between the tree and the living room's window, and the
+  // pool pump beside the pool. The pool's own heat pump is left out on purpose: a
+  // second unit beside the water was one box too many in the garden.
   machines: [
-    { kind: "heat-pump", x: 13.2, z: 8.75, face: "S" },
-    { kind: "pool-heat-pump", x: 10.45, z: 14.4, face: "E" },
+    { kind: "heat-pump", x: -0.3, z: 3.6, face: "W" },
     { kind: "pool-pump", x: 10.45, z: 16.3, face: "E" },
   ],
 

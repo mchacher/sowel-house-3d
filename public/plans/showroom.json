@@ -639,15 +639,9 @@
   "machines": [
     {
       "kind": "heat-pump",
-      "x": 13.2,
-      "z": 8.75,
-      "face": "S"
-    },
-    {
-      "kind": "pool-heat-pump",
-      "x": 10.45,
-      "z": 14.4,
-      "face": "E"
+      "x": -0.3,
+      "z": 3.6,
+      "face": "W"
     },
     {
       "kind": "pool-pump",
