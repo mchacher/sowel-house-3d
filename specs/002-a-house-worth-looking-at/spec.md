@@ -1,5 +1,7 @@
 # Spec 002 — A house worth looking at
 
+**Status**: ✅ Implemented, amended twice.
+
 **Phase 3, second pass.** Spec 001 proved the data path and admitted the look was a
 first draft. This is the second draft: a house that reads as a house.
 
@@ -102,6 +104,44 @@ builder holds the rooms.
 - A door with no contact bound stays shut rather than guessing.
 - A contact on a window would take a door's place in the pairing; the showroom has
   none, and the pairing says so in `derive.ts`.
+
+## Amendment — 2026-09-11: the grounds and the rooms
+
+The pavilion alone was a house on a green sheet. Built the same week, on the
+owner's review of the first screenshots:
+
+- **The grounds.** The plan gains a `fence` with a sliding gate, `beds` (flowers,
+  lawn), `trees` (tree, olive, bush), `patches` (drive, path), `machines` (outdoor
+  units) and `Roof.solar` (the eight panels the simulator's 4 kWc array is). The
+  mapping gains `gates` (a fence gate → its equipment, open from its contact) and
+  `watering` (a bed's group → its valve; jets over the bed while it is open).
+- **The pool.** Water that reads as water, a coping, and the cover from Sowel's
+  `pool_cover` position.
+- **The rooms.** Furniture by room kind — enough that a room reads as what it is.
+  Radiators (`heater`) on a wall and a stove for a room's thermostat, warm while
+  they heat. The non-goal "furniture, trees" was lifted this far on the owner's ask.
+
+## Amendment — 2026-09-26: every equipment where its name says
+
+The owner, going through the demo: outdoor lights drawn anywhere, spots meant for
+the terrace in the lawn, the tree uplights not under trees, a lamp in the middle of
+the pool. What changed:
+
+- **Typed fixtures.** `Room.fixtures` places each light as what it is — `ceiling`,
+  `spots`, `sconce`, `wall`, `uplight`, `bollard`, `underwater` — at the points the
+  plan gives; a room's fixtures pair in order with its lamps.
+- **Placement by name.** The mapping's `placement` lists, per room, the equipment
+  names in the plan's order: lamps pair with fixtures, shutters with windows, by
+  name rather than by whatever order Sowel returns them in. An equipment sitting on
+  a parent zone (the garden's lamps on `Extérieur`) is claimed by the room that
+  names it.
+- **Nothing drawn where the plan does not say.** An outdoor lamp with no fixture is
+  not drawn, and the derivation reports it on screen. Indoors a lamp without a
+  fixture still gets a ceiling light.
+- **Motors at motor speed.** The garage door takes 12 s and the gate 16 s, at
+  constant speed; eased, they covered their travel in a second.
+- **A WC** off the hall, and a bathroom furnished as one; every room named in both
+  languages (spec 003).
 
 ## Amendment — 2026-09-26: the design pass
 

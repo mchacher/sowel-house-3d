@@ -11,7 +11,11 @@
 | 7    | Doors derived from contacts; door state.                                     | `derive.test.ts`, `scene-state.test.ts`          | ✅    |
 | 8    | Lit panes.                                                                   | `house.test.ts` "windows at night"               | ✅    |
 | 9    | HUD: Extérieur, RDC, Étage. Framing includes the wing.                       | seen                                             | ✅    |
-| 10   | Simulator reshaped and released as 0.3.0; showroom reset on it.              | simulator `validate`; showroom `verify-showroom` | 🚧    |
+| 10   | Simulator reshaped and released as 0.3.0; showroom reset on it.              | simulator `validate`; showroom `verify-showroom` | ✅    |
+| 10b  | Amendment 09-11: grounds, pool, furniture by kind, heaters, solar panels.    | `house.test.ts`, `derive.test.ts`                | ✅    |
+| 11   | Amendment 09-26: typed fixtures, placement by name, motors at motor speed.   | `derive.test.ts`, `showroom.test.ts`             | ✅    |
+| 12   | Amendment 09-26: roof on the walls, joinery, furniture, floors.              | `geometry.test.ts`, `showroom.test.ts`           | ✅    |
+| 13   | Amendment 09-26: the pool's water.                                           | `house.test.ts`, `scene-state.test.ts`           | ✅    |
 
 ## Seen, on the running showroom
 
