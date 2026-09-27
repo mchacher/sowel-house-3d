@@ -17,7 +17,7 @@ Status: 📝 Draft · 🚧 In progress · ✅ Shipped
 | 002 | A house worth looking at | ✅     | Phase 3, second pass. A composed plan of a pavilion, two storeys stacked with the one being read solid, a roof, stairs, doors that report, lit windows. Amended with the design pass: joinery, furniture, the pool's water. |
 | 003 | The house beside Sowel   | ✅     | The 3D house in a vignette over the Sowel interface (`?mini=1`), full screen by anchor, a camera that stays put, the visitor's language, a way back to Sowel.                                                               |
 | 004 | The sun in the sky       | ✅     | The sun drawn on a dome around the house with today's path, the cardinal points on the ground, and a dial in the HUD that shows where the sun is whatever the camera does.                                                  |
-| 005 | The visitor walks        | 📝     | A toy-like figure of the visitor walks the plan's doors and stairs to a room, and moves the visitor's ghost room by room so the recipes react as it enters. Serves showroom spec 004.                                       |
+| 005 | The visitor walks        | ✅     | A toy-like figure of the visitor walks the plan's doors and stairs to a room, and moves the visitor's ghost room by room so the recipes react as it enters. Serves showroom spec 004.                                       |
 
 ## How to use this index after context loss
 

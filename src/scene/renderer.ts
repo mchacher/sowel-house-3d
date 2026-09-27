@@ -215,13 +215,21 @@ export class HouseRenderer {
     const from = this.visitorRoom ?? "away";
     const points = route(this.plan, from, room);
     if (!points) return false;
+    // Beside the room's spot, not on it: a household member stands there, and the
+    // figure vanished inside them.
+    const target = this.plan.rooms.find((r) => r.id === room);
+    const end = points[points.length - 1];
+    if (target) {
+      end.x = Math.min(target.x + target.w - 0.5, Math.max(target.x + 0.5, end.x + 0.8));
+      end.z = Math.min(target.z + target.d - 0.5, Math.max(target.z + 0.5, end.z + 0.5));
+    }
     if (from === room && !this.walk) return true;
     if (this.walk && this.visitor) {
       const here = this.visitor.root.position;
       points.unshift({ x: here.x, y: here.y, z: here.z });
     }
     if (!this.visitor) {
-      this.visitor = buildVisitor();
+      this.visitor = buildVisitor(this.lang === "fr" ? "Toi" : "You");
       this.scene.add(this.visitor.root);
     }
     this.visitor.root.visible = true;

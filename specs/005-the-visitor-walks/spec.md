@@ -1,6 +1,6 @@
 # Spec 005 — The visitor walks
 
-**Status**: 📝 Draft, for review. Serves showroom spec 004 (_the thirty-second
+**Status**: ✅ Implemented. Serves showroom spec 004 (_the thirty-second
 visitor_).
 
 ## Context
@@ -33,8 +33,8 @@ A toy-like figurine, generic: a large round head (about a third of its height), 
 cylindrical body, short legs, arms as rounded sticks, a face of two dots. Amber top
 (Sowel's accent), ocean trousers, so the visitor is told apart from the household's
 figures at a glance. None of a known toy's signatures: no helmet of hair, no C-shaped
-hands, no printed face. About 1.1 m tall in the scene: a toy in a house, readable in
-the vignette.
+hands, no printed face. About 1.5 m tall in the scene (it was 1.1 m and vanished in the vignette), with an
+amber ring at its feet and a label over its head drawn the same size at any distance.
 
 ### FR2 — The walk
 
