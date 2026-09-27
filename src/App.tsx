@@ -150,13 +150,12 @@ export function App() {
   // The visitor's figure tells Sowel where it is as it walks in (spec 005, FR3), and
   // the storey follows it, so it never walks inside a ghosted floor (FR4). Standing
   // in a room, it renews its ghost every minute: the simulator forgets a ghost after
-  // two minutes without an order.
+  // two minutes without an order. Walking out, it sends `away`, and the ghost goes.
   const [ghostTrouble, setGhostTrouble] = useState(false);
   useEffect(() => {
     const house = renderer.current;
     if (!house || !plan) return;
     house.onVisitorEnter = (room) => {
-      if (room === "away") return;
       void moveGhost(room).then((ok: boolean) => setGhostTrouble(!ok));
     };
     house.onFollow = (focus) => setLevel(focus);

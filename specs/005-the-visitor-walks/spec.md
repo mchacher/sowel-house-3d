@@ -67,7 +67,10 @@ equipment with `<visitor id>:<room>`, through the public API with its own sessio
 The visitor id is random, kept in `localStorage` (`showroom_visitor`), shared with the
 host page on the same origin. The simulator's ghost expires two minutes after its last
 order (simulator spec 002, FR4); a figure standing in a room renews it every minute
-so the light stays on while the figure is there.
+so the light stays on while the figure is there. Walking out of the house, it orders
+`<visitor id>:away`, and the simulator drops the ghost at once (simulator spec 002,
+FR4, amended 2026-09-27): the light it left behind goes off in seconds, not when the
+ghost expires.
 
 ### FR4 — What the visitor sees on the way
 
