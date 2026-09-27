@@ -135,11 +135,12 @@ export function App() {
           house.frameLevel();
         }
       }
-      if (anchor.level !== null) {
+      // A walk decides the view itself, following the figure (spec 005, FR4).
+      if (anchor.walk) house.walkTo(anchor.walk);
+      else if (anchor.level !== null) {
         setLevel(anchor.level);
         house.setLevel(anchor.level);
       }
-      if (anchor.walk) house.walkTo(anchor.walk);
     };
     apply();
     window.addEventListener("hashchange", apply);
@@ -157,18 +158,15 @@ export function App() {
     house.onVisitorEnter = (room) => {
       if (room === "away") return;
       void moveGhost(room).then((ok: boolean) => setGhostTrouble(!ok));
-      const entered = plan.rooms.find((r) => r.id === room);
-      if (entered && entered.level !== null && house.currentLevel !== "outside") {
-        setLevel(entered.level);
-        house.setLevel(entered.level);
-      }
     };
+    house.onFollow = (focus) => setLevel(focus);
     const renew = window.setInterval(() => {
       const room = house.visitorAt;
       if (room) void moveGhost(room);
     }, 60_000);
     return () => {
       house.onVisitorEnter = null;
+      house.onFollow = null;
       window.clearInterval(renew);
     };
   }, [plan, webgl, moveGhost]);
@@ -182,7 +180,11 @@ export function App() {
         state={state}
         levels={plan && webgl ? selectableLevels(plan) : []}
         level={level}
-        onLevel={setLevel}
+        onLevel={(next) => {
+          // A storey picked by hand: the view stops following the figure.
+          renderer.current?.stopFollowing();
+          setLevel(next);
+        }}
         onRecentre={() => renderer.current?.frameLevel()}
         lang={lang}
         onLang={(next) => {

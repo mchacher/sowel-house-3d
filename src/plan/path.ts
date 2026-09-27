@@ -9,7 +9,8 @@
  * the stairs' runs are climbed, or come down, in between.
  */
 
-import { levelElevation } from "../scene/geometry.ts";
+import { levelElevation, storeyPitch } from "../scene/geometry.ts";
+import type { Focus } from "../scene/house.ts";
 import type { Plan, Room } from "./types.ts";
 
 export interface Waypoint {
@@ -140,4 +141,17 @@ export function route(plan: Plan, from: string, to: string): Waypoint[] | null {
   }
   points.push(end);
   return points;
+}
+
+/**
+ * What to show for a figure in `room` at height `y` (spec 005, FR4, amended): the
+ * house from outside when it is outside, otherwise the storey it stands on — by its
+ * height, so the view changes halfway up the stairs rather than at the next door.
+ */
+export function focusAt(plan: Plan, room: string | null, y: number): Focus {
+  const here = room ? plan.rooms.find((r) => r.id === room) : undefined;
+  if (!here || here.level === null) return "outside";
+  const levels = plan.levels.map((l) => l.level);
+  const level = Math.round(y / storeyPitch(plan));
+  return Math.min(Math.max(...levels), Math.max(Math.min(...levels), level));
 }

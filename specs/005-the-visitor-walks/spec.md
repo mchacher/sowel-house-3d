@@ -59,8 +59,12 @@ so the light stays on while the figure is there.
 
 ### FR4 — What the visitor sees on the way
 
-The storey follows the figure: `level` from the anchor at the start, then the storey
-the figure is on as it climbs, so it is never walking inside a ghosted floor.
+The view follows the figure, and so does what is ghosted (amended 2026-09-27, on the
+owner's review): outside — the street, the garden — it is the house from outside,
+solid and roofed; on the ground floor, the ground floor with the storey above as
+glass; upstairs, the upper storey. The storey changes halfway up the stairs, where
+the figure is, not at the next door. It follows for the whole walk; a visitor who
+picks a storey themselves stops the following until the next walk.
 
 ## Acceptance criteria
 

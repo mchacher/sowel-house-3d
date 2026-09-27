@@ -42,7 +42,7 @@ import { makeMaterials, PALETTE, type Materials } from "./materials.ts";
 import { buildCompass, buildSky, placeSky, type SkyHandle } from "./sky.ts";
 import { buildVisitor, pose, type VisitorFigure } from "./visitor.ts";
 import { Walk } from "./walk.ts";
-import { route } from "../plan/path.ts";
+import { focusAt, route } from "../plan/path.ts";
 import type { Lang } from "../i18n.ts";
 
 /** How fast a shutter and a figure catch up with what Sowel said, per second. */
@@ -92,6 +92,10 @@ export class HouseRenderer {
   private visitorRoom: string | null = null;
   /** Told each room the figure walks into — the app moves the visitor's ghost there. */
   onVisitorEnter: ((room: string) => void) | null = null;
+  /** Whether the view follows the figure (spec 005, FR4): during a walk, until the visitor picks a storey. */
+  private following = false;
+  /** Told when the view changed storey to follow the figure, so the HUD's buttons agree. */
+  onFollow: ((focus: Focus) => void) | null = null;
   private compass: Group | null = null;
   private state: SceneState | null = null;
   private frame = 0;
@@ -187,13 +191,18 @@ export class HouseRenderer {
     if (this.handles) this.rebuild();
   }
 
-  setLevel(level: Focus): void {
+  /**
+   * Which storey is solid. `reframe` moves the camera to that storey's framing, as a
+   * visitor's click on a storey does; following the walking figure does not — only
+   * the ghosting changes, the camera stays where the visitor put it.
+   */
+  setLevel(level: Focus, reframe = true): void {
     if (level === this.level) return;
     this.level = level;
     // Every storey is already built and standing. Switching floors is a change of
     // which one is solid, not a change of what exists.
     if (this.handles) focusLevel(this.handles, level);
-    this.frameLevel();
+    if (reframe) this.frameLevel();
   }
 
   /** Switch between the vignette and the vignette opened full screen: the framing from outside. */
@@ -236,7 +245,13 @@ export class HouseRenderer {
     const start = points[0];
     if (!this.walk) this.visitor.root.position.set(start.x, start.y, start.z);
     this.walk = new Walk(points);
+    this.following = true;
     return true;
+  }
+
+  /** The visitor picked a storey: the view stops following the figure until the next walk. */
+  stopFollowing(): void {
+    this.following = false;
   }
 
   get currentLevel(): Focus {
@@ -427,8 +442,16 @@ export class HouseRenderer {
       this.visitorRoom = room === "away" ? null : room;
       this.onVisitorEnter?.(room);
     }
+    if (this.following) {
+      const focus = focusAt(this.plan, this.visitorRoom, step.position[1]);
+      if (focus !== this.currentLevel) {
+        this.setLevel(focus, false);
+        this.onFollow?.(focus);
+      }
+    }
     if (step.done) {
       this.walk = null;
+      this.following = false;
       if (this.visitorRoom === null) figure.root.visible = false;
     }
   }
