@@ -34,7 +34,8 @@ cylindrical body, short legs, arms as rounded sticks, a face of two dots. Amber 
 (Sowel's accent), ocean trousers, so the visitor is told apart from the household's
 figures at a glance. None of a known toy's signatures: no helmet of hair, no C-shaped
 hands, no printed face. About 1.5 m tall in the scene (it was 1.1 m and vanished in the vignette), with an
-amber ring at its feet and a label over its head drawn the same size at any distance.
+amber ring at its feet. (A "Toi" label over its head was tried and dropped: the
+owner saw no use in it.)
 
 ### FR2 — The walk
 

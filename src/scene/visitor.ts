@@ -5,14 +5,12 @@
  * short legs, arms as rounded sticks, a face of two dots. None of a known toy's
  * signatures — no helmet of hair, no C-shaped hands, no printed face. Amber top,
  * ocean trousers: Sowel's colours, and told apart from the household at a glance.
- * About 1.5 m tall, an amber ring at its feet and a label over its head: found at a
- * glance in a 440 × 300 vignette.
+ * About 1.5 m tall, with an amber ring at its feet: found at a glance.
  *
  * Its own materials, never ghosted: whichever storey is read, the visitor is there.
  */
 
 import {
-  CanvasTexture,
   CapsuleGeometry,
   CylinderGeometry,
   Group,
@@ -21,15 +19,13 @@ import {
   MeshStandardMaterial,
   RingGeometry,
   SphereGeometry,
-  Sprite,
-  SpriteMaterial,
   type Object3D,
 } from "three";
 
 /**
  * Scaled up from the toy's own proportions: at 1.1 m it vanished in the vignette,
  * and inside a household member standing on the room's spot. 1.5 m, taller than
- * the household, with a ring on the floor and a label, reads at 440 × 300.
+ * the household, with a ring on the floor.
  */
 const SCALE = 1.35;
 
@@ -56,39 +52,7 @@ function limb(radius: number, length: number, material: MeshStandardMaterial): G
   return joint;
 }
 
-/** A label over the head. Null where there is no canvas (tests). */
-function label(text: string): Sprite | null {
-  if (typeof document === "undefined") return null;
-  const canvas = document.createElement("canvas");
-  canvas.width = 160;
-  canvas.height = 72;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return null;
-  ctx.fillStyle = "rgba(26, 79, 110, 0.92)";
-  ctx.beginPath();
-  ctx.roundRect(8, 8, 144, 52, 18);
-  ctx.fill();
-  ctx.font = "700 34px Inter, system-ui, sans-serif";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillStyle = "#F2C035";
-  ctx.fillText(text, 80, 35);
-  // The same size on screen however far the camera is: in the vignette the figure
-  // is a few pixels at the back of the house, and the label is how it is found.
-  const sprite = new Sprite(
-    new SpriteMaterial({
-      map: new CanvasTexture(canvas),
-      depthTest: false,
-      transparent: true,
-      sizeAttenuation: false,
-    }),
-  );
-  sprite.scale.set(0.12, 0.054, 1);
-  sprite.renderOrder = 10;
-  return sprite;
-}
-
-export function buildVisitor(name = "Toi"): VisitorFigure {
+export function buildVisitor(): VisitorFigure {
   const top = new MeshStandardMaterial({ color: AMBER, roughness: 0.55 });
   const trousers = new MeshStandardMaterial({ color: OCEAN, roughness: 0.6 });
   const skin = new MeshStandardMaterial({ color: SKIN, roughness: 0.7 });
@@ -133,11 +97,6 @@ export function buildVisitor(name = "Toi"): VisitorFigure {
   ring.rotation.x = -Math.PI / 2;
   ring.position.y = 0.03;
   root.add(figure, ring);
-  const tag = label(name);
-  if (tag) {
-    tag.position.y = 1.35 * SCALE + 0.25;
-    root.add(tag);
-  }
   return { root, leftLeg, rightLeg, leftArm, rightArm };
 }
 

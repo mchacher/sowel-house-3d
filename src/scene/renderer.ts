@@ -229,7 +229,7 @@ export class HouseRenderer {
       points.unshift({ x: here.x, y: here.y, z: here.z });
     }
     if (!this.visitor) {
-      this.visitor = buildVisitor(this.lang === "fr" ? "Toi" : "You");
+      this.visitor = buildVisitor();
       this.scene.add(this.visitor.root);
     }
     this.visitor.root.visible = true;
