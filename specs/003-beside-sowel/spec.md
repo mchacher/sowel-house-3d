@@ -92,8 +92,9 @@ load Sowel inside its own vignette — and when there is no session.
 
 Showroom spec 004 walks a visitor into the bathroom, upstairs; the vignette has to
 show that storey without the visitor looking for the button. The frame's anchor,
-which says `full` or nothing today, can also say `level=<n>`, alone or with `full`
-(`#level=1`, `#full&level=1`). On `hashchange` the app reads both: `full` as before,
-and `level` to focus that storey. An anchor without `level` leaves the storey where
+which says `full` or nothing today, can also say `level=<n>` and `walk=<room>`, in any
+combination (`#level=1`, `#full&level=1&walk=salle-de-bain`). On `hashchange` the app
+reads them: `full` as before, `level` to focus that storey, `walk` to walk the
+visitor's figure to that room (spec 005). An anchor without `level` leaves the storey where
 the visitor put it; a level the plan does not have is ignored. The host page sets it;
 the visitor can still change storey afterwards.

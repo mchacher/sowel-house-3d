@@ -16,4 +16,4 @@ Built iteratively on the running showroom, then written down. Each step shipped 
 A driven Chrome on the local showroom: the vignette over the dashboard, full screen
 and back with the button and with Escape, the garden lights switched from Sowel and
 lit in the vignette.
-| 6 | Amendment 09-27: `level=<n>` in the anchor. | the anchor parser, tested | 📝 |
+| 6 | Amendment 09-27: `level` and `walk` in the anchor. | the anchor parser, tested | 📝 |
