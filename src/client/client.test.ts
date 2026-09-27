@@ -319,3 +319,23 @@ describe("eventsOf", () => {
     expect(eventsOf("nope")).toEqual([]);
   });
 });
+
+describe("an equipment order (spec 005)", () => {
+  it("posts the value as the product's interface does", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({}) });
+    vi.stubGlobal("fetch", fetchMock);
+    const rest = new Rest(new Session("", { accessToken: "t", refreshToken: "r" }));
+    await rest.order("eq-1", "sim.ghost", "v123:salle-de-bain");
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("/api/v1/equipments/eq-1/orders/sim.ghost");
+    expect(init.method).toBe("POST");
+    expect(JSON.parse(init.body)).toEqual({ value: "v123:salle-de-bain" });
+    expect(init.headers.Authorization).toBe("Bearer t");
+  });
+
+  it("says so when Sowel refuses", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 403 }));
+    const rest = new Rest(new Session("", { accessToken: "t", refreshToken: "r" }));
+    await expect(rest.order("eq-1", "sim.ghost", "x")).rejects.toThrow();
+  });
+});

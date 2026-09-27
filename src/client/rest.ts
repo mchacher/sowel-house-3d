@@ -53,6 +53,28 @@ export class Rest {
     return this.get<Zone[]>("/api/v1/zones");
   }
 
+  /** An equipment order, as the product's own interface sends one. */
+  async order(equipmentId: string, alias: string, value: unknown, retried = false): Promise<void> {
+    const token = this.session.token;
+    const path = `/api/v1/equipments/${encodeURIComponent(equipmentId)}/orders/${encodeURIComponent(alias)}`;
+    if (!token) throw new SowelUnauthorised(path);
+    let res: Response;
+    try {
+      res = await fetch(`${this.origin}${path}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ value }),
+      });
+    } catch {
+      throw new SowelUnreachable(path);
+    }
+    if (res.status === 401 && !retried) {
+      if (await this.session.refresh()) return this.order(equipmentId, alias, value, true);
+      throw new SowelUnauthorised(path);
+    }
+    if (!res.ok) throw new SowelUnreachable(`${path} → ${res.status}`);
+  }
+
   aggregation(): Promise<Aggregation> {
     return this.get<Aggregation>("/api/v1/zones/aggregation");
   }

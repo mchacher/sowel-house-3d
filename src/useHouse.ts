@@ -6,7 +6,7 @@
  * places, that is when it earns a store.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Rest, SowelUnauthorised, SowelUnreachable } from "./client/rest.ts";
 import { Session } from "./client/session.ts";
 import { Socket, type SocketStatus, type SowelEvent } from "./client/socket.ts";
@@ -27,6 +27,22 @@ export interface House {
   lampCounts: Record<string, number>;
   /** Radiators per room, and the rooms with a stove. */
   counts: { heaters: Record<string, number>; stoves: string[] };
+  /** Put the visitor's ghost in a room; false when Sowel did not hear it (spec 005). */
+  moveGhost: (room: string) => Promise<boolean>;
+}
+
+/** This browser's visitor, shared with the showroom's page on the same origin. */
+export function visitorId(): string {
+  const KEY = "showroom_visitor";
+  try {
+    const known = localStorage.getItem(KEY);
+    if (known && /^[a-z0-9]+$/.test(known)) return known;
+    const fresh = `v${Math.random().toString(36).slice(2, 10)}`;
+    localStorage.setItem(KEY, fresh);
+    return fresh;
+  } catch {
+    return "vanon";
+  }
 }
 
 export function useHouse(planUrl: string, mappingUrl: string): House {
@@ -48,9 +64,12 @@ export function useHouse(planUrl: string, mappingUrl: string): House {
     aggregation: Aggregation;
   } | null>(null);
 
+  const restRef = useRef<Rest | null>(null);
+
   useEffect(() => {
     const session = new Session();
     const rest = new Rest(session);
+    restRef.current = rest;
     let socket: Socket | null = null;
     let cancelled = false;
 
@@ -141,5 +160,23 @@ export function useHouse(planUrl: string, mappingUrl: string): House {
     };
   }, [planUrl, mappingUrl]);
 
-  return { phase, socket: socketStatus, plan, state, lampCounts, counts };
+  /**
+   * Put the visitor's ghost in a room (spec 005, FR3): `sim.ghost` on whichever
+   * equipment carries it, `<visitor id>:<room>`. False when Sowel did not hear it.
+   */
+  const moveGhost = useCallback(async (room: string): Promise<boolean> => {
+    const rest = restRef.current;
+    const equipment = live.current?.equipments.find((e) =>
+      e.orderBindings.some((b) => b.alias === "sim.ghost"),
+    );
+    if (!rest || !equipment) return false;
+    try {
+      await rest.order(equipment.id, "sim.ghost", `${visitorId()}:${room}`);
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  return { phase, socket: socketStatus, plan, state, lampCounts, counts, moveGhost };
 }
