@@ -1,146 +1,220 @@
 /**
- * The way from one room to another, through doors and up stairs (spec 005, FR2).
+ * The way from where the figure is to a room (spec 005, FR2, amended).
  *
- * The plan's door graph (`plan.doors`) says which rooms open onto which, and where:
- * `away` (the street) onto the hall, the hall onto the stairwell, the stairwell onto
- * every room upstairs. A route is a breadth-first walk of that graph, laid out as
- * waypoints: a step before each door, the door, a step after it, and the room's spot
- * at the end. Where a room's two doors are on different storeys — the stairwell —
- * the stairs' runs are climbed, or come down, in between.
+ * On each storey, the shortest way around everything (`navigate.ts`); between
+ * storeys, the stairs, from their foot to their top. The rooms the figure enters are
+ * read off where it walks: each time it steps into a room it was not in, that point
+ * carries `enter`, which is when the app tells Sowel. A corridor that is no room —
+ * the landing upstairs, the passage by the WC — counts as the stairwell, which is
+ * what the house's circulation is.
  */
 
 import { levelElevation, storeyPitch } from "../scene/geometry.ts";
 import type { Focus } from "../scene/house.ts";
-import type { Plan, Room } from "./types.ts";
+import { findPath, freePoint, navGrid, roomAt, type NavGrid, type Point } from "./navigate.ts";
+import type { Plan, StairRun } from "./types.ts";
 
 export interface Waypoint {
   x: number;
   y: number;
   z: number;
-  /** The room entered on reaching this point. */
+  /** The room entered on reaching this point, or `away` on leaving the house. */
   enter?: string;
 }
 
 const AWAY = "away";
-/** How far either side of a door the figure lines up, metres. */
-const APPROACH = 0.45;
+/** Points along the way, metres apart, so a room entered is caught where it is. */
+const SAMPLE = 0.2;
+/** Beside a room's spot, not on it: a household member stands there. */
+const BESIDE = { x: 0.8, z: 0.5 };
 
-function levelOf(plan: Plan, id: string): number {
+const grids = new WeakMap<Plan, Map<number, NavGrid>>();
+function gridFor(plan: Plan, level: number): NavGrid {
+  let byLevel = grids.get(plan);
+  if (!byLevel) {
+    byLevel = new Map();
+    grids.set(plan, byLevel);
+  }
+  let grid = byLevel.get(level);
+  if (!grid) {
+    grid = navGrid(plan, level);
+    byLevel.set(level, grid);
+  }
+  return grid;
+}
+
+function levelOfRoom(plan: Plan, id: string): number {
   if (id === AWAY) return 0;
   return plan.rooms.find((r) => r.id === id)?.level ?? 0;
 }
 
-function spotOf(plan: Plan, id: string): Waypoint {
-  if (id === AWAY) return { x: plan.awaySpot[0], y: 0, z: plan.awaySpot[1] };
-  const room = plan.rooms.find((r) => r.id === id) as Room;
-  return { x: room.spot[0], y: levelElevation(plan, room.level ?? 0), z: room.spot[1] };
-}
-
-/** Rooms and doors: who opens onto whom, and at which point. */
-function neighbours(plan: Plan): Map<string, { to: string; x: number; z: number }[]> {
-  const graph = new Map<string, { to: string; x: number; z: number }[]>();
-  const add = (a: string, b: string, x: number, z: number) => {
-    const list = graph.get(a) ?? [];
-    list.push({ to: b, x, z });
-    graph.set(a, list);
+/** Where the figure stands in a room: beside its spot. */
+function standingPoint(plan: Plan, id: string): Point {
+  const room = plan.rooms.find((r) => r.id === id);
+  if (id === AWAY || !room) return { x: plan.awaySpot[0], z: plan.awaySpot[1] };
+  return {
+    x: Math.min(room.x + room.w - 0.4, Math.max(room.x + 0.4, room.spot[0] + BESIDE.x)),
+    z: Math.min(room.z + room.d - 0.4, Math.max(room.z + 0.4, room.spot[1] + BESIDE.z)),
   };
-  for (const door of plan.doors) {
-    add(door.a, door.b, door.x, door.z);
-    add(door.b, door.a, door.x, door.z);
-  }
-  return graph;
 }
 
-/** The rooms in order, `from` to `to`, by the fewest doors. */
-export function roomsBetween(plan: Plan, from: string, to: string): string[] | null {
-  const graph = neighbours(plan);
-  const previous = new Map<string, string | null>([[from, null]]);
-  const queue = [from];
-  while (queue.length > 0) {
-    const here = queue.shift() as string;
-    if (here === to) break;
-    for (const { to: next } of graph.get(here) ?? []) {
-      if (previous.has(next)) continue;
-      previous.set(next, here);
-      queue.push(next);
-    }
-  }
-  if (!previous.has(to)) return null;
-  const rooms: string[] = [];
-  for (let at: string | null = to; at !== null; at = previous.get(at) ?? null) rooms.unshift(at);
-  return rooms;
+/** A run's two ends, and the way it climbs. */
+function ends(run: StairRun): { low: Point; high: Point; dir: Point } {
+  const alongX = run.axis === "x";
+  const length = alongX ? run.w : run.d;
+  const at = (along: number): Point =>
+    alongX
+      ? { x: run.x + along, z: run.z + run.d / 2 }
+      : { x: run.x + run.w / 2, z: run.z + along };
+  const low = at(run.direction === 1 ? 0 : length);
+  const high = at(run.direction === 1 ? length : 0);
+  const dir = alongX ? { x: run.direction, z: 0 } : { x: 0, z: run.direction };
+  return { low, high, dir };
 }
 
-/** The unit vector across a door's wall, pointing into `room`. */
-function into(plan: Plan, x: number, z: number, room: string, other: string): [number, number] {
-  const box = plan.rooms.find((r) => r.id === room) ?? plan.rooms.find((r) => r.id === other);
-  if (!box) return [0, 1];
-  const onX = Math.min(Math.abs(x - box.x), Math.abs(x - (box.x + box.w)));
-  const onZ = Math.min(Math.abs(z - box.z), Math.abs(z - (box.z + box.d)));
-  const cx = box.x + box.w / 2;
-  const cz = box.z + box.d / 2;
-  const inside = box.id === room ? 1 : -1;
-  return onX < onZ
-    ? [Math.sign(cx - x) * inside || inside, 0]
-    : [0, Math.sign(cz - z) * inside || inside];
-}
-
-/** The stairs climbed from their foot, as points, at the plan's elevations. */
-function climb(plan: Plan): Waypoint[] {
+/**
+ * Climbing the stairs: the foot on the lower storey, the steps, the top upstairs.
+ *
+ * The foot is where the stairs can be stepped onto from the stairwell: a run that
+ * starts against a wall is taken from its side, not through the wall behind it.
+ */
+function stairClimb(plan: Plan): { foot: Point; top: Point; steps: Waypoint[] } | null {
   const stair = plan.stairs?.[0];
-  if (!stair) return [];
+  if (!stair || stair.runs.length === 0) return null;
   const base = levelElevation(plan, stair.level);
-  const points: Waypoint[] = [];
+  const first = ends(stair.runs[0]);
+  const last = ends(stair.runs[stair.runs.length - 1]);
+  const steps: Waypoint[] = [];
   for (const run of stair.runs) {
-    const alongX = run.axis === "x";
-    const length = alongX ? run.w : run.d;
-    const low = run.direction === 1 ? 0 : length;
-    const high = run.direction === 1 ? length : 0;
-    const at = (along: number, y: number): Waypoint =>
-      alongX
-        ? { x: run.x + along, y: base + y, z: run.z + run.d / 2 }
-        : { x: run.x + run.w / 2, y: base + y, z: run.z + along };
-    points.push(at(low, run.y0), at(high, run.y1));
-  }
-  return points;
-}
-
-export function route(plan: Plan, from: string, to: string): Waypoint[] | null {
-  const rooms = roomsBetween(plan, from, to);
-  if (!rooms) return null;
-  const graph = neighbours(plan);
-  const points: Waypoint[] = [spotOf(plan, from)];
-  let level = levelOf(plan, from);
-
-  for (let i = 0; i + 1 < rooms.length; i++) {
-    const here = rooms[i];
-    const next = rooms[i + 1];
-    const door = (graph.get(here) ?? []).find((d) => d.to === next) as {
-      x: number;
-      z: number;
-    };
-    const doorLevel = Math.max(levelOf(plan, here), levelOf(plan, next));
-    if (doorLevel !== level) {
-      const stairs = climb(plan);
-      points.push(...(doorLevel > level ? stairs : [...stairs].reverse()));
-      level = doorLevel;
-    }
-    const y = levelElevation(plan, level);
-    const [ax, az] = into(plan, door.x, door.z, here, next);
-    const [bx, bz] = into(plan, door.x, door.z, next, here);
-    points.push(
-      { x: door.x + ax * APPROACH, y, z: door.z + az * APPROACH },
-      { x: door.x, y, z: door.z, enter: next },
-      { x: door.x + bx * APPROACH, y, z: door.z + bz * APPROACH },
+    const { low, high, dir } = ends(run);
+    // A hand's width in from each end, so the figure is on the treads, not the walls.
+    steps.push(
+      { x: low.x + dir.x * 0.15, y: base + run.y0, z: low.z + dir.z * 0.15 },
+      { x: high.x - dir.x * 0.15, y: base + run.y1, z: high.z - dir.z * 0.15 },
     );
   }
-  const end = spotOf(plan, to);
-  if (end.y !== levelElevation(plan, level)) {
-    const stairs = climb(plan);
-    points.push(...(end.y > levelElevation(plan, level) ? stairs : [...stairs].reverse()));
+  const stairRoom = plan.rooms.find((r) => r.kind === "stair" && r.level === stair.level);
+  const grid = gridFor(plan, stair.level);
+  const onFirstStep = { x: first.low.x + first.dir.x * 0.3, z: first.low.z + first.dir.z * 0.3 };
+  const side = { x: first.dir.z, z: first.dir.x };
+  const candidates: Point[] = [
+    { x: first.low.x - first.dir.x * 0.5, z: first.low.z - first.dir.z * 0.5 },
+    { x: onFirstStep.x - side.x * 0.8, z: onFirstStep.z - side.z * 0.8 },
+    { x: onFirstStep.x + side.x * 0.8, z: onFirstStep.z + side.z * 0.8 },
+  ];
+  const inStairwell = (p: Point) =>
+    !stairRoom ||
+    (p.x > stairRoom.x &&
+      p.x < stairRoom.x + stairRoom.w &&
+      p.z > stairRoom.z &&
+      p.z < stairRoom.z + stairRoom.d);
+  const foot =
+    candidates.find((c) => inStairwell(c) && freePoint(grid, c) === c) ??
+    candidates.find((c) => freePoint(grid, c) === c) ??
+    candidates[0];
+  return {
+    foot,
+    top: { x: last.high.x + last.dir.x * 0.5, z: last.high.z + last.dir.z * 0.5 },
+    steps,
+  };
+}
+
+/** A flat stretch on a storey, around everything, as waypoints at its height. */
+function flat(plan: Plan, level: number, from: Point, to: Point): Waypoint[] | null {
+  // Where it can actually stand: the street's spot is in a bush, a room's spot may
+  // be in a chair.
+  const grid = gridFor(plan, level);
+  const a = freePoint(grid, from);
+  const b = freePoint(grid, to);
+  const path = findPath(grid, a, b);
+  if (!path) return null;
+  const y = levelElevation(plan, level);
+  return [
+    { x: a.x, y, z: a.z },
+    ...path.map((p) => ({ x: p.x, y, z: p.z })),
+    { x: b.x, y, z: b.z },
+  ];
+}
+
+/** Whether a point is under a storey's slab — inside the house on that storey. */
+function indoors(plan: Plan, level: number, p: Point): boolean {
+  const slab = plan.levels.find((l) => l.level === level);
+  if (!slab) return false;
+  return [slab, ...(slab.parts ?? [])].some(
+    (r) => p.x > r.x && p.x < r.x + r.w && p.z > r.z && p.z < r.z + r.d,
+  );
+}
+
+/** Which room a point is in, for the ghost: a room, the stairwell for a corridor, or `away`. */
+export function presence(plan: Plan, p: { x: number; y: number; z: number }): string {
+  const level = Math.round(p.y / storeyPitch(plan));
+  const room = roomAt(plan, level, p);
+  if (room) return room.id;
+  if (!indoors(plan, level, p)) return AWAY;
+  return plan.rooms.find((r) => r.kind === "stair")?.id ?? AWAY;
+}
+
+/** Sample a polyline every `SAMPLE` metres and mark each room entered. */
+function markEntries(plan: Plan, points: Waypoint[], startRoom: string): Waypoint[] {
+  const out: Waypoint[] = [{ x: points[0].x, y: points[0].y, z: points[0].z }];
+  let current = startRoom;
+  for (let i = 1; i < points.length; i++) {
+    const a = points[i - 1];
+    const b = points[i];
+    const length = Math.hypot(b.x - a.x, b.y - a.y, b.z - a.z);
+    const n = Math.max(1, Math.ceil(length / SAMPLE));
+    for (let k = 1; k <= n; k++) {
+      const t = k / n;
+      const p: Waypoint = {
+        x: a.x + (b.x - a.x) * t,
+        y: a.y + (b.y - a.y) * t,
+        z: a.z + (b.z - a.z) * t,
+      };
+      const here = presence(plan, p);
+      if (here !== current) {
+        p.enter = here;
+        current = here;
+      }
+      out.push(p);
+    }
   }
-  points.push(end);
-  return points;
+  return out;
+}
+
+/**
+ * The way to `to`, from a room (or `away`) or from where the figure stands. Null
+ * when there is none.
+ */
+export function route(
+  plan: Plan,
+  from: string | { x: number; y: number; z: number },
+  to: string,
+): Waypoint[] | null {
+  if (to !== AWAY && !plan.rooms.some((r) => r.id === to)) return null;
+  const start: Waypoint =
+    typeof from === "string"
+      ? { ...standingPoint(plan, from), y: levelElevation(plan, levelOfRoom(plan, from)) }
+      : { x: from.x, y: from.y, z: from.z };
+  const startLevel = Math.round(start.y / storeyPitch(plan));
+  const startRoom = typeof from === "string" ? from : presence(plan, start);
+  const target = standingPoint(plan, to);
+  const targetLevel = levelOfRoom(plan, to);
+
+  let points: Waypoint[] | null;
+  if (startLevel === targetLevel) {
+    points = flat(plan, startLevel, start, target);
+  } else {
+    const stair = stairClimb(plan);
+    if (!stair) return null;
+    const up = targetLevel > startLevel;
+    const toStairs = flat(plan, startLevel, start, up ? stair.foot : stair.top);
+    const fromStairs = flat(plan, targetLevel, up ? stair.top : stair.foot, target);
+    if (!toStairs || !fromStairs) return null;
+    const steps = up ? stair.steps : [...stair.steps].reverse();
+    points = [...toStairs, ...steps, ...fromStairs];
+  }
+  if (!points) return null;
+  return markEntries(plan, points, startRoom);
 }
 
 /**

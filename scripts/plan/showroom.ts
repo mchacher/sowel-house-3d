@@ -47,7 +47,9 @@ const house: HouseSpec = {
       z: 0,
       w: 10.5,
       d: 9.5,
-      hole: { x: 3.5, z: 2.5, w: 3, d: 2.5 },
+      // Over the stairs only — the U in the north half of the stairwell — so the band
+      // south of it is the upstairs landing, joining the two wings (2026-09-27).
+      hole: { x: 3.5, z: 2.5, w: 3, d: 1.5 },
     },
   ],
 
@@ -423,8 +425,10 @@ const house: HouseSpec = {
     },
     // Doorways.
     { room: "bureau", side: "E", at: 1.2, w: 0.9, to: "entree" },
-    { room: "escalier", side: "N", at: 1.0, w: 1.2, to: "entree" },
-    { room: "escalier", side: "W", at: 0.6, w: 1.0 },
+    // From the hall straight onto the first flight, at its foot.
+    { room: "escalier", side: "N", at: 0.4, w: 0.8, to: "entree" },
+    // From the passage by the WC onto the free band south of the stairs.
+    { room: "escalier", side: "W", at: 2.0, w: 0.9 },
     { room: "wc", side: "E", at: 1.2, w: 0.7 },
     { room: "sejour", side: "N", at: 1.7, w: 1.0 },
     { room: "cuisine", side: "S", at: 2.0, w: 2.4, head: 2.3, to: "sejour" },
@@ -453,13 +457,26 @@ const house: HouseSpec = {
   stairs: [
     {
       level: 0,
-      // Up the east side of the stairwell, a corner landing, then west along the
-      // south to arrive on the upstairs corridor.
+      // A U in the north half of the stairwell: east along the hall's wall, a half
+      // landing against the east wall, back west to arrive upstairs by the bathroom.
+      // The first design ran the second flight along the south, and its opening
+      // took the whole middle of the upper floor: the children's rooms opened onto
+      // the void, with no landing between the wings. The band south of the U is now
+      // that landing upstairs, and free floor downstairs.
       runs: [
-        { axis: "z", direction: 1, x: 5.5, z: 2.5, w: 1.0, d: 1.5, y0: 0, y1: 1.2 },
-        { axis: "x", direction: -1, x: 3.5, z: 4.0, w: 2.0, d: 1.0, y0: 1.2, y1: UPSTAIRS },
+        { axis: "x", direction: 1, x: 3.5, z: 2.5, w: 2.5, d: 0.75, y0: 0, y1: UPSTAIRS / 2 },
+        {
+          axis: "x",
+          direction: -1,
+          x: 3.5,
+          z: 3.25,
+          w: 2.5,
+          d: 0.75,
+          y0: UPSTAIRS / 2,
+          y1: UPSTAIRS,
+        },
       ],
-      landings: [{ x: 5.5, z: 4.0, w: 1.0, d: 1.0, y: 1.2 }],
+      landings: [{ x: 6.0, z: 2.5, w: 0.5, d: 1.5, y: UPSTAIRS / 2 }],
     },
   ],
 

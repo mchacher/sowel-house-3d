@@ -48,6 +48,18 @@ twenty seconds from the street to the bathroom.
 
 `walk=away` walks it back out of the front door, where it disappears.
 
+**Amended 2026-09-27: around everything.** The first walk went door to door in
+straight lines, and the owner watched it walk through the bathroom's wall — the
+graph's point for that room was a link drawn between two spots, not a door. Now each
+storey is a grid of the plot (10 cm), every obstacle marked on it — walls with their
+doors left open, furniture, the fence and hedges, flower beds, bushes and trunks, the
+pool, the machines, the stairwell's opening — grown by the figure's half-width, and
+the figure takes the shortest way through what is left (A*, smoothed into straight
+lines). The stairs are the one way between storeys, stepped onto from the side of
+their first flight. The rooms entered are read off where the figure walks; a
+corridor that is no room counts as the stairwell. A test holds every walk, to every
+room, clear of every obstacle.
+
 ### FR3 — The ghost follows the figure
 
 On entering each room, the app orders `sim.ghost` on the house's "Simulation"

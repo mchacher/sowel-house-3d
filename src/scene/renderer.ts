@@ -221,29 +221,18 @@ export class HouseRenderer {
    * while walking turns round from where it is.
    */
   walkTo(room: string): boolean {
-    const from = this.visitorRoom ?? "away";
+    // From where the figure stands, or from the street when it is not in the house.
+    const here = this.visitor?.root.visible ? this.visitor.root.position : null;
+    const from = here ? { x: here.x, y: here.y, z: here.z } : "away";
     const points = route(this.plan, from, room);
     if (!points) return false;
-    // Beside the room's spot, not on it: a household member stands there, and the
-    // figure vanished inside them.
-    const target = this.plan.rooms.find((r) => r.id === room);
-    const end = points[points.length - 1];
-    if (target) {
-      end.x = Math.min(target.x + target.w - 0.5, Math.max(target.x + 0.5, end.x + 0.8));
-      end.z = Math.min(target.z + target.d - 0.5, Math.max(target.z + 0.5, end.z + 0.5));
-    }
-    if (from === room && !this.walk) return true;
-    if (this.walk && this.visitor) {
-      const here = this.visitor.root.position;
-      points.unshift({ x: here.x, y: here.y, z: here.z });
-    }
     if (!this.visitor) {
       this.visitor = buildVisitor();
       this.scene.add(this.visitor.root);
     }
     this.visitor.root.visible = true;
     const start = points[0];
-    if (!this.walk) this.visitor.root.position.set(start.x, start.y, start.z);
+    this.visitor.root.position.set(start.x, start.y, start.z);
     this.walk = new Walk(points);
     this.following = true;
     return true;
