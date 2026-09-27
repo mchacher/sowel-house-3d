@@ -16,6 +16,7 @@ import { levelElevation, wallPieces } from "./geometry.ts";
 import type { Plan } from "../plan/types.ts";
 import type { SceneState } from "../state/scene-state.ts";
 import showroomPlan from "../../public/plans/showroom.json";
+import { buildSky, placeSky, SKY_RADIUS } from "./sky.ts";
 
 const plan = showroomPlan as unknown as Plan;
 const materials = makeMaterials();
@@ -49,7 +50,16 @@ function state(overrides: Partial<SceneState> = {}): SceneState {
   return {
     rooms,
     people: [],
-    sky: { elevationDeg: 40, azimuthDeg: 180, isDaylight: true, rainMmPerHour: 0, clearness: 1 },
+    sky: {
+      elevationDeg: 40,
+      azimuthDeg: 180,
+      isDaylight: true,
+      sunrise: "07:30",
+      sunset: "19:40",
+      dayFraction: 0.5,
+      rainMmPerHour: 0,
+      clearness: 1,
+    },
     garden: { gates: {}, watering: {} },
     problems: [],
     ...overrides,
@@ -319,12 +329,12 @@ describe("the roof and the stairs", () => {
   it("builds a roof in a group of its own", () => {
     const handles = build(0);
     expect(handles.roof).not.toBeNull();
-    // Two slopes, a ridge cap, eight panels, two gables, and the garage's flat slab.
-    expect(handles.roof!.group.children.length).toBe(14);
+    // Two slopes, a ridge cap, twelve panels, two gables, and the garage's flat slab.
+    expect(handles.roof!.group.children.length).toBe(18);
     const panels = handles.roof!.group.children.filter(
       (c) => c instanceof Mesh && c.material === handles.roof!.materials.panel,
     );
-    expect(panels).toHaveLength(8);
+    expect(panels).toHaveLength(12);
   });
 
   it("puts the stairs on the storey they start from, climbing to the next", () => {
@@ -746,5 +756,48 @@ describe("what a room is furnished with", () => {
     expect(handles.heaters.get("sejour")![0].body.material).toBe(
       handles.levels.get(0)!.materials.dark,
     );
+  });
+});
+
+describe("the sun in the sky (spec 004)", () => {
+  const sky = (over: Partial<SceneState["sky"]>): SceneState["sky"] => ({
+    elevationDeg: 30,
+    azimuthDeg: 200,
+    isDaylight: true,
+    sunrise: "07:30",
+    sunset: "19:30",
+    dayFraction: 0.6,
+    rainMmPerHour: 0,
+    clearness: 1,
+    ...over,
+  });
+
+  it("puts the sun on its dome, past the farthest the camera can stand", () => {
+    const handle = buildSky(plan);
+    placeSky(handle, sky({}));
+    expect(handle.sun.visible).toBe(true);
+    const { x, y, z } = handle.sun.position;
+    const dist = Math.hypot(x - handle.centre.x, y, z - handle.centre.z);
+    expect(dist).toBeCloseTo(SKY_RADIUS);
+    expect(SKY_RADIUS).toBeGreaterThan(120);
+    // South-west of the plot, and above the horizon.
+    expect(z).toBeGreaterThan(handle.centre.z);
+    expect(x).toBeLessThan(handle.centre.x);
+    expect(y).toBeGreaterThan(0);
+  });
+
+  it("does not draw the sun under the ground, nor the path at night", () => {
+    const handle = buildSky(plan);
+    placeSky(handle, sky({ elevationDeg: -10, dayFraction: null }));
+    expect(handle.sun.visible).toBe(false);
+    expect(handle.path.visible).toBe(false);
+  });
+
+  it("draws today's path, and as much of it as the day has travelled", () => {
+    const handle = buildSky(plan);
+    placeSky(handle, sky({ dayFraction: 0.5 }));
+    expect(handle.path.visible).toBe(true);
+    const count = handle.path.geometry.getAttribute("position").count;
+    expect(handle.travelled.geometry.drawRange.count).toBe(Math.floor(0.5 * (count - 1)) + 1);
   });
 });

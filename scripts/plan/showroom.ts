@@ -475,7 +475,7 @@ const house: HouseSpec = {
       d: 9.5,
       rise: 2.4,
       overhang: 0.45,
-      solar: { rows: 2, perRow: 4 },
+      solar: { rows: 2, perRow: 6 },
     },
     { over: 0, kind: "flat", x: 10.5, z: 3, w: 5.5, d: 5.5, rise: 0.3, overhang: 0.15 },
   ],

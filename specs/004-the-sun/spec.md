@@ -1,6 +1,6 @@
 # Spec 004 — The sun in the sky
 
-**Status**: 📝 Draft, for review.
+**Status**: ✅ Implemented.
 
 ## Context
 

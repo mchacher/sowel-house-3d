@@ -13,6 +13,7 @@ import {
   AmbientLight,
   Color,
   DirectionalLight,
+  Group,
   HemisphereLight,
   PerspectiveCamera,
   PCFSoftShadowMap,
@@ -38,6 +39,7 @@ import {
   type HouseHandles,
 } from "./house.ts";
 import { makeMaterials, PALETTE, type Materials } from "./materials.ts";
+import { buildCompass, buildSky, placeSky, type SkyHandle } from "./sky.ts";
 import type { Lang } from "../i18n.ts";
 
 /** How fast a shutter and a figure catch up with what Sowel said, per second. */
@@ -80,6 +82,8 @@ export class HouseRenderer {
   private lampCounts: Record<string, number> = {};
   private counts: Partial<Counts> = {};
   private lang: Lang = "fr";
+  private sky: SkyHandle | null = null;
+  private compass: Group | null = null;
   private state: SceneState | null = null;
   private frame = 0;
   /** Seconds since start, for what cycles on its own: the pools' water. */
@@ -123,7 +127,8 @@ export class HouseRenderer {
     // geometry fix is to stop putting surfaces in the same plane; this is the other
     // half, and the near plane costs nothing because the camera cannot come closer
     // than three metres anyway.
-    this.camera = new PerspectiveCamera(42, 1, 0.5, 250);
+    // Far enough for the sun on its dome (`SKY_RADIUS`) with the camera pulled back.
+    this.camera = new PerspectiveCamera(42, 1, 0.5, 400);
 
     // Orbit, zoom and pan. Without these the scene is a photograph: the first thing
     // anyone does with a 3D house is try to turn it round, and a view that refuses
@@ -204,6 +209,14 @@ export class HouseRenderer {
 
   private rebuild(): void {
     if (this.handles) this.scene.remove(this.handles.root);
+    if (this.sky) this.scene.remove(this.sky.group);
+    if (this.compass) this.scene.remove(this.compass);
+    this.sky = buildSky(this.plan);
+    this.compass = buildCompass(
+      this.plan,
+      this.lang === "fr" ? { N: "N", E: "E", S: "S", W: "O" } : { N: "N", E: "E", S: "S", W: "W" },
+    );
+    this.scene.add(this.sky.group, this.compass);
     this.handles = buildHouse({
       plan: this.plan,
       materials: this.materials,
@@ -311,6 +324,7 @@ export class HouseRenderer {
       ? day.clone().lerp(dusk, Math.max(0, 1 - state.sky.elevationDeg / 22))
       : night;
     (this.scene.background as Color).copy(sky);
+    if (this.sky) placeSky(this.sky, state.sky);
   }
 
   private aspect(): number {

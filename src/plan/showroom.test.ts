@@ -39,6 +39,17 @@ describe("the showroom plan", () => {
     expect(plan.rooms.map((r) => r.id).sort()).toEqual(expected);
   });
 
+  it("carries the simulator's array on its roof: twelve 500 W panels, 6 kWc", () => {
+    // sowel-plugin-simulator's `layout.ts`: `pv: { peakW: 6000 }` (its spec 001,
+    // amended 2026-09-26). The roof draws what the house produces from.
+    const SIMULATOR_PEAK_W = 6000;
+    const panels = (plan.roofs ?? []).reduce(
+      (n, roof) => n + (roof.solar ? roof.solar.rows * roof.solar.perRow : 0),
+      0,
+    );
+    expect(panels * 500).toBe(SIMULATOR_PEAK_W);
+  });
+
   it("keeps every room's area within a few percent of the simulator's", () => {
     // Floor areas come from the thermal model, so the house a visitor sees and the
     // house the physics runs on are the same size.
