@@ -41,7 +41,14 @@ import {
 } from "./house.ts";
 import { makeMaterials, PALETTE, type Materials } from "./materials.ts";
 import { buildCompass, buildSky, placeSky, type SkyHandle } from "./sky.ts";
-import { buildVisitor, pose, type VisitorFigure } from "./visitor.ts";
+import {
+  buildFigure,
+  buildVisitor,
+  nameTag,
+  OTHER_VISITOR_STYLE,
+  pose,
+  type VisitorFigure,
+} from "./visitor.ts";
 import { Walk } from "./walk.ts";
 import { focusAt, placeInRoom, route, SLOT_COUNT } from "../plan/path.ts";
 import type { Lang } from "../i18n.ts";
@@ -91,6 +98,14 @@ export class HouseRenderer {
   private visitor: VisitorFigure | null = null;
   private walk: Walk | null = null;
   private visitorRoom: string | null = null;
+  /** Someone else's figure, walking their queued action; null when there is none. */
+  private other: {
+    figure: VisitorFigure;
+    who: string | null;
+    walk: Walk | null;
+    room: string | null;
+  } | null = null;
+  private followingOther = false;
   /** The household's walks, per person: where they were last sent, and the way. */
   private householdWalks = new Map<
     string,
@@ -252,12 +267,40 @@ export class HouseRenderer {
     this.visitor.root.position.set(start.x, start.y, start.z);
     this.walk = new Walk(points);
     this.following = true;
+    this.followingOther = false;
+    return true;
+  }
+
+  /**
+   * Walk someone else's figure (spec 005, amended 2026-09-27): another visitor whose
+   * action is running. Grey, named, and it tells Sowel nothing — their own page does.
+   * A new person starts from the street; the same person walks on from where they are.
+   */
+  walkOther(room: string, who: string | null): boolean {
+    const same = this.other && this.other.who === who && this.other.figure.root.visible;
+    const here = same ? this.other!.figure.root.position : null;
+    const points = route(this.plan, here ? { x: here.x, y: here.y, z: here.z } : "away", room);
+    if (!points) return false;
+    if (!this.other || this.other.who !== who) {
+      if (this.other) this.scene.remove(this.other.figure.root);
+      const figure = buildFigure(OTHER_VISITOR_STYLE);
+      if (who) figure.root.add(nameTag(who));
+      this.scene.add(figure.root);
+      this.other = { figure, who, walk: null, room: null };
+    }
+    const other = this.other;
+    other.figure.root.visible = true;
+    other.figure.root.position.set(points[0].x, points[0].y, points[0].z);
+    other.walk = new Walk(points);
+    this.followingOther = true;
+    this.following = false;
     return true;
   }
 
   /** The visitor picked a storey: the view stops following the figure until the next walk. */
   stopFollowing(): void {
     this.following = false;
+    this.followingOther = false;
   }
 
   get currentLevel(): Focus {
@@ -437,6 +480,28 @@ export class HouseRenderer {
    * slides and a figure drifts instead of teleporting. The easing is first-order, so
    * it cannot overshoot — the scene is always somewhere Sowel has actually been.
    */
+  private stepOther(dt: number): void {
+    const other = this.other;
+    if (!other?.walk) return;
+    const step = other.walk.step(dt);
+    other.figure.root.position.set(...step.position);
+    other.figure.root.rotation.y = step.heading;
+    pose(other.figure, step.distance, !step.done);
+    for (const room of step.entered) other.room = room === "away" ? null : room;
+    if (this.followingOther) {
+      const focus = focusAt(this.plan, other.room, step.position[1]);
+      if (focus !== this.currentLevel) {
+        this.setLevel(focus, false);
+        this.onFollow?.(focus);
+      }
+    }
+    if (step.done) {
+      other.walk = null;
+      this.followingOther = false;
+      if (other.room === null) other.figure.root.visible = false;
+    }
+  }
+
   private stepVisitor(dt: number): void {
     if (!this.walk || !this.visitor) return;
     const step = this.walk.step(dt);
@@ -545,6 +610,7 @@ export class HouseRenderer {
     }
     this.time += dt;
     this.stepVisitor(dt);
+    this.stepOther(dt);
     animateWater(this.handles, this.time);
     animateFans(this.handles, dt);
     this.stepHousehold(dt);

@@ -136,7 +136,8 @@ export function App() {
         }
       }
       // A walk decides the view itself, following the figure (spec 005, FR4).
-      if (anchor.walk) house.walkTo(anchor.walk);
+      if (anchor.walk && !anchor.me) house.walkOther(anchor.walk, anchor.who);
+      else if (anchor.walk) house.walkTo(anchor.walk);
       else if (anchor.level !== null) {
         setLevel(anchor.level);
         house.setLevel(anchor.level);

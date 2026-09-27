@@ -13,10 +13,17 @@ export interface Anchor {
   level: Focus | null;
   /** The room the visitor's figure walks to, or `away` to leave (spec 005). */
   walk: string | null;
+  /**
+   * Whose walk it is (spec 005, amended 2026-09-27): `me=0` walks someone else's
+   * figure — another visitor's action, running in the showroom's queue — grey, named
+   * `who`, and sending no ghost order, since that visitor's own page does.
+   */
+  me: boolean;
+  who: string | null;
 }
 
 export function parseAnchor(hash: string): Anchor {
-  const anchor: Anchor = { full: false, level: null, walk: null };
+  const anchor: Anchor = { full: false, level: null, walk: null, me: true, who: null };
   for (const part of hash.replace(/^#/, "").split("&")) {
     if (!part) continue;
     const [key, raw = ""] = part.split("=");
@@ -26,6 +33,9 @@ export function parseAnchor(hash: string): Anchor {
       if (value === "outside") anchor.level = "outside";
       else if (/^-?\d+$/.test(value)) anchor.level = Number(value);
     } else if (key === "walk" && /^[a-z0-9-]+$/.test(value)) anchor.walk = value;
+    else if (key === "me") anchor.me = value !== "0";
+    // A name to show, never markup: letters, digits, spaces and a little punctuation.
+    else if (key === "who" && /^[\p{L}\p{N} .'-]{1,30}$/u.test(value)) anchor.who = value;
   }
   return anchor;
 }
