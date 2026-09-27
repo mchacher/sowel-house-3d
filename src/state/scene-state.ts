@@ -78,6 +78,11 @@ export interface GardenState {
 
 export interface SceneState {
   rooms: Record<string, RoomState>;
+  /**
+   * The house's heat pump is running — its run state, not its switch. Null when the
+   * mapping names none.
+   */
+  heatPump: boolean | null;
   people: { id: string; label: string; room: string | null }[];
   sky: SkyState;
   garden: GardenState;
@@ -186,8 +191,16 @@ function assemble(input: BuildInput, derived: Derived): SceneState {
           : !booleanOf(contact.dataBindings.find((b) => b.category === "contact_door")?.value),
       ),
       heating:
+        // A radiator's run state where it has one: on a pilot wire its relay says
+        // eco or comfort, not whether it is warm (simulator spec 001, amended
+        // 2026-09-27). Its `state` otherwise, for a radiator that is simply on/off.
         bindings.heaters.some((h) =>
-          booleanOf(h.dataBindings.find((b) => b.alias === "state")?.value),
+          booleanOf(
+            (
+              h.dataBindings.find((b) => b.alias === "heating") ??
+              h.dataBindings.find((b) => b.alias === "state")
+            )?.value,
+          ),
         ) ||
         // The stove's run state lands on `state` (core spec 176 binds it there);
         // `power` is what the order is called, and some plugins report it too.
@@ -245,6 +258,10 @@ function assemble(input: BuildInput, derived: Derived): SceneState {
 
   return {
     rooms,
+    heatPump:
+      derived.heatPump === null
+        ? null
+        : booleanOf(derived.heatPump.dataBindings.find((b) => b.alias === "state")?.value),
     people: derived.people,
     garden,
     sky: {

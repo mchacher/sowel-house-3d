@@ -303,3 +303,46 @@ describe("the pool's water", () => {
     expect(on.rooms.piscine.poolHeating).toBe(true);
   });
 });
+
+describe("heating, read off its run state (simulator spec 001, amended 2026-09-27)", () => {
+  const withBindings = (name: string, patch: (e: Equipment) => Equipment) =>
+    base.equipments.map((e) => (e.name === name ? patch(e) : e));
+
+  it("reads the house's heat pump from the mapping, running or not", () => {
+    expect(buildSceneState(base).heatPump).toBe(false);
+    const running = buildSceneState({
+      ...base,
+      equipments: withBindings("PAC", (e) => ({
+        ...e,
+        dataBindings: e.dataBindings.map((b) => (b.alias === "state" ? { ...b, value: true } : b)),
+      })),
+    });
+    expect(running.heatPump).toBe(true);
+    expect(
+      buildSceneState({ ...base, mapping: { ...base.mapping, heatPump: undefined } }).heatPump,
+    ).toBeNull();
+  });
+
+  it("draws a pilot-wire radiator warm on `heating`, not on its relay", () => {
+    // The relay energised is eco on a pilot wire; the room is not heating.
+    const eco = buildSceneState({
+      ...base,
+      equipments: withBindings("Radiateur", (e) => ({
+        ...e,
+        dataBindings: [
+          ...e.dataBindings.map((b) => (b.alias === "state" ? { ...b, value: true } : b)),
+          { ...e.dataBindings[0], id: `${e.id}-heating`, alias: "heating", value: false },
+        ],
+      })),
+    });
+    const warm = Object.values(eco.rooms).filter(
+      (r) => r.id.startsWith("chambre-enfant") && r.heating,
+    );
+    expect(warm).toEqual([]);
+  });
+
+  it("keeps reading `state` for a radiator that has no run state", () => {
+    const on = buildSceneState(base);
+    expect(on.rooms["chambre-enfant-2"].heating).toBe(true);
+  });
+});

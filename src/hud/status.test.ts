@@ -6,6 +6,7 @@ const live: AppPhase = { kind: "live" };
 
 function state(overrides: Partial<SceneState> = {}): SceneState {
   return {
+    heatPump: null,
     rooms: {
       sejour: {
         id: "sejour",
