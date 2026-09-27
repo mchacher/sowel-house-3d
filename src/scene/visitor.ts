@@ -12,6 +12,7 @@
  */
 
 import {
+  CanvasTexture,
   CapsuleGeometry,
   CylinderGeometry,
   Group,
@@ -20,6 +21,8 @@ import {
   MeshStandardMaterial,
   RingGeometry,
   SphereGeometry,
+  Sprite,
+  SpriteMaterial,
   type Object3D,
 } from "three";
 
@@ -46,6 +49,44 @@ export interface FigureStyle {
  */
 const HOUSEHOLD_TOPS = [0x3f8f8a, 0xc8674f, 0x7a6fb0, 0x5f9a4f, 0xb0617f];
 const HOUSEHOLD_TROUSERS = [0x2f3e4a, 0x4a4033, 0x33404f];
+
+/** Another visitor, whose action is running (spec 005, amended): grey, no ring. */
+export const OTHER_VISITOR_STYLE: FigureStyle = {
+  top: 0xa9b6be,
+  trousers: 0x55636d,
+  scale: SCALE,
+  ring: false,
+};
+
+/**
+ * A small name over a figure: pale on a dark pill, the size of a word at the house's
+ * scale — the big "TOI" was removed for shouting, and this one only says who.
+ */
+export function nameTag(text: string): Sprite {
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 64;
+  const ctx = canvas.getContext("2d");
+  if (ctx) {
+    ctx.font = "600 30px Inter, system-ui, sans-serif";
+    const w = Math.min(248, ctx.measureText(text).width + 28);
+    ctx.fillStyle = "rgba(16, 40, 58, 0.78)";
+    ctx.beginPath();
+    ctx.roundRect((256 - w) / 2, 12, w, 40, 20);
+    ctx.fill();
+    ctx.fillStyle = "#ffffff";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, 128, 33);
+  }
+  const sprite = new Sprite(
+    new SpriteMaterial({ map: new CanvasTexture(canvas), depthTest: false, transparent: true }),
+  );
+  sprite.scale.set(1.0, 0.25, 1);
+  sprite.position.y = 1.85;
+  sprite.renderOrder = 10;
+  return sprite;
+}
 
 export function householdStyle(id: string, label: string): FigureStyle {
   let hash = 0;

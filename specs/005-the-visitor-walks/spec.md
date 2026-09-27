@@ -119,3 +119,16 @@ figurine; and the visitor went round by the garden between two rooms of the hous
   garden: from the office, out of the front door and in by its gate is shorter than
   through the house. The detour came from the stairs, redrawn in spec 002 (amended
   the same day).
+
+## Amendment — 2026-09-27: someone else's walk
+
+For the showroom's live demo (its spec 005), where visitors' actions run one at a time
+from a queue and every visitor watches the running one:
+
+- The anchor may say whose walk it is: `walk=<room>&who=<name>&me=0`. `me=0` walks
+  **someone else's figure**: grey, without the ring, a small name tag over it; it sends
+  **no ghost order** — that visitor's own page does — and the view follows it as it
+  follows the visitor's own. The same name walks on from where it stands; a new name
+  starts from the street. One such figure at a time: the running action's.
+- `who` is a name to show, never markup: letters, digits, spaces and a little
+  punctuation, thirty characters at most; anything else is dropped.
