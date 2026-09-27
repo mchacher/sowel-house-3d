@@ -178,3 +178,12 @@ the stove, heat pumps nobody recognised. What changed:
   lawn and looked like an arcade game.) The pool's machines are not drawn — boxes
   on its edge were ugly, and the water says what they do. The house's heat pump is,
   against the west wall.
+
+## Amendment — 2026-09-26: twelve panels
+
+The simulator goes back to 6 kWc (its spec 001, amended the same day): the owner
+found 4 kWc weak on the running demo. The roof carries what the simulator produces
+from, so `Roof.solar` becomes **two rows of six**, twelve 500 W panels on the south
+slope — 6.6 m along an 11.4 m slope, 3.6 m down a 5.8 m one. The plan's test holds
+the panel count times 500 W against the simulator's peak, as it holds the room areas
+against its thermal model.

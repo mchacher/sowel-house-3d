@@ -52,6 +52,12 @@ const STRINGS = {
     anomalies: (n: number) => `${n} anomalies`,
     people: (n: number) => `${n} personne${n === 1 ? "" : "s"} à la maison`,
     lights: (n: number) => `${n} lumière${n === 1 ? "" : "s"} allumée${n === 1 ? "" : "s"}`,
+    sun: "Soleil",
+    sunrise: "lever",
+    sunset: "coucher",
+    east: "E",
+    south: "S",
+    west: "O",
   },
   en: {
     noWebgl:
@@ -70,6 +76,12 @@ const STRINGS = {
     anomalies: (n: number) => `${n} problems`,
     people: (n: number) => `${n} ${n === 1 ? "person" : "people"} at home`,
     lights: (n: number) => `${n} light${n === 1 ? "" : "s"} on`,
+    sun: "Sun",
+    sunrise: "sunrise",
+    sunset: "sunset",
+    east: "E",
+    south: "S",
+    west: "W",
   },
 } as const;
 

@@ -13,7 +13,7 @@ import type { Plan } from "../plan/types.ts";
 import type { Aggregation, Equipment, Zone } from "../sowel/types.ts";
 import type { Mapping } from "../mapping/types.ts";
 import { derive, type Derived } from "../mapping/derive.ts";
-import { localMinutes, sunPosition, type SunPosition } from "./sun.ts";
+import { dayFraction, localMinutes, sunPosition, type SunPosition } from "./sun.ts";
 
 export interface LampState {
   on: boolean;
@@ -58,6 +58,11 @@ export interface RoomState {
 }
 
 export interface SkyState extends SunPosition {
+  /** Sowel's sunrise and sunset for the house, local `HH:MM` — for the dial (spec 004). */
+  sunrise: string | null;
+  sunset: string | null;
+  /** 0 at sunrise, 1 at sunset; null at night or without the times. */
+  dayFraction: number | null;
   /** Millimetres in the last hour, 0 when dry. From the weather equipment. */
   rainMmPerHour: number;
   /** 0 overcast … 1 clear, inferred from luminosity against the sun's height. */
@@ -244,6 +249,13 @@ function assemble(input: BuildInput, derived: Derived): SceneState {
     garden,
     sky: {
       ...sun,
+      sunrise: house?.sunrise ?? null,
+      sunset: house?.sunset ?? null,
+      dayFraction: dayFraction(
+        house?.sunrise ?? null,
+        house?.sunset ?? null,
+        input.nowMinutes ?? localMinutes(),
+      ),
       rainMmPerHour: rain,
       clearness: clearness(house?.luminosity ?? null, sun.elevationDeg),
     },

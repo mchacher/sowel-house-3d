@@ -12,6 +12,7 @@ import type { Level } from "../plan/types.ts";
 import type { Focus } from "../scene/house.ts";
 import { isTrouble, statusLine, type AppPhase } from "./status.ts";
 import { named, strings, type Lang } from "../i18n.ts";
+import { SunDial } from "./SunDial.tsx";
 
 export type { AppPhase };
 
@@ -51,12 +52,15 @@ export function Hud(props: Props): React.ReactElement {
       }`;
     return (
       <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-2">
-        <div>
-          {trouble && (
-            <div className="rounded-md bg-amber-100/90 px-2 py-1 text-[11px] font-medium text-amber-900 shadow-sm">
-              {statusLine(phase, socket, state, lang)}
-            </div>
-          )}
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            {trouble && (
+              <div className="rounded-md bg-amber-100/90 px-2 py-1 text-[11px] font-medium text-amber-900 shadow-sm">
+                {statusLine(phase, socket, state, lang)}
+              </div>
+            )}
+          </div>
+          {state && <SunDial sky={state.sky} lang={lang} compact />}
         </div>
         {levels.length > 0 && (
           <div className="pointer-events-auto flex gap-0.5 self-end rounded-md bg-white/85 p-0.5 shadow-sm backdrop-blur">
@@ -146,6 +150,12 @@ export function Hud(props: Props): React.ReactElement {
               ))}
             </ul>
           </details>
+        )}
+
+        {state && (
+          <div className="ml-auto">
+            <SunDial sky={state.sky} lang={lang} />
+          </div>
         )}
       </div>
 

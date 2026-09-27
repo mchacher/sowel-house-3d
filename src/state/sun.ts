@@ -70,12 +70,7 @@ export function sunPosition(
   }
 
   if (now >= rise && now <= set) {
-    const fraction = (now - rise) / (set - rise);
-    return {
-      elevationDeg: Math.sin(Math.PI * fraction) * PEAK_ELEVATION_DEG,
-      azimuthDeg: 90 + 180 * fraction,
-      isDaylight: isDaylight ?? true,
-    };
+    return { ...onArc((now - rise) / (set - rise)), isDaylight: isDaylight ?? true };
   }
 
   // Night: the same arc, run backwards under the horizon, so the sky keeps moving
@@ -88,6 +83,47 @@ export function sunPosition(
     azimuthDeg: (270 + 180 * fraction) % 360,
     isDaylight: isDaylight ?? false,
   };
+}
+
+/** A point of the day's arc: 0 at sunrise in the east, 1 at sunset in the west. */
+function onArc(fraction: number): { elevationDeg: number; azimuthDeg: number } {
+  return {
+    elevationDeg: Math.sin(Math.PI * fraction) * PEAK_ELEVATION_DEG,
+    azimuthDeg: 90 + 180 * fraction,
+  };
+}
+
+/**
+ * How far through the day the sun is: 0 at sunrise, 1 at sunset (spec 004). Null at
+ * night, or when Sowel reports no sunrise or sunset — the dial then shows no times
+ * rather than wrong ones.
+ */
+export function dayFraction(
+  sunrise: string | null,
+  sunset: string | null,
+  now: number,
+): number | null {
+  const rise = minutesOf(sunrise);
+  const set = minutesOf(sunset);
+  if (rise === null || set === null || set <= rise) return null;
+  if (now < rise || now > set) return null;
+  return (now - rise) / (set - rise);
+}
+
+/**
+ * Today's arc, sampled from sunrise to sunset (spec 004): the path the sun in the
+ * sky and on the dial is drawn on. The same curve `sunPosition` puts the sun on, so
+ * the sun is always on its own path. Empty without both times.
+ */
+export function sunPath(
+  sunrise: string | null,
+  sunset: string | null,
+  samples = 32,
+): { elevationDeg: number; azimuthDeg: number }[] {
+  const rise = minutesOf(sunrise);
+  const set = minutesOf(sunset);
+  if (rise === null || set === null || set <= rise) return [];
+  return Array.from({ length: samples + 1 }, (_, i) => onArc(i / samples));
 }
 
 /** Minutes since local midnight, for the browser's own clock. */
