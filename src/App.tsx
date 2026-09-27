@@ -5,6 +5,7 @@ import type { Focus } from "./scene/house.ts";
 import { detectLang, rememberLang, type Lang } from "./i18n.ts";
 import { selectableLevels } from "./scene/geometry.ts";
 import { useHouse } from "./useHouse.ts";
+import { parseAnchor } from "./anchor.ts";
 
 // Relative to the app's base, so the same build works at the root during a bare
 // `vite dev` and under /maison/ behind the showroom's proxy.
@@ -25,7 +26,7 @@ const MINI = new URLSearchParams(window.location.search).get("mini") === "1";
  * nothing, and it is already there when the app starts, where a message sent
  * during loading would be lost before anyone listened.
  */
-const fullRequested = (): boolean => window.location.hash === "#full";
+const fullRequested = (): boolean => parseAnchor(window.location.hash).full;
 
 /**
  * Whether this browser will draw at all, asked once on a throwaway canvas.
@@ -62,7 +63,10 @@ export function App() {
   // Computed once, in the initialiser: nothing here re-probes, and nothing sets it
   // from inside an effect.
   const [webgl] = useState(drawsWebGL);
-  const { phase, socket, plan, state, lampCounts, counts } = useHouse(PLAN_URL, MAPPING_URL);
+  const { phase, socket, plan, state, lampCounts, counts, moveGhost } = useHouse(
+    PLAN_URL,
+    MAPPING_URL,
+  );
 
   // The renderer outlives a render, so it is built once the plan is in and torn down
   // with the component — not rebuilt on every state change.
@@ -114,26 +118,57 @@ export function App() {
     if (state) renderer.current?.update(state);
   }, [state]);
 
-  // Opened full screen and back, by the page the vignette floats in.
+  // The page the vignette floats in talks through the anchor (spec 003, amended):
+  // full screen and back, a storey, a walk. Read on every change, and once the
+  // house is built for an anchor that was already there when the app started.
   useEffect(() => {
-    if (!MINI) return;
-    const onHash = (): void => {
-      const next = !fullRequested();
-      miniRef.current = next;
-      setMini(next);
-      const house = renderer.current;
-      if (!house) return;
-      house.setMini(next);
-      // The storey the visitor chose stays chosen either way: small or big, the
-      // same buttons, now in both.
-      const focus: Focus = house.currentLevel;
-      setLevel(focus);
-      house.setLevel(focus);
-      house.frameLevel();
+    const house = renderer.current;
+    if (!house) return;
+    const apply = (): void => {
+      const anchor = parseAnchor(window.location.hash);
+      if (MINI) {
+        const next = !anchor.full;
+        if (next !== miniRef.current) {
+          miniRef.current = next;
+          setMini(next);
+          house.setMini(next);
+          house.frameLevel();
+        }
+      }
+      // A walk decides the view itself, following the figure (spec 005, FR4).
+      if (anchor.walk) house.walkTo(anchor.walk);
+      else if (anchor.level !== null) {
+        setLevel(anchor.level);
+        house.setLevel(anchor.level);
+      }
     };
-    window.addEventListener("hashchange", onHash);
-    return () => window.removeEventListener("hashchange", onHash);
-  }, []);
+    apply();
+    window.addEventListener("hashchange", apply);
+    return () => window.removeEventListener("hashchange", apply);
+  }, [plan, webgl]);
+
+  // The visitor's figure tells Sowel where it is as it walks in (spec 005, FR3), and
+  // the storey follows it, so it never walks inside a ghosted floor (FR4). Standing
+  // in a room, it renews its ghost every minute: the simulator forgets a ghost after
+  // two minutes without an order. Walking out, it sends `away`, and the ghost goes.
+  const [ghostTrouble, setGhostTrouble] = useState(false);
+  useEffect(() => {
+    const house = renderer.current;
+    if (!house || !plan) return;
+    house.onVisitorEnter = (room) => {
+      void moveGhost(room).then((ok: boolean) => setGhostTrouble(!ok));
+    };
+    house.onFollow = (focus) => setLevel(focus);
+    const renew = window.setInterval(() => {
+      const room = house.visitorAt;
+      if (room) void moveGhost(room);
+    }, 60_000);
+    return () => {
+      house.onVisitorEnter = null;
+      house.onFollow = null;
+      window.clearInterval(renew);
+    };
+  }, [plan, webgl, moveGhost]);
 
   return (
     <main className="relative h-[100dvh] w-full overflow-hidden bg-[#EEF5F8] font-sans dark:bg-slate-950">
@@ -144,7 +179,11 @@ export function App() {
         state={state}
         levels={plan && webgl ? selectableLevels(plan) : []}
         level={level}
-        onLevel={setLevel}
+        onLevel={(next) => {
+          // A storey picked by hand: the view stops following the figure.
+          renderer.current?.stopFollowing();
+          setLevel(next);
+        }}
         onRecentre={() => renderer.current?.frameLevel()}
         lang={lang}
         onLang={(next) => {
@@ -152,6 +191,7 @@ export function App() {
           setLang(next);
         }}
         mini={mini}
+        unheard={ghostTrouble}
       />
     </main>
   );

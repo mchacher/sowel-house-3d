@@ -187,3 +187,14 @@ from, so `Roof.solar` becomes **two rows of six**, twelve 500 W panels on the so
 slope — 6.6 m along an 11.4 m slope, 3.6 m down a 5.8 m one. The plan's test holds
 the panel count times 500 W against the simulator's peak, as it holds the room areas
 against its thermal model.
+
+## Amendment — 2026-09-27: a stair that leaves a landing
+
+Walking a figure through the house (spec 005) found that the upper floor had no
+landing: the stairwell's opening took its whole middle, and the three children's
+rooms opened onto the void, with no way from the stairs to them. The stairs become a
+U in the north half of the stairwell — east along the hall's wall, a half landing
+against the east wall, back west to arrive by the bathroom — and the opening shrinks
+to that U. The band south of it is the upstairs landing, joining the two wings, and
+free floor downstairs. The hall's door to the stairs moves to the foot of the first
+flight; the passage by the WC opens onto the free band.

@@ -40,6 +40,9 @@ import {
 } from "./house.ts";
 import { makeMaterials, PALETTE, type Materials } from "./materials.ts";
 import { buildCompass, buildSky, placeSky, type SkyHandle } from "./sky.ts";
+import { buildVisitor, pose, type VisitorFigure } from "./visitor.ts";
+import { Walk } from "./walk.ts";
+import { focusAt, route } from "../plan/path.ts";
 import type { Lang } from "../i18n.ts";
 
 /** How fast a shutter and a figure catch up with what Sowel said, per second. */
@@ -83,6 +86,16 @@ export class HouseRenderer {
   private counts: Partial<Counts> = {};
   private lang: Lang = "fr";
   private sky: SkyHandle | null = null;
+  /** The visitor's figure and where it is walking (spec 005). */
+  private visitor: VisitorFigure | null = null;
+  private walk: Walk | null = null;
+  private visitorRoom: string | null = null;
+  /** Told each room the figure walks into — the app moves the visitor's ghost there. */
+  onVisitorEnter: ((room: string) => void) | null = null;
+  /** Whether the view follows the figure (spec 005, FR4): during a walk, until the visitor picks a storey. */
+  private following = false;
+  /** Told when the view changed storey to follow the figure, so the HUD's buttons agree. */
+  onFollow: ((focus: Focus) => void) | null = null;
   private compass: Group | null = null;
   private state: SceneState | null = null;
   private frame = 0;
@@ -178,18 +191,56 @@ export class HouseRenderer {
     if (this.handles) this.rebuild();
   }
 
-  setLevel(level: Focus): void {
+  /**
+   * Which storey is solid. `reframe` moves the camera to that storey's framing, as a
+   * visitor's click on a storey does; following the walking figure does not — only
+   * the ghosting changes, the camera stays where the visitor put it.
+   */
+  setLevel(level: Focus, reframe = true): void {
     if (level === this.level) return;
     this.level = level;
     // Every storey is already built and standing. Switching floors is a change of
     // which one is solid, not a change of what exists.
     if (this.handles) focusLevel(this.handles, level);
-    this.frameLevel();
+    if (reframe) this.frameLevel();
   }
 
   /** Switch between the vignette and the vignette opened full screen: the framing from outside. */
   setMini(mini: boolean): void {
     this.closeness = mini ? MINI_CLOSENESS : 1;
+  }
+
+  /** Where the visitor's figure is, or null when it is not in the house. */
+  get visitorAt(): string | null {
+    return this.visitorRoom;
+  }
+
+  /**
+   * Walk the visitor's figure to a room, or `away` to leave (spec 005, FR2): from
+   * where it stands, or from the street when it is not in the house yet. A new walk
+   * while walking turns round from where it is.
+   */
+  walkTo(room: string): boolean {
+    // From where the figure stands, or from the street when it is not in the house.
+    const here = this.visitor?.root.visible ? this.visitor.root.position : null;
+    const from = here ? { x: here.x, y: here.y, z: here.z } : "away";
+    const points = route(this.plan, from, room);
+    if (!points) return false;
+    if (!this.visitor) {
+      this.visitor = buildVisitor();
+      this.scene.add(this.visitor.root);
+    }
+    this.visitor.root.visible = true;
+    const start = points[0];
+    this.visitor.root.position.set(start.x, start.y, start.z);
+    this.walk = new Walk(points);
+    this.following = true;
+    return true;
+  }
+
+  /** The visitor picked a storey: the view stops following the figure until the next walk. */
+  stopFollowing(): void {
+    this.following = false;
   }
 
   get currentLevel(): Focus {
@@ -369,6 +420,31 @@ export class HouseRenderer {
    * slides and a figure drifts instead of teleporting. The easing is first-order, so
    * it cannot overshoot — the scene is always somewhere Sowel has actually been.
    */
+  private stepVisitor(dt: number): void {
+    if (!this.walk || !this.visitor) return;
+    const step = this.walk.step(dt);
+    const figure = this.visitor;
+    figure.root.position.set(...step.position);
+    figure.root.rotation.y = step.heading;
+    pose(figure, step.distance, !step.done);
+    for (const room of step.entered) {
+      this.visitorRoom = room === "away" ? null : room;
+      this.onVisitorEnter?.(room);
+    }
+    if (this.following) {
+      const focus = focusAt(this.plan, this.visitorRoom, step.position[1]);
+      if (focus !== this.currentLevel) {
+        this.setLevel(focus, false);
+        this.onFollow?.(focus);
+      }
+    }
+    if (step.done) {
+      this.walk = null;
+      this.following = false;
+      if (this.visitorRoom === null) figure.root.visible = false;
+    }
+  }
+
   private ease(dt: number): void {
     if (!this.handles) return;
     const k = 1 - Math.exp(-EASE_PER_SECOND * dt);
@@ -403,6 +479,7 @@ export class HouseRenderer {
       }
     }
     this.time += dt;
+    this.stepVisitor(dt);
     animateWater(this.handles, this.time);
     for (const entry of this.state?.people ?? []) {
       const figure = this.handles.people.get(entry.id);

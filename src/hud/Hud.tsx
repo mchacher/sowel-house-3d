@@ -28,13 +28,16 @@ interface Props {
   onLang: (lang: Lang) => void;
   /** The vignette over the Sowel interface: the scene, and trouble if there is any. */
   mini?: boolean;
+  /** The visitor's figure walked in and Sowel did not hear it (spec 005). */
+  unheard?: boolean;
 }
 
 /** Shown inside another page — the showroom's side-by-side view. */
 const FRAMED = typeof window !== "undefined" && window.self !== window.top;
 
 export function Hud(props: Props): React.ReactElement {
-  const { phase, socket, state, levels, level, onLevel, onRecentre, lang, onLang, mini } = props;
+  const { phase, socket, state, levels, level, onLevel, onRecentre, lang, onLang, mini, unheard } =
+    props;
   const t = strings(lang);
   const trouble = isTrouble(phase, socket, state);
 
@@ -54,9 +57,9 @@ export function Hud(props: Props): React.ReactElement {
       <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-2">
         <div className="flex items-start justify-between gap-2">
           <div>
-            {trouble && (
+            {(trouble || unheard) && (
               <div className="rounded-md bg-amber-100/90 px-2 py-1 text-[11px] font-medium text-amber-900 shadow-sm">
-                {statusLine(phase, socket, state, lang)}
+                {trouble ? statusLine(phase, socket, state, lang) : t.unheard}
               </div>
             )}
           </div>
