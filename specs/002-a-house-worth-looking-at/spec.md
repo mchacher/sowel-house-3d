@@ -212,3 +212,19 @@ lets the cold into the office and the heat pump starts:
   otherwise. On a pilot wire the relay signals eco or comfort, not warmth
   (simulator spec 001, amended the same day); read as warmth, a child's room
   glowed in eco and went cold in comfort.
+
+## Amendment — 2026-09-27: a stair whose foot is on the way
+
+The owner, walking the figure from the living room to child's room 2: it went out
+by the terrace, round the garden and in by the front door. The U of the previous
+amendment filled the north half of the stairwell wall to wall, its first flight
+against the hall: the hall's door opened onto the first step, and from the band by
+the living room the foot could not be reached — the upper flight stood in the way,
+1.3 m off the floor.
+
+- The flights are **1.75 m** (seven steps of 25 cm), leaving an **aisle on the
+  west** of the stairwell from the hall's door (now 0.7 m) to the band.
+- The **first flight is the south one**: its foot is on that aisle, reached from the
+  hall and from the living room alike. The second flight comes back along the north
+  and arrives upstairs above the hall; the opening upstairs shrinks to the flights.
+- The stairwell's spot moves onto the band, out from under the flights.

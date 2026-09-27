@@ -97,3 +97,21 @@ picks a storey themselves stops the following until the next walk.
 - The order fails (session expired): the figure still walks; the HUD's trouble line
   says Sowel did not hear it.
 - A room the plan has no path to: the walk is refused, nothing moves.
+
+## Amendment — 2026-09-27: the household are figurines too, and every way is the short one
+
+The owner: the household were blue cylinders with a ball on top, and the visitor a
+figurine; and the visitor went round by the garden between two rooms of the house.
+
+- **The household** are the visitor's figurine in their own colours — calm ones,
+  never the visitor's amber, chosen by the occupant's id so a person keeps theirs —
+  **without the ring**, which stays the visitor's mark. A child (a label Sowel gives
+  as "Enfant…") is a size smaller.
+- **They walk** from room to room along the same ways as the visitor — doors,
+  stairs, around the furniture — instead of sliding in a straight line through the
+  walls. With no way found they are simply there.
+- **Short ways.** Between two rooms inside the house, the way never leaves it (a
+  test walks every pair). The one exception is the garage, which opens on the
+  garden: from the office, out of the front door and in by its gate is shorter than
+  through the house. The detour came from the stairs, redrawn in spec 002 (amended
+  the same day).

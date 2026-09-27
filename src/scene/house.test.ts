@@ -459,10 +459,36 @@ describe("applying the state", () => {
 });
 
 describe("the people", () => {
+  it("draws each as a figurine in their own colours, without the visitor's ring", () => {
+    const handles = build(0);
+    syncPeople(
+      handles,
+      state({
+        people: [
+          { id: "adult", label: "Adulte 1", room: "sejour" },
+          { id: "child", label: "Enfant 1", room: "sejour" },
+        ],
+      }),
+      plan,
+    );
+    const adult = handles.people.get("adult");
+    const child = handles.people.get("child");
+    expect(adult?.userData.figure).toBeDefined();
+    // The visitor's ring is a RingGeometry at its feet; the household has none.
+    let rings = 0;
+    adult?.traverse((o) => {
+      if (o instanceof Mesh && o.geometry.type === "RingGeometry") rings += 1;
+    });
+    expect(rings).toBe(0);
+    // A child is a size smaller.
+    const scaleOf = (g: typeof adult) => g?.children[0]?.scale.x ?? 0;
+    expect(scaleOf(child)).toBeLessThan(scaleOf(adult));
+  });
+
   it("stands someone in the room Sowel says they are in", () => {
     const handles = build(0);
     const occupied = state({ people: [{ id: "p1", label: "Adulte 1", room: "sejour" }] });
-    syncPeople(handles, occupied, plan, materials);
+    syncPeople(handles, occupied, plan);
     const figure = handles.people.get("p1");
     const room = plan.rooms.find((r) => r.id === "sejour");
     expect(figure?.visible).toBe(true);
@@ -472,12 +498,7 @@ describe("the people", () => {
 
   it("puts someone who is away outside, and still draws them", () => {
     const handles = build(0);
-    syncPeople(
-      handles,
-      state({ people: [{ id: "p1", label: "A", room: "away" }] }),
-      plan,
-      materials,
-    );
+    syncPeople(handles, state({ people: [{ id: "p1", label: "A", room: "away" }] }), plan);
     const figure = handles.people.get("p1");
     expect(figure?.visible).toBe(true);
     expect(figure?.position.x).toBeCloseTo(plan.awaySpot[0]);
@@ -486,7 +507,7 @@ describe("the people", () => {
   it("hides someone Sowel puts somewhere the plan does not know", () => {
     // Better an absent figure than one standing at the origin for no reason.
     const handles = build(0);
-    syncPeople(handles, state({ people: [{ id: "p1", label: "A", room: null }] }), plan, materials);
+    syncPeople(handles, state({ people: [{ id: "p1", label: "A", room: null }] }), plan);
     expect(handles.people.get("p1")?.visible).toBe(false);
   });
 
@@ -494,47 +515,27 @@ describe("the people", () => {
     // A figure that has just appeared should not slide across the house from the
     // origin; one that already exists is walked to its new room by the renderer.
     const handles = build(0);
-    syncPeople(
-      handles,
-      state({ people: [{ id: "p1", label: "A", room: "sejour" }] }),
-      plan,
-      materials,
-    );
+    syncPeople(handles, state({ people: [{ id: "p1", label: "A", room: "sejour" }] }), plan);
     const figure = handles.people.get("p1");
     const before = figure?.position.clone();
-    syncPeople(
-      handles,
-      state({ people: [{ id: "p1", label: "A", room: "cuisine" }] }),
-      plan,
-      materials,
-    );
+    syncPeople(handles, state({ people: [{ id: "p1", label: "A", room: "cuisine" }] }), plan);
     expect(handles.people.get("p1")?.position.x).toBeCloseTo(before?.x ?? -1);
   });
 
   it("reuses a figure rather than making a second one", () => {
     const handles = build(0);
     const one = state({ people: [{ id: "p1", label: "A", room: "sejour" }] });
-    syncPeople(handles, one, plan, materials);
+    syncPeople(handles, one, plan);
     const figure = handles.people.get("p1");
-    syncPeople(
-      handles,
-      { ...one, people: [{ id: "p1", label: "A", room: "cuisine" }] },
-      plan,
-      materials,
-    );
+    syncPeople(handles, { ...one, people: [{ id: "p1", label: "A", room: "cuisine" }] }, plan);
     expect(handles.people.get("p1")).toBe(figure);
     expect(handles.people.size).toBe(1);
   });
 
   it("stops drawing somebody Sowel has stopped reporting", () => {
     const handles = build(0);
-    syncPeople(
-      handles,
-      state({ people: [{ id: "p1", label: "A", room: "sejour" }] }),
-      plan,
-      materials,
-    );
-    syncPeople(handles, state({ people: [] }), plan, materials);
+    syncPeople(handles, state({ people: [{ id: "p1", label: "A", room: "sejour" }] }), plan);
+    syncPeople(handles, state({ people: [] }), plan);
     expect(handles.people.get("p1")?.visible).toBe(false);
   });
 });

@@ -18,6 +18,33 @@ describe("the way through the house (spec 005)", () => {
     }
   });
 
+  it("never goes out of the house between two rooms inside it", () => {
+    // The owner's walk of 2026-09-27: from the living room to child's room 2 the
+    // figure went round by the garden, because the stairs' foot could only be
+    // reached from the hall. Every indoor pair, both ways — but the garage, whose
+    // gate opens on the garden: from the office, out of the front door and in by
+    // the gate is simply shorter than through the house, and that is right.
+    const indoor = plan.rooms
+      .filter((r) => !r.ground && r.level !== null && r.id !== "garage")
+      .map((r) => r.id);
+    for (const from of indoor) {
+      for (const to of indoor) {
+        if (from === to) continue;
+        expect(entered(from, to), `${from} → ${to}`).not.toContain("away");
+      }
+    }
+  });
+
+  it("takes the living room to child's room 2 by the stairwell, and not far", () => {
+    const points = route(plan, "sejour", "chambre-enfant-2") ?? [];
+    let metres = 0;
+    for (let i = 1; i < points.length; i++) {
+      metres += Math.hypot(points[i].x - points[i - 1].x, points[i].z - points[i - 1].z);
+    }
+    expect(entered("sejour", "chambre-enfant-2")).toEqual(["escalier", "chambre-enfant-2"]);
+    expect(metres).toBeLessThan(25);
+  });
+
   it("walks in through the hall and up the stairs to the bathroom", () => {
     expect(entered("away", "salle-de-bain")).toEqual(["entree", "escalier", "salle-de-bain"]);
     const points = route(plan, "away", "salle-de-bain") ?? [];

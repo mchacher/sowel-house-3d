@@ -47,9 +47,10 @@ const house: HouseSpec = {
       z: 0,
       w: 10.5,
       d: 9.5,
-      // Over the stairs only — the U in the north half of the stairwell — so the band
-      // south of it is the upstairs landing, joining the two wings (2026-09-27).
-      hole: { x: 3.5, z: 2.5, w: 3, d: 1.5 },
+      // Over the stairs only — the U in the north-east of the stairwell — so the band
+      // south of it is the upstairs landing, joining the two wings, and the strip
+      // west of it is where the stairs arrive (2026-09-27, twice).
+      hole: { x: 4.25, z: 2.5, w: 2.25, d: 1.5 },
     },
   ],
 
@@ -104,7 +105,8 @@ const house: HouseSpec = {
       z: 2.5,
       w: 3,
       d: 2.5,
-      spot: [4.4, 3.2],
+      // On the free band, not under the flights.
+      spot: [4.8, 4.5],
     },
     {
       id: "cuisine",
@@ -425,8 +427,9 @@ const house: HouseSpec = {
     },
     // Doorways.
     { room: "bureau", side: "E", at: 1.2, w: 0.9, to: "entree" },
-    // From the hall straight onto the first flight, at its foot.
-    { room: "escalier", side: "N", at: 0.4, w: 0.8, to: "entree" },
+    // From the hall into the aisle west of the flights, which leads to the foot of
+    // the stairs and on to the band by the living room.
+    { room: "escalier", side: "N", at: 0.4, w: 0.7, to: "entree" },
     // From the passage by the WC onto the free band south of the stairs.
     { room: "escalier", side: "W", at: 2.0, w: 0.9 },
     { room: "wc", side: "E", at: 1.2, w: 0.7 },
@@ -457,20 +460,27 @@ const house: HouseSpec = {
   stairs: [
     {
       level: 0,
-      // A U in the north half of the stairwell: east along the hall's wall, a half
-      // landing against the east wall, back west to arrive upstairs by the bathroom.
+      // A U in the north-east of the stairwell: east from its foot, a half landing
+      // against the east wall, back west to arrive upstairs above the hall.
+      //
       // The first design ran the second flight along the south, and its opening
       // took the whole middle of the upper floor: the children's rooms opened onto
-      // the void, with no landing between the wings. The band south of the U is now
-      // that landing upstairs, and free floor downstairs.
+      // the void, with no landing between the wings. The second filled the north
+      // half wall to wall, the first flight against the hall: the hall's door opened
+      // onto its first step, and from the living room the foot could not be reached
+      // at all — the upper flight stood in the way, 1.3 m off the floor — so the
+      // figure went round by the garden to the front door (owner's walk,
+      // 2026-09-27). Now the flights are 1.75 m (seven steps, 25 cm treads), which
+      // leaves an aisle on the west from the hall's door to the band by the living
+      // room; and the first flight is the south one, its foot on that aisle.
       runs: [
-        { axis: "x", direction: 1, x: 3.5, z: 2.5, w: 2.5, d: 0.75, y0: 0, y1: UPSTAIRS / 2 },
+        { axis: "x", direction: 1, x: 4.25, z: 3.25, w: 1.75, d: 0.75, y0: 0, y1: UPSTAIRS / 2 },
         {
           axis: "x",
           direction: -1,
-          x: 3.5,
-          z: 3.25,
-          w: 2.5,
+          x: 4.25,
+          z: 2.5,
+          w: 1.75,
           d: 0.75,
           y0: UPSTAIRS / 2,
           y1: UPSTAIRS,

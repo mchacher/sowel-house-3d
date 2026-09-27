@@ -1,5 +1,6 @@
 /**
- * The visitor's figure (spec 005, FR1).
+ * The figures: the visitor's (spec 005, FR1), and the household's (spec 005,
+ * amended 2026-09-27) — the same figurine in other colours, without the ring.
  *
  * A toy-like figurine, and a generic one: a large round head, a cylindrical body,
  * short legs, arms as rounded sticks, a face of two dots. None of a known toy's
@@ -29,6 +30,36 @@ import {
  */
 const SCALE = 1.35;
 
+/** What tells one figurine from another. */
+export interface FigureStyle {
+  top: number;
+  trousers: number;
+  /** Relative to the toy's own proportions. */
+  scale: number;
+  /** The amber ring at its feet: the visitor's, and only the visitor's. */
+  ring: boolean;
+}
+
+/**
+ * The household's colours: calm, told apart from each other, and never the
+ * visitor's amber. Chosen by the occupant's id, so a person keeps theirs.
+ */
+const HOUSEHOLD_TOPS = [0x3f8f8a, 0xc8674f, 0x7a6fb0, 0x5f9a4f, 0xb0617f];
+const HOUSEHOLD_TROUSERS = [0x2f3e4a, 0x4a4033, 0x33404f];
+
+export function householdStyle(id: string, label: string): FigureStyle {
+  let hash = 0;
+  for (const c of id) hash = (hash * 31 + c.charCodeAt(0)) >>> 0;
+  // A child is a size smaller; the label is the only thing Sowel says about it.
+  const child = /enfant|child|kid/i.test(label);
+  return {
+    top: HOUSEHOLD_TOPS[hash % HOUSEHOLD_TOPS.length],
+    trousers: HOUSEHOLD_TROUSERS[(hash >>> 3) % HOUSEHOLD_TROUSERS.length],
+    scale: child ? 1.0 : 1.2,
+    ring: false,
+  };
+}
+
 export interface VisitorFigure {
   root: Group;
   leftLeg: Object3D;
@@ -39,6 +70,8 @@ export interface VisitorFigure {
 
 const AMBER = 0xf2c035;
 const OCEAN = 0x1a4f6e;
+
+const VISITOR_STYLE: FigureStyle = { top: AMBER, trousers: OCEAN, scale: SCALE, ring: true };
 const SKIN = 0xf1cfae;
 const DARK = 0x22313b;
 
@@ -53,8 +86,12 @@ function limb(radius: number, length: number, material: MeshStandardMaterial): G
 }
 
 export function buildVisitor(): VisitorFigure {
-  const top = new MeshStandardMaterial({ color: AMBER, roughness: 0.55 });
-  const trousers = new MeshStandardMaterial({ color: OCEAN, roughness: 0.6 });
+  return buildFigure(VISITOR_STYLE);
+}
+
+export function buildFigure(style: FigureStyle): VisitorFigure {
+  const top = new MeshStandardMaterial({ color: style.top, roughness: 0.55 });
+  const trousers = new MeshStandardMaterial({ color: style.trousers, roughness: 0.6 });
   const skin = new MeshStandardMaterial({ color: SKIN, roughness: 0.7 });
   const dark = new MeshStandardMaterial({ color: DARK, roughness: 0.6 });
 
@@ -87,7 +124,10 @@ export function buildVisitor(): VisitorFigure {
   for (const mesh of [hips, body, head]) mesh.castShadow = true;
   const figure = new Group();
   figure.add(leftLeg, rightLeg, hips, body, leftArm, rightArm, head, eye(-0.06), eye(0.06));
-  figure.scale.setScalar(SCALE);
+  figure.scale.setScalar(style.scale);
+  root.add(figure);
+  const handles = { root, leftLeg, rightLeg, leftArm, rightArm };
+  if (!style.ring) return handles;
 
   // Where the visitor is, on the floor: seen through a ghosted storey too.
   const ring = new Mesh(
@@ -96,8 +136,8 @@ export function buildVisitor(): VisitorFigure {
   );
   ring.rotation.x = -Math.PI / 2;
   ring.position.y = 0.03;
-  root.add(figure, ring);
-  return { root, leftLeg, rightLeg, leftArm, rightArm };
+  root.add(ring);
+  return handles;
 }
 
 /** The walk cycle: legs and arms swinging by the distance walked; still when stopped. */
