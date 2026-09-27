@@ -5,6 +5,7 @@ import {
   buildHouse,
   focusLevel,
   LIFT_OPEN_SCALE,
+  animateFans,
   animateWater,
   setDrop,
   SWING_OPEN_RAD,
@@ -49,6 +50,7 @@ function state(overrides: Partial<SceneState> = {}): SceneState {
   }
   return {
     rooms,
+    heatPump: null,
     people: [],
     sky: {
       elevationDeg: 40,
@@ -799,5 +801,26 @@ describe("the sun in the sky (spec 004)", () => {
     expect(handle.path.visible).toBe(true);
     const count = handle.path.geometry.getAttribute("position").count;
     expect(handle.travelled.geometry.drawRange.count).toBe(Math.floor(0.5 * (count - 1)) + 1);
+  });
+});
+
+describe("the heat pump's fan (spec 002, amended 2026-09-27)", () => {
+  it("turns while the heat pump runs, and runs down when it stops", () => {
+    const handles = build();
+    expect(handles.fans).toHaveLength(1);
+    const fan = handles.fans[0];
+
+    applyState(handles, state({ heatPump: true }), materials);
+    const before = fan.blades.rotation.z;
+    for (let i = 0; i < 60; i++) animateFans(handles, 1 / 30);
+    expect(fan.speed).toBeGreaterThan(0.9);
+    expect(fan.blades.rotation.z).not.toBe(before);
+
+    applyState(handles, state({ heatPump: false }), materials);
+    for (let i = 0; i < 300; i++) animateFans(handles, 1 / 30);
+    expect(fan.speed).toBeLessThan(0.01);
+    const still = fan.blades.rotation.z;
+    animateFans(handles, 1 / 30);
+    expect(Math.abs(fan.blades.rotation.z - still)).toBeLessThan(0.001);
   });
 });

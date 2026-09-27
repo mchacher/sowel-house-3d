@@ -23,6 +23,8 @@ export interface Mapping {
   gates?: Record<string, string>;
   /** Watering group (a bed's `watering`) → the valve equipment, by name. */
   watering?: Record<string, string>;
+  /** The house's heat pump, by name: its outdoor unit's fan turns while it runs. */
+  heatPump?: string;
   /**
    * Plan room id → names of its equipments, in the order the plan lists what they
    * pair with: its fixtures for lamps, its windows for shutters. Without it they

@@ -400,8 +400,11 @@ function buildLamp(
   }
 }
 
-/** The machines outside: a box, and a fan or a filter to say what it is. */
-function buildMachine(machine: Machine, materials: Materials, group: Group): void {
+/**
+ * The machines outside: a box, and a fan or a filter to say what it is. Returns the
+ * heat pump's fan blades, which turn while it runs; null for anything else.
+ */
+function buildMachine(machine: Machine, materials: Materials, group: Group): Group | null {
   const [fx, fz] = FACING[machine.face];
   // Built facing +z and turned to its face: +z goes to (fx, fz).
   const unit = new Group();
@@ -418,7 +421,7 @@ function buildMachine(machine: Machine, materials: Materials, group: Group): voi
   if (machine.kind === "pool-pump") {
     add(box(0.45, 0.35, 0.35, materials.metal), 0, 0.175, 0);
     add(new Mesh(new CylinderGeometry(0.18, 0.18, 0.62, 14), materials.white), 0.4, 0.31, -0.05);
-    return;
+    return null;
   }
 
   // An outdoor unit, the way everybody pictures a heat pump: a white casing on two
@@ -443,6 +446,21 @@ function buildMachine(machine: Machine, materials: Materials, group: Group): voi
     face + 0.01,
   );
   hub.rotation.x = Math.PI / 2;
+  // Three blades between the disc and the grille, turning about the face's normal
+  // (+z, before the unit is turned to its face). Light against the dark disc, so a
+  // turning fan reads as one from the garden.
+  const blades = new Group();
+  blades.position.set(fanX, cy, face + 0.012);
+  for (let i = 0; i < 3; i++) {
+    const arm = new Group();
+    arm.rotation.z = (i * 2 * Math.PI) / 3;
+    const blade = box(r * 0.8, r * 0.28, 0.008, materials.metal);
+    blade.position.x = r * 0.48;
+    blade.rotation.x = 0.35;
+    arm.add(blade);
+    blades.add(arm);
+  }
+  unit.add(blades);
   add(new Mesh(new TorusGeometry(r, 0.012, 6, 32), materials.metal), fanX, cy, face + 0.02);
   add(new Mesh(new TorusGeometry(r * 0.6, 0.008, 6, 24), materials.metal), fanX, cy, face + 0.02);
   add(box(2 * r, 0.012, 0.012, materials.metal), fanX, cy, face + 0.02);
@@ -451,6 +469,20 @@ function buildMachine(machine: Machine, materials: Materials, group: Group): voi
   const louvreW = w / 2 - (fanX + r) - 0.08;
   for (let i = 0; i < 5; i++) {
     add(box(louvreW, 0.018, 0.012, materials.dark), louvreX, lift + 0.2 + i * 0.07, face + 0.004);
+  }
+  return machine.kind === "heat-pump" ? blades : null;
+}
+
+/** Full speed of the heat pump's fan, radians per second, and how fast it gets there. */
+const FAN_RAD_PER_S = 9;
+const FAN_EASE_PER_S = 0.6;
+
+/** Turn the fans: towards full speed while the heat pump runs, down to still when not. */
+export function animateFans(handles: HouseHandles, dt: number): void {
+  const k = 1 - Math.exp(-dt * FAN_EASE_PER_S * 3);
+  for (const fan of handles.fans) {
+    fan.speed += ((fan.running ? 1 : 0) - fan.speed) * k;
+    if (fan.speed > 0.001) fan.blades.rotation.z -= fan.speed * FAN_RAD_PER_S * dt;
   }
 }
 
@@ -532,6 +564,12 @@ export interface HouseHandles {
   pools: Map<string, PoolFlow>;
   /** The sprinkler jets of each watering group, shown while the valve is open. */
   watering: Map<string, Object3D[]>;
+  /**
+   * The heat pump's fan blades, turning while it runs (spec 002, amended
+   * 2026-09-27). `running` is what Sowel says; `speed` eases towards it, so the fan
+   * spins up and runs down rather than jumping.
+   */
+  fans: { blades: Group; running: boolean; speed: number }[];
   /** Per room: its window panes, lit from outside when a lamp in the room is on. */
   panes: Map<string, Mesh[]>;
   /** Per room, in plan order of its `door:` and `gate:` openings. */
@@ -606,6 +644,7 @@ export function buildHouse(options: BuildHouseOptions): HouseHandles {
     covers: new Map(),
     pools: new Map(),
     watering: new Map(),
+    fans: [],
     panes: new Map(),
     doors: new Map(),
     roof: null,
@@ -912,7 +951,10 @@ function buildOutdoors(
     if (lamps.length > 0) handles.lamps.set(room.id, lamps);
   }
 
-  for (const machine of plan.machines ?? []) buildMachine(machine, materials, group);
+  for (const machine of plan.machines ?? []) {
+    const blades = buildMachine(machine, materials, group);
+    if (blades) handles.fans.push({ blades, running: false, speed: 0 });
+  }
 }
 
 function buildLevel(
@@ -1588,6 +1630,11 @@ export function applyState(
   for (const [group, jets] of handles.watering) {
     const on = state.garden.watering[group] ?? false;
     for (const jet of jets) jet.visible = on;
+  }
+
+  for (const fan of handles.fans) {
+    fan.running = state.heatPump === true;
+    if (immediate) fan.speed = fan.running ? 1 : 0;
   }
 
   for (const [roomId, shutters] of handles.shutters) {

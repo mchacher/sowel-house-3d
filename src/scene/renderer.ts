@@ -31,6 +31,7 @@ import {
   focusLevel,
   syncPeople,
   LIFT_OPEN_SCALE,
+  animateFans,
   animateWater,
   setDrop,
   type Counts,
@@ -481,6 +482,7 @@ export class HouseRenderer {
     this.time += dt;
     this.stepVisitor(dt);
     animateWater(this.handles, this.time);
+    animateFans(this.handles, dt);
     for (const entry of this.state?.people ?? []) {
       const figure = this.handles.people.get(entry.id);
       if (!figure) continue;

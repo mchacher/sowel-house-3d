@@ -81,6 +81,8 @@ export interface Derived {
   watering: Record<string, Equipment | null>;
   /** The root zone, whose aggregation carries the house's sunlight. */
   houseZoneId: string | null;
+  /** The house's heat pump, as the mapping names it; null when it names none. */
+  heatPump: Equipment | null;
   problems: string[];
 }
 
@@ -291,6 +293,18 @@ export function derive(
   };
   const gates = named(mapping.gates, "Portail");
   const watering = named(mapping.watering, "Vanne");
+  const heatPump = mapping.heatPump
+    ? (named({ heatPump: mapping.heatPump }, "Pompe à chaleur").heatPump ?? null)
+    : null;
 
-  return { rooms, people, weather, gates, watering, houseZoneId: root?.id ?? null, problems };
+  return {
+    rooms,
+    people,
+    weather,
+    gates,
+    watering,
+    heatPump,
+    houseZoneId: root?.id ?? null,
+    problems,
+  };
 }

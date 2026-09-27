@@ -198,3 +198,17 @@ against the east wall, back west to arrive by the bathroom — and the opening s
 to that U. The band south of it is the upstairs landing, joining the two wings, and
 free floor downstairs. The hall's door to the stairs moves to the foot of the first
 flight; the passage by the WC opens onto the free band.
+
+## Amendment — 2026-09-27: the heat pump’s fan turns; a radiator is warm when it heats
+
+For the showroom's second guided journeys (showroom spec 004), where a visitor
+lets the cold into the office and the heat pump starts:
+
+- The mapping may name the house's heat pump (`heatPump: "PAC"`). Its outdoor
+  unit's fan turns while the pump's run state (`state`) is true, spinning up and
+  running down rather than jumping. No name, no binding: the fan stays still and
+  nothing is reported.
+- A radiator is drawn warm on its `heating` binding when it has one, its `state`
+  otherwise. On a pilot wire the relay signals eco or comfort, not warmth
+  (simulator spec 001, amended the same day); read as warmth, a child's room
+  glowed in eco and went cold in comfort.
