@@ -14,6 +14,7 @@
  * things are.
  */
 
+import { buildFigure, householdStyle } from "./visitor.ts";
 import {
   BoxGeometry,
   Color,
@@ -592,17 +593,16 @@ function at(mesh: Mesh | Group, x: number, y: number, z: number): Mesh | Group {
   return mesh;
 }
 
-/** A figure simple enough to read at a glance and cheap enough to have five of. */
-function person(materials: Materials): Group {
-  const group = new Group();
-  const body = new Mesh(new CylinderGeometry(0.16, 0.2, 0.9, 10), materials.person);
-  body.position.y = 0.45;
-  body.castShadow = true;
-  const head = new Mesh(new SphereGeometry(0.13, 12, 10), materials.person);
-  head.position.y = 1.05;
-  head.castShadow = true;
-  group.add(body, head);
-  return group;
+/**
+ * A member of the household: the visitor's figurine in their own colours, without
+ * the ring (spec 005, amended 2026-09-27). The figure's limbs ride on the root's
+ * `userData.figure`, so the renderer can walk it.
+ */
+function person(id: string, label: string): Group {
+  const figure = buildFigure(householdStyle(id, label));
+  figure.root.name = `person:${id}`;
+  figure.root.userData.figure = figure;
+  return figure.root;
 }
 
 export interface BuildHouseOptions {
@@ -1537,27 +1537,21 @@ export function focusLevel(handles: HouseHandles, focus: Focus): void {
  * position and is walked there by the renderer's easing. Otherwise somebody who has
  * just appeared slides across the house from the origin.
  */
-export function syncPeople(
-  handles: HouseHandles,
-  state: SceneState,
-  plan: Plan,
-  materials: Materials,
-): void {
+export function syncPeople(handles: HouseHandles, state: SceneState, plan: Plan): void {
   for (const entry of state.people) {
     let figure = handles.people.get(entry.id);
     const isNew = !figure;
     if (!figure) {
-      figure = person(materials);
+      figure = person(entry.id, entry.label);
       handles.people.set(entry.id, figure);
       handles.root.add(figure);
     }
     const room = entry.room ? handles.rooms.get(entry.room) : undefined;
     const spot = room ? room.spot : plan.awaySpot;
     figure.visible = entry.room !== null;
-    // Height is set outright, never eased: somebody going upstairs should appear
-    // upstairs, not glide up through the ceiling.
-    figure.position.y = levelElevation(plan, room?.level ?? null);
-    if (isNew) figure.position.set(spot[0], figure.position.y, spot[1]);
+    // Placed on arrival only; after that the renderer walks them from room to room
+    // along the doors and the stairs, as it walks the visitor.
+    if (isNew) figure.position.set(spot[0], levelElevation(plan, room?.level ?? null), spot[1]);
   }
   // Somebody Sowel has stopped reporting stops being drawn.
   for (const [id, figure] of handles.people) {

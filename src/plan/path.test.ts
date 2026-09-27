@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import showroomPlan from "../../public/plans/showroom.json";
 import { furnitureFor, levelElevation, pieceBox, wallPieces } from "../scene/geometry.ts";
 import { Walk } from "../scene/walk.ts";
-import { focusAt, route } from "./path.ts";
+import { focusAt, placeInRoom, route } from "./path.ts";
 import type { Plan } from "./types.ts";
 
 const plan = showroomPlan as unknown as Plan;
@@ -16,6 +16,33 @@ describe("the way through the house (spec 005)", () => {
       const seen = entered("away", room.id);
       expect(seen[seen.length - 1], room.id).toBe(room.id);
     }
+  });
+
+  it("never goes out of the house between two rooms inside it", () => {
+    // The owner's walk of 2026-09-27: from the living room to child's room 2 the
+    // figure went round by the garden, because the stairs' foot could only be
+    // reached from the hall. Every indoor pair, both ways — but the garage, whose
+    // gate opens on the garden: from the office, out of the front door and in by
+    // the gate is simply shorter than through the house, and that is right.
+    const indoor = plan.rooms
+      .filter((r) => !r.ground && r.level !== null && r.id !== "garage")
+      .map((r) => r.id);
+    for (const from of indoor) {
+      for (const to of indoor) {
+        if (from === to) continue;
+        expect(entered(from, to), `${from} → ${to}`).not.toContain("away");
+      }
+    }
+  });
+
+  it("takes the living room to child's room 2 by the stairwell, and not far", () => {
+    const points = route(plan, "sejour", "chambre-enfant-2") ?? [];
+    let metres = 0;
+    for (let i = 1; i < points.length; i++) {
+      metres += Math.hypot(points[i].x - points[i - 1].x, points[i].z - points[i - 1].z);
+    }
+    expect(entered("sejour", "chambre-enfant-2")).toEqual(["escalier", "chambre-enfant-2"]);
+    expect(metres).toBeLessThan(25);
   });
 
   it("walks in through the hall and up the stairs to the bathroom", () => {
@@ -140,5 +167,24 @@ describe("what is shown for the figure (spec 005, FR4, amended)", () => {
       if (step.done) break;
     }
     expect(seen).toEqual(["outside", 0, 1]);
+  });
+});
+
+describe("the household's places in a room (spec 005, amended 2026-09-27)", () => {
+  it("stands five people in the living room apart, and off the visitor's place", () => {
+    const places = [0, 1, 2, 3, 4].map((slot) => placeInRoom(plan, "sejour", slot));
+    for (let i = 0; i < places.length; i++) {
+      for (let j = i + 1; j < places.length; j++) {
+        const apart = Math.hypot(places[i].x - places[j].x, places[i].z - places[j].z);
+        expect(apart, `slots ${i} and ${j}`).toBeGreaterThan(0.45);
+      }
+    }
+    // The visitor walks to beside the spot, south-east of it.
+    const visitor = (route(plan, "away", "sejour") ?? []).at(-1);
+    for (const place of places) {
+      expect(Math.hypot(place.x - (visitor?.x ?? 0), place.z - (visitor?.z ?? 0))).toBeGreaterThan(
+        0.45,
+      );
+    }
   });
 });

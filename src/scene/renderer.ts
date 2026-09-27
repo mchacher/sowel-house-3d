@@ -43,7 +43,7 @@ import { makeMaterials, PALETTE, type Materials } from "./materials.ts";
 import { buildCompass, buildSky, placeSky, type SkyHandle } from "./sky.ts";
 import { buildVisitor, pose, type VisitorFigure } from "./visitor.ts";
 import { Walk } from "./walk.ts";
-import { focusAt, route } from "../plan/path.ts";
+import { focusAt, placeInRoom, route, SLOT_COUNT } from "../plan/path.ts";
 import type { Lang } from "../i18n.ts";
 
 /** How fast a shutter and a figure catch up with what Sowel said, per second. */
@@ -91,6 +91,22 @@ export class HouseRenderer {
   private visitor: VisitorFigure | null = null;
   private walk: Walk | null = null;
   private visitorRoom: string | null = null;
+  /** The household's walks, per person: where they were last sent, and the way. */
+  private householdWalks = new Map<
+    string,
+    { target: string | null; slot: number; walk: Walk | null }
+  >();
+
+  /** The first place in `room` no other member of the household holds. */
+  private freeSlot(room: string | null, except: string): number {
+    const taken = new Set(
+      [...this.householdWalks]
+        .filter(([id, s]) => id !== except && s.target === room)
+        .map(([, s]) => s.slot),
+    );
+    for (let slot = 0; slot < SLOT_COUNT; slot++) if (!taken.has(slot)) return slot;
+    return taken.size % SLOT_COUNT;
+  }
   /** Told each room the figure walks into — the app moves the visitor's ghost there. */
   onVisitorEnter: ((room: string) => void) | null = null;
   /** Whether the view follows the figure (spec 005, FR4): during a walk, until the visitor picks a storey. */
@@ -255,7 +271,7 @@ export class HouseRenderer {
     // The first state after a build snaps: a freshly opened scene should already be
     // right rather than sliding into place from nowhere.
     applyState(this.handles, state, this.materials, first);
-    syncPeople(this.handles, state, this.plan, this.materials);
+    syncPeople(this.handles, state, this.plan);
     this.placeSun(state);
   }
 
@@ -282,7 +298,7 @@ export class HouseRenderer {
       // A rebuild is a new graph, so it snaps too — switching storey should not
       // show every shutter rolling down.
       applyState(this.handles, this.state, this.materials, true);
-      syncPeople(this.handles, this.state, this.plan, this.materials);
+      syncPeople(this.handles, this.state, this.plan);
       this.placeSun(this.state);
     }
 
@@ -446,6 +462,54 @@ export class HouseRenderer {
     }
   }
 
+  /**
+   * The household walks from room to room the way the visitor does — the doors,
+   * the stairs, around the furniture (spec 005, amended 2026-09-27) — rather than
+   * sliding there in a straight line through the walls.
+   */
+  private stepHousehold(dt: number): void {
+    if (!this.handles) return;
+    for (const entry of this.state?.people ?? []) {
+      const root = this.handles.people.get(entry.id);
+      if (!root) continue;
+      let state = this.householdWalks.get(entry.id);
+      if (!state) {
+        // First seen: stood in their own place in the room Sowel says, no walk.
+        const slot = this.freeSlot(entry.room, entry.id);
+        state = { target: entry.room, slot, walk: null };
+        this.householdWalks.set(entry.id, state);
+        if (entry.room) {
+          const place = placeInRoom(this.plan, entry.room, slot);
+          root.position.set(place.x, place.y, place.z);
+        }
+      }
+      if (entry.room !== state.target) {
+        state.target = entry.room;
+        state.slot = this.freeSlot(entry.room, entry.id);
+        const place = entry.room ? placeInRoom(this.plan, entry.room, state.slot) : null;
+        const points =
+          entry.room && place
+            ? route(
+                this.plan,
+                { x: root.position.x, y: root.position.y, z: root.position.z },
+                entry.room,
+                { x: place.x, z: place.z },
+              )
+            : null;
+        state.walk = points && points.length > 1 ? new Walk(points) : null;
+        // No way found: be there, rather than stand in the wrong room.
+        if (!state.walk && place) root.position.set(place.x, place.y, place.z);
+      }
+      if (!state.walk) continue;
+      const step = state.walk.step(dt);
+      root.position.set(...step.position);
+      root.rotation.y = step.heading;
+      const figure = root.userData.figure as VisitorFigure | undefined;
+      if (figure) pose(figure, step.distance, !step.done);
+      if (step.done) state.walk = null;
+    }
+  }
+
   private ease(dt: number): void {
     if (!this.handles) return;
     const k = 1 - Math.exp(-EASE_PER_SECOND * dt);
@@ -483,13 +547,6 @@ export class HouseRenderer {
     this.stepVisitor(dt);
     animateWater(this.handles, this.time);
     animateFans(this.handles, dt);
-    for (const entry of this.state?.people ?? []) {
-      const figure = this.handles.people.get(entry.id);
-      if (!figure) continue;
-      const room = entry.room ? this.handles.rooms.get(entry.room) : undefined;
-      const spot = room ? room.spot : this.plan.awaySpot;
-      figure.position.x += (spot[0] - figure.position.x) * k;
-      figure.position.z += (spot[1] - figure.position.z) * k;
-    }
+    this.stepHousehold(dt);
   }
 }

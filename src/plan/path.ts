@@ -48,10 +48,46 @@ function levelOfRoom(plan: Plan, id: string): number {
   return plan.rooms.find((r) => r.id === id)?.level ?? 0;
 }
 
-/** Where the figure stands in a room: beside its spot. */
-function standingPoint(plan: Plan, id: string): Point {
+/**
+ * Where the household stand in a room: their own place around its spot, so five
+ * people in the living room are five figures, not one with its heads stacked
+ * (spec 005, amended 2026-09-27). A first ring, then a wider one; the visitor's
+ * side of the spot (`BESIDE`, south-east) is left to the visitor.
+ */
+const SLOTS: [number, number][] = [
+  ...[90, 150, 210, 270, 330].map((deg) => [0.7, deg] as [number, number]),
+  ...[120, 180, 240, 300].map((deg) => [1.2, deg] as [number, number]),
+];
+export const SLOT_COUNT = SLOTS.length;
+
+/** A household member's place in a room, on the floor it can stand on. */
+export function placeInRoom(plan: Plan, id: string, slot: number): Waypoint {
+  const room = plan.rooms.find((r) => r.id === id);
+  const level = levelOfRoom(plan, id);
+  const base = standingPoint(plan, id === AWAY || !room ? AWAY : id, false);
+  const [radius, deg] = SLOTS[slot % SLOTS.length];
+  const wanted =
+    id === AWAY || !room
+      ? base
+      : {
+          x: Math.min(
+            room.x + room.w - 0.4,
+            Math.max(room.x + 0.4, room.spot[0] + radius * Math.cos((deg * Math.PI) / 180)),
+          ),
+          z: Math.min(
+            room.z + room.d - 0.4,
+            Math.max(room.z + 0.4, room.spot[1] + radius * Math.sin((deg * Math.PI) / 180)),
+          ),
+        };
+  const free = freePoint(gridFor(plan, level), wanted);
+  return { x: free.x, y: levelElevation(plan, level), z: free.z };
+}
+
+/** Where the figure stands in a room: beside its spot, or on it. */
+function standingPoint(plan: Plan, id: string, beside = true): Point {
   const room = plan.rooms.find((r) => r.id === id);
   if (id === AWAY || !room) return { x: plan.awaySpot[0], z: plan.awaySpot[1] };
+  if (!beside) return { x: room.spot[0], z: room.spot[1] };
   return {
     x: Math.min(room.x + room.w - 0.4, Math.max(room.x + 0.4, room.spot[0] + BESIDE.x)),
     z: Math.min(room.z + room.d - 0.4, Math.max(room.z + 0.4, room.spot[1] + BESIDE.z)),
@@ -189,6 +225,8 @@ export function route(
   plan: Plan,
   from: string | { x: number; y: number; z: number },
   to: string,
+  /** Where in `to` to stop, when not beside its spot: a household member's place. */
+  at?: Point,
 ): Waypoint[] | null {
   if (to !== AWAY && !plan.rooms.some((r) => r.id === to)) return null;
   const start: Waypoint =
@@ -197,7 +235,7 @@ export function route(
       : { x: from.x, y: from.y, z: from.z };
   const startLevel = Math.round(start.y / storeyPitch(plan));
   const startRoom = typeof from === "string" ? from : presence(plan, start);
-  const target = standingPoint(plan, to);
+  const target = at ?? standingPoint(plan, to);
   const targetLevel = levelOfRoom(plan, to);
 
   let points: Waypoint[] | null;
