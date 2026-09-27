@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import showroomPlan from "../../public/plans/showroom.json";
 import { furnitureFor, levelElevation, pieceBox, wallPieces } from "../scene/geometry.ts";
 import { Walk } from "../scene/walk.ts";
-import { focusAt, route } from "./path.ts";
+import { focusAt, placeInRoom, route } from "./path.ts";
 import type { Plan } from "./types.ts";
 
 const plan = showroomPlan as unknown as Plan;
@@ -167,5 +167,24 @@ describe("what is shown for the figure (spec 005, FR4, amended)", () => {
       if (step.done) break;
     }
     expect(seen).toEqual(["outside", 0, 1]);
+  });
+});
+
+describe("the household's places in a room (spec 005, amended 2026-09-27)", () => {
+  it("stands five people in the living room apart, and off the visitor's place", () => {
+    const places = [0, 1, 2, 3, 4].map((slot) => placeInRoom(plan, "sejour", slot));
+    for (let i = 0; i < places.length; i++) {
+      for (let j = i + 1; j < places.length; j++) {
+        const apart = Math.hypot(places[i].x - places[j].x, places[i].z - places[j].z);
+        expect(apart, `slots ${i} and ${j}`).toBeGreaterThan(0.45);
+      }
+    }
+    // The visitor walks to beside the spot, south-east of it.
+    const visitor = (route(plan, "away", "sejour") ?? []).at(-1);
+    for (const place of places) {
+      expect(Math.hypot(place.x - (visitor?.x ?? 0), place.z - (visitor?.z ?? 0))).toBeGreaterThan(
+        0.45,
+      );
+    }
   });
 });

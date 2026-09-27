@@ -43,7 +43,7 @@ import { makeMaterials, PALETTE, type Materials } from "./materials.ts";
 import { buildCompass, buildSky, placeSky, type SkyHandle } from "./sky.ts";
 import { buildVisitor, pose, type VisitorFigure } from "./visitor.ts";
 import { Walk } from "./walk.ts";
-import { focusAt, route } from "../plan/path.ts";
+import { focusAt, placeInRoom, route, SLOT_COUNT } from "../plan/path.ts";
 import type { Lang } from "../i18n.ts";
 
 /** How fast a shutter and a figure catch up with what Sowel said, per second. */
@@ -92,7 +92,21 @@ export class HouseRenderer {
   private walk: Walk | null = null;
   private visitorRoom: string | null = null;
   /** The household's walks, per person: where they were last sent, and the way. */
-  private householdWalks = new Map<string, { target: string | null; walk: Walk | null }>();
+  private householdWalks = new Map<
+    string,
+    { target: string | null; slot: number; walk: Walk | null }
+  >();
+
+  /** The first place in `room` no other member of the household holds. */
+  private freeSlot(room: string | null, except: string): number {
+    const taken = new Set(
+      [...this.householdWalks]
+        .filter(([id, s]) => id !== except && s.target === room)
+        .map(([, s]) => s.slot),
+    );
+    for (let slot = 0; slot < SLOT_COUNT; slot++) if (!taken.has(slot)) return slot;
+    return taken.size % SLOT_COUNT;
+  }
   /** Told each room the figure walks into — the app moves the visitor's ghost there. */
   onVisitorEnter: ((room: string) => void) | null = null;
   /** Whether the view follows the figure (spec 005, FR4): during a walk, until the visitor picks a storey. */
@@ -460,26 +474,31 @@ export class HouseRenderer {
       if (!root) continue;
       let state = this.householdWalks.get(entry.id);
       if (!state) {
-        // Just placed where Sowel says: nothing to walk yet.
-        state = { target: entry.room, walk: null };
+        // First seen: stood in their own place in the room Sowel says, no walk.
+        const slot = this.freeSlot(entry.room, entry.id);
+        state = { target: entry.room, slot, walk: null };
         this.householdWalks.set(entry.id, state);
+        if (entry.room) {
+          const place = placeInRoom(this.plan, entry.room, slot);
+          root.position.set(place.x, place.y, place.z);
+        }
       }
       if (entry.room !== state.target) {
         state.target = entry.room;
-        const points = entry.room
-          ? route(
-              this.plan,
-              { x: root.position.x, y: root.position.y, z: root.position.z },
-              entry.room,
-            )
-          : null;
+        state.slot = this.freeSlot(entry.room, entry.id);
+        const place = entry.room ? placeInRoom(this.plan, entry.room, state.slot) : null;
+        const points =
+          entry.room && place
+            ? route(
+                this.plan,
+                { x: root.position.x, y: root.position.y, z: root.position.z },
+                entry.room,
+                { x: place.x, z: place.z },
+              )
+            : null;
         state.walk = points && points.length > 1 ? new Walk(points) : null;
-        if (!state.walk && entry.room) {
-          // No way found: be there, rather than stand in the wrong room.
-          const room = this.handles.rooms.get(entry.room);
-          const spot = room ? room.spot : this.plan.awaySpot;
-          root.position.set(spot[0], levelElevation(this.plan, room?.level ?? null), spot[1]);
-        }
+        // No way found: be there, rather than stand in the wrong room.
+        if (!state.walk && place) root.position.set(place.x, place.y, place.z);
       }
       if (!state.walk) continue;
       const step = state.walk.step(dt);

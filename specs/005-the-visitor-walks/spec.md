@@ -110,6 +110,10 @@ figurine; and the visitor went round by the garden between two rooms of the hous
 - **They walk** from room to room along the same ways as the visitor — doors,
   stairs, around the furniture — instead of sliding in a straight line through the
   walls. With no way found they are simply there.
+- **Each has their own place in a room**, around its spot — a first ring, then a
+  wider one — and the visitor's side of the spot is left to the visitor. Five people
+  in the living room stood on one point, and an adult's head showed above a child's:
+  one figure with two heads (owner's walk, the same day).
 - **Short ways.** Between two rooms inside the house, the way never leaves it (a
   test walks every pair). The one exception is the garage, which opens on the
   garden: from the office, out of the front door and in by its gate is shorter than
