@@ -16,7 +16,7 @@ Status: 📝 Draft · 🚧 In progress · ✅ Shipped
 | 001 | The house, read-only     | ✅     | Phase 3. The plan as data, the Sowel mapping derived rather than listed, REST + WebSocket, and the scene ported from the prototype.                                                                                         |
 | 002 | A house worth looking at | ✅     | Phase 3, second pass. A composed plan of a pavilion, two storeys stacked with the one being read solid, a roof, stairs, doors that report, lit windows. Amended with the design pass: joinery, furniture, the pool's water. |
 | 003 | The house beside Sowel   | ✅     | The 3D house in a vignette over the Sowel interface (`?mini=1`), full screen by anchor, a camera that stays put, the visitor's language, a way back to Sowel.                                                               |
-| 004 | The sun in the sky       | 📝     | The sun drawn on a dome around the house with today's path, the cardinal points on the ground, and a dial in the HUD that shows where the sun is whatever the camera does.                                                  |
+| 004 | The sun in the sky       | ✅     | The sun drawn on a dome around the house with today's path, the cardinal points on the ground, and a dial in the HUD that shows where the sun is whatever the camera does.                                                  |
 
 ## How to use this index after context loss
 
